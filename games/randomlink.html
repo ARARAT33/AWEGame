@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curiosity Stream</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        /* Էջից դուրս գալու սահուն անհետացում */
+        .fade-exit {
+            opacity: 0;
+            transform: scale(0.96);
+            filter: blur(8px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Սահուն շարժվող գրադիենտ ֆոն */
+        @keyframes gradient-bg {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .animated-bg {
+            background: linear-gradient(-45deg, #f8fafc, #f5f3ff, #e0f2fe, #fafafa);
+            background-size: 400% 400%;
+            animation: gradient-bg 12s ease infinite;
+        }
+
+        /* Կոճակի ներսի լուսային անիմացիան */
+        @keyframes loading-wave {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .animate-wave {
+            animation: loading-wave 1.4s infinite linear;
+        }
+    </style>
+</head>
+<body class="animated-bg text-slate-800 min-h-screen flex flex-col items-center justify-between p-6 transition-all duration-500 font-sans overflow-hidden" id="page-body">
+
+    <!-- Top Navigation (Back Button) -->
+    <div class="w-full max-w-4xl z-10">
+        <button onclick="goHome()" class="group flex items-center gap-2 bg-white/80 hover:bg-white border border-slate-200 px-5 py-2.5 rounded-full text-xs font-bold tracking-wider uppercase text-slate-500 hover:text-indigo-600 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md backdrop-blur-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5 transform group-hover:-translate-x-1 transition-transform">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+            </svg>
+            Back to Dashboard
+        </button>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex flex-col items-center justify-center text-center max-w-lg px-4 flex-grow z-10 w-full transition-all duration-500" id="main-content">
+        
+        <h1 class="text-4xl sm:text-5xl font-black tracking-tight text-slate-900 mb-4 drop-shadow-sm">
+            Random <span class="bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent">Discovery</span>
+        </h1>
+        
+        <p class="text-slate-500 text-sm sm:text-base mb-8 font-medium max-w-xs leading-relaxed">
+            Let Google scan the live web and instantly teleport you to a random, meaningful page.
+        </p>
+
+        <!-- Main Action Button -->
+        <div class="w-full max-w-xs relative">
+            <button id="search-btn" onclick="triggerGoogleLucky()" class="w-full py-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold rounded-2xl shadow-xl shadow-indigo-600/10 hover:shadow-indigo-600/20 active:scale-98 transition-all duration-300 cursor-pointer text-sm tracking-widest uppercase relative overflow-hidden">
+                <span id="btn-text">Search Live Web</span>
+                
+                <!-- Inner Loading Wave -->
+                <div id="btn-wave" class="hidden absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent w-full h-full animate-wave"></div>
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Minimal Modern Footer -->
+    <footer class="text-[10px] text-slate-400 font-bold tracking-widest uppercase z-10">
+        Live Web Search Portal // 2026
+    </footer>
+
+    <script>
+        function goHome() {
+            const body = document.getElementById('page-body');
+            body.classList.add('fade-exit');
+            setTimeout(() => {
+                window.location.href = '../../index.html';
+            }, 500);
+        }
+
+        function triggerGoogleLucky() {
+            const btn = document.getElementById('search-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnWave = document.getElementById('btn-wave');
+            const mainContent = document.getElementById('main-content');
+
+            // Կոճակի անիմացիայի միացում
+            btn.classList.add('pointer-events-none');
+            btnText.innerText = "Exploring...";
+            btnWave.classList.remove('hidden');
+            
+            mainContent.style.transform = "scale(0.98)";
+            mainContent.style.opacity = "0.7";
+
+            setTimeout(() => {
+                
+                // --- ԻՆՉՊԵՍ Է Google-Ը ԳՏՆՈՒՄ ԻՄԱՍՏԱԼԻՑ ՈՒ ՊԱՏԱՀԱԿԱՆ ԲԱՆ ---
+                // Օգտագործում ենք հատուկ նշաններ `www.*.*` կամ `info:*` և դրանց ավելացնում ենք 
+                // դինամիկ փոփոխվող պատահական թիվ (որպեսզի միշտ տարբեր էջեր բերի)։
+                // Google-ի ալգորիթմը ստիպված ինքն է այդ նշանների տակ իրական բառեր ու կայքեր գտնում։
+                
+                const randomNumber = Math.floor(Math.random() * 99999);
+                const googleOperators = [
+                    `site:*.*.* "${randomNumber}"`, 
+                    `info:www.*.com ${randomNumber}`,
+                    `intitle:"*" ${randomNumber}`
+                ];
+                
+                // Պատահական ընտրում ենք այս օպերատորներից մեկը
+                const selectedOperator = googleOperators[Math.floor(Math.random() * googleOperators.length)];
+                const searchQuery = encodeURIComponent(selectedOperator);
+                
+                // Ուղարկում ենք Google-ի "I'm Feeling Lucky" (&btnI=1) համակարգին
+                const targetUrl = `https://www.google.com/search?q=${searchQuery}&btnI=1`;
+
+                // Միանգամից բացում ենք էջը
+                window.open(targetUrl, '_blank');
+
+                // Էջի վերականգնում
+                setTimeout(() => {
+                    btn.classList.remove('pointer-events-none');
+                    btnText.innerText = "Search Live Web";
+                    btnWave.classList.add('hidden');
+                    mainContent.style.transform = "scale(1)";
+                    mainContent.style.opacity = "1";
+                }, 800);
+
+            }, 1200);
+        }
+    </script>
+</body>
+</html>
