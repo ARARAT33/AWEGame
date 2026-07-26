@@ -15,5 +15,11 @@ const games = [
     developer: "AWEGames",
     icon: "✈️🛩️"
   },
-  
+  {
+    title: "⚡ CYBERCORE: CONTROL THE POWER, SURVIVE THE MELTDOWN!",
+    folder: "reactor.html",
+    description: "Harness raw plasma energy, unlock 20+ quantum upgrades, and expand your power grid. Keep your core cool under extreme pressure—or face a total reactor collapse! 🚀",
+    developer: "AWEGames",
+    icon: "☢"
+  },
 ];
