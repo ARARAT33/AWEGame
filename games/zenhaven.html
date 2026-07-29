@@ -1940,22 +1940,22 @@
             }, 300);
         });
 
-        // Exit Button with Portal Animation
-        document.getElementById('exitBtn').addEventListener('click', () => {
-            const overlay = document.getElementById('portalOverlay');
-            overlay.classList.add('active');
+       // Exit Button with Portal Animation
+document.getElementById('exitBtn').addEventListener('click', () => {
+    const overlay = document.getElementById('portalOverlay');
+    overlay.classList.add('active');
 
-            if (state.audioEnabled) {
-                audio.playChime(523.25, 'sine');
-                setTimeout(() => audio.playChime(659.25, 'sine'), 150);
-                setTimeout(() => audio.playChime(783.99, 'sine'), 300);
-            }
+    if (state.audioEnabled) {
+        audio.playChime(523.25, 'sine');
+        setTimeout(() => audio.playChime(659.25, 'sine'), 150);
+        setTimeout(() => audio.playChime(783.99, 'sine'), 300);
+    }
 
-            setTimeout(() => {
-                overlay.classList.remove('active');
-                showToast('welcome');
-            }, 1800);
-        });
+
+    setTimeout(() => {
+        window.location.href = '../index.html';
+    }, 1800);
+});
 
         window.onload = function() {
             loadSavedState();
