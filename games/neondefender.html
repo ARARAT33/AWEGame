@@ -108,6 +108,7 @@
             border: 2px solid rgba(0, 240, 255, 0.6);
             box-shadow: 0 0 25px rgba(0, 240, 255, 0.4), inset 0 0 15px rgba(0, 240, 255, 0.25);
             touch-action: none;
+            cursor: pointer;
         }
         .joystick-thumb {
             background: radial-gradient(circle, #00f0ff 0%, #0066ff 100%);
@@ -123,11 +124,9 @@
             cursor: pointer;
         }
 
-        /* Hide Touch overlay on PC */
-        @media (min-width: 1025px) {
-            #mobileControls {
-                display: none !important;
-            }
+        /* Visible controls everywhere (PC + Mobile) */
+        #mobileControls {
+            display: block !important;
         }
     </style>
 </head>
@@ -151,6 +150,12 @@
             <button id="openMarketBtn" class="btn-action-gold text-yellow-300 font-extrabold px-2.5 py-1.5 sm:px-5 sm:py-3 rounded-2xl flex items-center gap-1.5 text-[11px] sm:text-sm cursor-pointer">
                 <i class="fa-solid fa-store text-xs sm:text-base"></i>
                 <span class="tracking-wider uppercase">ARMORY</span>
+            </button>
+
+            <!-- PC/Global Auto-Fire Toggle Header Button -->
+            <button id="pcAutoToggleBtn" class="glass-card text-purple-300 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-2xl border border-purple-500/50 flex items-center gap-1.5 text-[11px] sm:text-sm font-bold hover:bg-purple-500/20 active:scale-95 transition cursor-pointer">
+                <i class="fa-solid fa-bolt text-purple-400"></i>
+                <span>AUTO FIRE: <span id="pcAutoStatus" class="text-red-400">OFF</span></span>
             </button>
         </div>
 
@@ -216,7 +221,7 @@
         </div>
     </div>
 
-    <!-- MOBILE CONTROLS OVERLAY -->
+    <!-- ON-SCREEN CONTROLS OVERLAY (Visible on both PC & Mobile) -->
     <div id="mobileControls" class="absolute inset-0 z-20 pointer-events-none safe-bottom">
         <!-- Virtual Joystick Area (Left Bottom) -->
         <div id="touchJoystickBase" class="absolute bottom-10 left-4 w-28 h-28 sm:w-36 sm:h-36 joystick-base rounded-full pointer-events-auto flex items-center justify-center">
@@ -232,7 +237,7 @@
                     <span class="text-[8px] font-black uppercase tracking-tighter">EMP</span>
                 </button>
 
-                <!-- Auto Fire Toggle -->
+                <!-- Auto Fire Toggle Button -->
                 <button id="touchAutoFireBtn" class="mobile-btn-action w-12 h-12 sm:w-14 sm:h-14 bg-purple-600/80 active:bg-purple-500 border-2 border-purple-300 rounded-2xl flex flex-col items-center justify-center text-white shadow-lg shadow-purple-500/30 active:scale-90 transition">
                     <i class="fa-solid fa-bolt text-xs"></i>
                     <span id="autoFireLabel" class="text-[8px] font-black tracking-tighter">AUTO</span>
@@ -349,8 +354,8 @@
 
             <div class="bg-black/70 p-3 rounded-2xl border border-white/10 text-left text-[11px] text-slate-300 space-y-1.5">
                 <div class="font-bold text-cyan-400 border-b border-white/10 pb-1">TACTICAL CONTROLS:</div>
-                <div class="flex justify-between"><span>Desktop PC:</span><span class="text-cyan-300">WASD / Arrows + Space</span></div>
-                <div class="flex justify-between"><span>Mobile Phone:</span><span class="text-pink-300">Touch Joystick + FIRE / EMP</span></div>
+                <div class="flex justify-between"><span>Desktop PC:</span><span class="text-cyan-300">WASD / Arrows + Space / F (Auto)</span></div>
+                <div class="flex justify-between"><span>Mobile / UI:</span><span class="text-pink-300">On-Screen Joystick + Buttons</span></div>
             </div>
 
             <div class="flex gap-3 pt-2">
@@ -514,6 +519,17 @@
         var score = 0;
         var wave = 1;
         var sessionCoins = 0;
+
+        function toggleAutoFire() {
+            autoFire = !autoFire;
+            var lbl = document.getElementById('autoFireLabel');
+            var pcLbl = document.getElementById('pcAutoStatus');
+            if (lbl) lbl.textContent = autoFire ? 'ON' : 'AUTO';
+            if (pcLbl) {
+                pcLbl.textContent = autoFire ? 'ON' : 'OFF';
+                pcLbl.className = autoFire ? 'text-emerald-400' : 'text-red-400';
+            }
+        }
 
         function getPrice(tier, base) {
             return Math.round(base * Math.pow(tier, 1.55) / 10) * 10;
@@ -1601,6 +1617,9 @@
         window.addEventListener('load', function() {
             loadProgress();
 
+            // PC Auto Fire Header Button Trigger
+            document.getElementById('pcAutoToggleBtn').onclick = toggleAutoFire;
+
             // Menu Buttons
             document.getElementById('menuToggleBtn').onclick = function() {
                 document.getElementById('quickMenuModal').classList.toggle('hidden');
@@ -1677,13 +1696,12 @@
                 }
             };
 
-            // Touch Joystick Handlers
+            // Touch & Mouse Joystick Handlers
             var joystickBase = document.getElementById('touchJoystickBase');
             var joystickThumb = document.getElementById('touchJoystickThumb');
 
-            function handleTouchMove(e) {
+            function handleMove(touch) {
                 if (!joystickActive) return;
-                var touch = e.touches ? e.touches[0] : e;
                 var rect = joystickBase.getBoundingClientRect();
                 var centerX = rect.left + rect.width / 2;
                 var centerY = rect.top + rect.height / 2;
@@ -1705,13 +1723,13 @@
             joystickBase.addEventListener('touchstart', function(e) {
                 e.preventDefault();
                 joystickActive = true;
-                handleTouchMove(e);
+                handleMove(e.touches[0]);
             }, { passive: false });
 
             window.addEventListener('touchmove', function(e) {
                 if (joystickActive) {
                     e.preventDefault();
-                    handleTouchMove(e);
+                    handleMove(e.touches[0]);
                 }
             }, { passive: false });
 
@@ -1719,6 +1737,26 @@
                 joystickActive = false;
                 joystickVector = { x: 0, y: 0 };
                 joystickThumb.style.transform = 'translate(0px, 0px)';
+            });
+
+            // Mouse Drag Support for On-Screen Joystick on PC
+            joystickBase.addEventListener('mousedown', function(e) {
+                joystickActive = true;
+                handleMove(e);
+            });
+
+            window.addEventListener('mousemove', function(e) {
+                if (joystickActive) {
+                    handleMove(e);
+                }
+            });
+
+            window.addEventListener('mouseup', function() {
+                if (joystickActive) {
+                    joystickActive = false;
+                    joystickVector = { x: 0, y: 0 };
+                    joystickThumb.style.transform = 'translate(0px, 0px)';
+                }
             });
 
             // Action Buttons
@@ -1733,15 +1771,13 @@
             empBtn.addEventListener('touchstart', function(e) { e.preventDefault(); triggerEmpBomb(); }, { passive: false });
 
             var autoFireBtn = document.getElementById('touchAutoFireBtn');
-            autoFireBtn.addEventListener('click', function() {
-                autoFire = !autoFire;
-                document.getElementById('autoFireLabel').textContent = autoFire ? 'ON' : 'AUTO';
-            });
+            autoFireBtn.addEventListener('click', toggleAutoFire);
 
-            // Keyboard Handlers
+            // Keyboard Handlers (PC Controls Retained + F Key for Auto)
             window.addEventListener('keydown', function(e) {
                 keys[e.code] = true;
                 if (e.code === 'KeyE') triggerEmpBomb();
+                if (e.code === 'KeyF') toggleAutoFire();
             });
             window.addEventListener('keyup', function(e) {
                 keys[e.code] = false;
