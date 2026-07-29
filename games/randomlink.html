@@ -34,6 +34,37 @@
         .animate-wave {
             animation: loading-wave 1.4s infinite linear;
         }
+
+        /* Responsive adjustments for all screen sizes */
+        @media (max-width: 640px) {
+            body {
+                padding: 4px !important;
+            }
+            h1 {
+                font-size: 2rem !important;
+            }
+            p {
+                font-size: 0.875rem !important;
+            }
+            #search-btn {
+                padding: 0.75rem 1.5rem !important;
+                font-size: 0.75rem !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.75rem !important;
+            }
+            p {
+                font-size: 0.75rem !important;
+                max-width: 100% !important;
+            }
+            #search-btn {
+                padding: 0.625rem 1.25rem !important;
+                font-size: 0.625rem !important;
+            }
+        }
     </style>
 </head>
 <body class="animated-bg text-slate-800 min-h-screen flex flex-col items-center justify-between p-6 transition-all duration-500 font-sans overflow-hidden" id="page-body">
@@ -81,7 +112,7 @@
             const body = document.getElementById('page-body');
             body.classList.add('fade-exit');
             setTimeout(() => {
-                window.location.href = '../../index.html';
+                window.location.href = '../index.html';
             }, 500);
         }
 

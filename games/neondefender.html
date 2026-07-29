@@ -19,11 +19,13 @@
             background: #030308;
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             color: #fff;
+            touch-action: none;
+            -webkit-overflow-scrolling: touch;
         }
         #gameCanvas {
             display: block;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             background: radial-gradient(circle at center, #0a0a1a 0%, #020206 100%);
         }
 
@@ -378,6 +380,97 @@
             align-items: center;
             gap: 6px;
             backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        #backBtn:hover {
+            background: rgba(0, 240, 255, 0.2);
+            border-color: rgba(0, 240, 255, 0.5);
+            transform: translateX(-3px);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+        }
+
+        /* Responsive adjustments for all screen sizes */
+        @media (max-width: 768px) {
+            #hud {
+                padding: 8px 12px;
+                top: 8px;
+                left: 8px;
+                right: 8px;
+            }
+            .hud-label {
+                font-size: 8px;
+            }
+            .hud-value {
+                font-size: 14px;
+            }
+            .icon-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+            }
+            #hpContainer {
+                width: 200px;
+                height: 10px;
+                top: 60px;
+            }
+            #mobileControls {
+                bottom: 10px;
+                padding: 0 10px;
+            }
+            #joystickZone {
+                width: 120px;
+                height: 120px;
+            }
+            #joystickKnob {
+                width: 40px;
+                height: 40px;
+                top: 40px;
+                left: 40px;
+            }
+            .game-btn {
+                width: 55px;
+                height: 55px;
+                font-size: 10px;
+            }
+            .btn-fire {
+                width: 65px;
+                height: 65px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #hud {
+                padding: 6px 10px;
+            }
+            .hud-label {
+                font-size: 7px;
+            }
+            .hud-value {
+                font-size: 12px;
+            }
+            #hpContainer {
+                width: 160px;
+            }
+            #joystickZone {
+                width: 100px;
+                height: 100px;
+            }
+            #joystickKnob {
+                width: 35px;
+                height: 35px;
+                top: 32px;
+                left: 32px;
+            }
+            .game-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 9px;
+            }
+            .btn-fire {
+                width: 60px;
+                height: 60px;
+            }
         }
     </style>
 </head>
