@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Balloon Pop</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: linear-gradient(180deg, #87ceeb 0%, #e0f6ff 100%); font-family: 'Segoe UI', sans-serif; }
+        #gameCanvas { display: block; width: 100vw; height: 100vh; cursor: crosshair; }
+        #backBtn { position: absolute; top: 10px; left: 10px; z-index: 100; background: rgba(255,255,255,0.3); border: none; color: #333; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: clamp(10px, 1.5vw, 14px); font-weight: bold; text-decoration: none; }
+        #ui { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.5); border-radius: 8px; color: #333; font-size: clamp(10px, 1.5vw, 14px); font-weight: bold; }
+        #startScreen, #gameOverScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.5); color: #fff; z-index: 50; }
+        .hidden { display: none !important; }
+        h1 { font-size: clamp(24px, 5vw, 48px); margin-bottom: 20px; }
+        p { font-size: clamp(12px, 2vw, 16px); margin-bottom: 30px; text-align: center; padding: 0 20px; }
+        button { background: #ff6b6b; border: none; color: #fff; padding: 15px 40px; font-size: clamp(14px, 2.5vw, 18px); font-weight: bold; border-radius: 30px; cursor: pointer; }
+        button:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    <a href="../index.html" id="backBtn">← BACK</a>
+    <canvas id="gameCanvas"></canvas>
+    <div id="ui" class="hidden">
+        <span>Score: <span id="scoreDisplay">0</span></span>
+        <span>Time: <span id="timeDisplay">30</span></span>
+        <span>Best: <span id="highScoreDisplay">0</span></span>
+    </div>
+    <div id="startScreen">
+        <h1>🎈 Balloon Pop</h1>
+        <p>Pop as many balloons as you can in 30 seconds!</p>
+        <button id="startBtn">START</button>
+    </div>
+    <div id="gameOverScreen" class="hidden">
+        <h1>Time's Up!</h1>
+        <p>You popped <span id="finalScore">0</span> balloons!</p>
+        <button id="restartBtn">PLAY AGAIN</button>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let balloons, score, timeLeft, highScore, gameRunning, animationId, spawnInterval, timerInterval;
+        
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+        
+        highScore = parseInt(localStorage.getItem('balloon_highscore')) || 0;
+        document.getElementById('highScoreDisplay').textContent = highScore;
+        
+        function initGame() {
+            balloons = [];
+            score = 0;
+            timeLeft = 30;
+            gameRunning = true;
+            document.getElementById('scoreDisplay').textContent = score;
+            document.getElementById('timeDisplay').textContent = timeLeft;
+            document.getElementById('ui').classList.remove('hidden');
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            
+            spawnInterval = setInterval(spawnBalloon, 600);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timeDisplay').textContent = timeLeft;
+                if (timeLeft <= 0) gameOver();
+            }, 1000);
+            
+            gameLoop();
+        }
+        
+        function spawnBalloon() {
+            if (!gameRunning) return;
+            balloons.push({
+                x: Math.random() * (canvas.width - 60) + 30,
+                y: canvas.height + 30,
+                size: Math.random() * 30 + 30,
+                speed: Math.random() * 3 + 2,
+                hue: Math.random() * 360
+            });
+        }
+        
+        function update() {
+            for (let i = balloons.length - 1; i >= 0; i--) {
+                balloons[i].y -= balloons[i].speed;
+                if (balloons[i].y < -50) {
+                    balloons.splice(i, 1);
+                }
+            }
+        }
+        
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let b of balloons) {
+                ctx.fillStyle = `hsl(${b.hue}, 70%, 60%)`;
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.size/2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // String
+                ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(b.x, b.y + b.size/2);
+                ctx.lineTo(b.x, b.y + b.size/2 + 30);
+                ctx.stroke();
+            }
+        }
+        
+        function gameLoop() {
+            if (!gameRunning) return;
+            update();
+            draw();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+        
+        function popBalloon(x, y) {
+            for (let i = balloons.length - 1; i >= 0; i--) {
+                const dx = x - balloons[i].x;
+                const dy = y - balloons[i].y;
+                if (Math.sqrt(dx*dx + dy*dy) < balloons[i].size/2) {
+                    score++;
+                    document.getElementById('scoreDisplay').textContent = score;
+                    balloons.splice(i, 1);
+                    break;
+                }
+            }
+        }
+        
+        canvas.addEventListener('click', e => {
+            if (gameRunning) popBalloon(e.clientX, e.clientY);
+        });
+        
+        canvas.addEventListener('touchstart', e => {
+            e.preventDefault();
+            if (gameRunning) {
+                for (let t of e.touches) {
+                    popBalloon(t.clientX, t.clientY);
+                }
+            }
+        });
+        
+        function gameOver() {
+            gameRunning = false;
+            clearInterval(spawnInterval);
+            clearInterval(timerInterval);
+            cancelAnimationFrame(animationId);
+            
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('balloon_highscore', highScore);
+                document.getElementById('highScoreDisplay').textContent = highScore;
+            }
+            
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('ui').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+        }
+        
+        document.getElementById('startBtn').addEventListener('click', initGame);
+        document.getElementById('restartBtn').addEventListener('click', initGame);
+    </script>
+</body>
+</html>

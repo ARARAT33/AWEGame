@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Space Dodger</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; }
+        #gameCanvas { display: block; width: 100vw; height: 100vh; }
+        #backBtn { position: absolute; top: 10px; left: 10px; z-index: 100; background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: clamp(10px, 1.5vw, 14px); font-weight: bold; text-decoration: none; }
+        #ui { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: clamp(10px, 1.5vw, 14px); }
+        #startScreen, #gameOverScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.9); color: #fff; z-index: 50; }
+        .hidden { display: none !important; }
+        h1 { font-size: clamp(24px, 5vw, 48px); margin-bottom: 20px; }
+        p { font-size: clamp(12px, 2vw, 16px); margin-bottom: 30px; text-align: center; padding: 0 20px; }
+        button { background: linear-gradient(135deg, #f093fb, #f5576c); border: none; color: #fff; padding: 15px 40px; font-size: clamp(14px, 2.5vw, 18px); font-weight: bold; border-radius: 30px; cursor: pointer; }
+        button:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    <a href="../index.html" id="backBtn">← BACK</a>
+    <canvas id="gameCanvas"></canvas>
+    <div id="ui" class="hidden">
+        <span>Score: <span id="scoreDisplay">0</span></span>
+        <span>High: <span id="highScoreDisplay">0</span></span>
+    </div>
+    <div id="startScreen">
+        <h1>🚀 Space Dodger</h1>
+        <p>Dodge the falling asteroids!</p>
+        <button id="startBtn">LAUNCH</button>
+    </div>
+    <div id="gameOverScreen" class="hidden">
+        <h1>CRASHED!</h1>
+        <p>Score: <span id="finalScore">0</span></p>
+        <button id="restartBtn">RETRY</button>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let player, asteroids, score, highScore, gameRunning, animationId;
+        
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+        
+        highScore = parseInt(localStorage.getItem('spacedodger_highscore')) || 0;
+        document.getElementById('highScoreDisplay').textContent = highScore;
+        
+        function initGame() {
+            player = { x: canvas.width / 2, y: canvas.height - 100, size: 30 };
+            asteroids = [];
+            score = 0;
+            gameRunning = true;
+            document.getElementById('scoreDisplay').textContent = score;
+            document.getElementById('ui').classList.remove('hidden');
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            spawnAsteroid();
+            gameLoop();
+        }
+        
+        function spawnAsteroid() {
+            if (!gameRunning) return;
+            asteroids.push({
+                x: Math.random() * canvas.width,
+                y: -50,
+                size: Math.random() * 30 + 20,
+                speed: Math.random() * 5 + 3
+            });
+            setTimeout(spawnAsteroid, Math.random() * 800 + 400);
+        }
+        
+        function update() {
+            score += 0.1;
+            document.getElementById('scoreDisplay').textContent = Math.floor(score);
+            
+            for (let i = asteroids.length - 1; i >= 0; i--) {
+                asteroids[i].y += asteroids[i].speed;
+                
+                if (asteroids[i].y > canvas.height + 50) {
+                    asteroids.splice(i, 1);
+                    continue;
+                }
+                
+                const dx = player.x - asteroids[i].x;
+                const dy = player.y - asteroids[i].y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < player.size/2 + asteroids[i].size/2) {
+                    gameOver();
+                    return;
+                }
+            }
+        }
+        
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw stars
+            if (Math.random() < 0.3) {
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 2, 2);
+            }
+            
+            // Draw player
+            ctx.fillStyle = '#00ffff';
+            ctx.shadowColor = '#00ffff';
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.moveTo(player.x, player.y - player.size/2);
+            ctx.lineTo(player.x - player.size/2, player.y + player.size/2);
+            ctx.lineTo(player.x + player.size/2, player.y + player.size/2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            // Draw asteroids
+            for (let a of asteroids) {
+                ctx.fillStyle = '#888';
+                ctx.beginPath();
+                ctx.arc(a.x, a.y, a.size/2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        function gameLoop() {
+            if (!gameRunning) return;
+            update();
+            draw();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+        
+        function gameOver() {
+            gameRunning = false;
+            cancelAnimationFrame(animationId);
+            if (Math.floor(score) > highScore) {
+                highScore = Math.floor(score);
+                localStorage.setItem('spacedodger_highscore', highScore);
+                document.getElementById('highScoreDisplay').textContent = highScore;
+            }
+            document.getElementById('finalScore').textContent = Math.floor(score);
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+            document.getElementById('ui').classList.add('hidden');
+        }
+        
+        canvas.addEventListener('mousemove', e => {
+            player.x = e.clientX;
+        });
+        
+        canvas.addEventListener('touchmove', e => {
+            e.preventDefault();
+            player.x = e.touches[0].clientX;
+        });
+        
+        document.getElementById('startBtn').addEventListener('click', initGame);
+        document.getElementById('restartBtn').addEventListener('click', initGame);
+    </script>
+</body>
+</html>

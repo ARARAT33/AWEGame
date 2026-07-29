@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Reactor Core</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #0a0a0f; font-family: 'Courier New', monospace; }
+        #gameCanvas { display: block; width: 100vw; height: 100vh; }
+        #backBtn { position: absolute; top: 10px; left: 10px; z-index: 100; background: rgba(0,255,136,0.2); border: 1px solid #00ff88; color: #00ff88; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: clamp(10px, 1.5vw, 14px); font-weight: bold; text-decoration: none; }
+        #ui { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; padding: 10px; background: rgba(0,255,136,0.1); border: 1px solid #00ff88; border-radius: 8px; color: #00ff88; font-size: clamp(10px, 1.5vw, 14px); }
+        #startScreen, #gameOverScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.9); color: #00ff88; z-index: 50; }
+        .hidden { display: none !important; }
+        h1 { font-size: clamp(24px, 5vw, 48px); margin-bottom: 20px; text-shadow: 0 0 20px #00ff88; }
+        p { font-size: clamp(12px, 2vw, 16px); margin-bottom: 30px; text-align: center; padding: 0 20px; }
+        button { background: transparent; border: 2px solid #00ff88; color: #00ff88; padding: 15px 40px; font-size: clamp(14px, 2.5vw, 18px); font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        button:hover { background: #00ff88; color: #000; }
+        #stabilityBar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 200px; height: 20px; background: rgba(0,255,136,0.2); border: 1px solid #00ff88; border-radius: 10px; overflow: hidden; }
+        #stabilityFill { width: 100%; height: 100%; background: linear-gradient(90deg, #ff0055, #ffd700, #00ff88); transition: width 0.3s; }
+    </style>
+</head>
+<body>
+    <a href="../index.html" id="backBtn">← BACK</a>
+    <canvas id="gameCanvas"></canvas>
+    <div id="ui" class="hidden">
+        <span>Score: <span id="scoreDisplay">0</span></span>
+        <span>High: <span id="highScoreDisplay">0</span></span>
+    </div>
+    <div id="stabilityBar" class="hidden"><div id="stabilityFill"></div></div>
+    <div id="startScreen">
+        <h1>⚛️ REACTOR CORE</h1>
+        <p>Stabilize the reactor by clicking the warning zones!</p>
+        <button id="startBtn">INITIATE</button>
+    </div>
+    <div id="gameOverScreen" class="hidden">
+        <h1>MELTDOWN</h1>
+        <p>Final Score: <span id="finalScore">0</span></p>
+        <button id="restartBtn">RESTART</button>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let score, highScore, stability, warnings, gameRunning, animationId;
+        
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+        
+        highScore = parseInt(localStorage.getItem('reactor_highscore')) || 0;
+        document.getElementById('highScoreDisplay').textContent = highScore;
+        
+        function initGame() {
+            score = 0;
+            stability = 100;
+            warnings = [];
+            gameRunning = true;
+            document.getElementById('scoreDisplay').textContent = score;
+            document.getElementById('ui').classList.remove('hidden');
+            document.getElementById('stabilityBar').classList.remove('hidden');
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            spawnWarning();
+            gameLoop();
+        }
+        
+        function spawnWarning() {
+            if (!gameRunning) return;
+            warnings.push({
+                x: Math.random() * (canvas.width - 100) + 50,
+                y: Math.random() * (canvas.height - 200) + 100,
+                radius: 30,
+                maxRadius: 80,
+                growth: 1
+            });
+            setTimeout(spawnWarning, Math.random() * 2000 + 1000);
+        }
+        
+        function update() {
+            if (!gameRunning) return;
+            stability -= 0.3;
+            document.getElementById('stabilityFill').style.width = stability + '%';
+            
+            for (let i = warnings.length - 1; i >= 0; i--) {
+                warnings[i].radius += warnings[i].growth;
+                if (warnings[i].radius >= warnings[i].maxRadius) {
+                    stability -= 20;
+                    warnings.splice(i, 1);
+                }
+            }
+            
+            if (stability <= 0) gameOver();
+        }
+        
+        function draw() {
+            ctx.fillStyle = 'rgba(10, 10, 15, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            for (let w of warnings) {
+                let gradient = ctx.createRadialGradient(w.x, w.y, 0, w.x, w.y, w.radius);
+                gradient.addColorStop(0, 'rgba(255, 0, 85, 0.8)');
+                gradient.addColorStop(1, 'rgba(255, 0, 85, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(w.x, w.y, w.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.strokeStyle = '#ff0055';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(w.x, w.y, w.radius, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
+        
+        function gameLoop() {
+            if (!gameRunning) return;
+            update();
+            draw();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+        
+        function gameOver() {
+            gameRunning = false;
+            cancelAnimationFrame(animationId);
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('reactor_highscore', highScore);
+                document.getElementById('highScoreDisplay').textContent = highScore;
+            }
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+            document.getElementById('ui').classList.add('hidden');
+            document.getElementById('stabilityBar').classList.add('hidden');
+        }
+        
+        canvas.addEventListener('click', e => {
+            if (!gameRunning) return;
+            for (let i = warnings.length - 1; i >= 0; i--) {
+                let dx = e.clientX - warnings[i].x;
+                let dy = e.clientY - warnings[i].y;
+                if (Math.sqrt(dx*dx + dy*dy) < warnings[i].radius) {
+                    score += 10;
+                    stability = Math.min(100, stability + 10);
+                    document.getElementById('scoreDisplay').textContent = score;
+                    warnings.splice(i, 1);
+                    break;
+                }
+            }
+        });
+        
+        canvas.addEventListener('touchstart', e => {
+            e.preventDefault();
+            for (let t of e.touches) {
+                if (!gameRunning) return;
+                for (let i = warnings.length - 1; i >= 0; i--) {
+                    let dx = t.clientX - warnings[i].x;
+                    let dy = t.clientY - warnings[i].y;
+                    if (Math.sqrt(dx*dx + dy*dy) < warnings[i].radius) {
+                        score += 10;
+                        stability = Math.min(100, stability + 10);
+                        document.getElementById('scoreDisplay').textContent = score;
+                        warnings.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+        });
+        
+        document.getElementById('startBtn').addEventListener('click', initGame);
+        document.getElementById('restartBtn').addEventListener('click', initGame);
+    </script>
+</body>
+</html>

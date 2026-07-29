@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quantum Snake</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
+        #gameCanvas { display: block; width: 100vw; height: 100vh; }
+        #backBtn { position: absolute; top: 10px; left: 10px; z-index: 100; background: rgba(0,255,255,0.2); border: 1px solid #00ffff; color: #00ffff; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: clamp(10px, 1.5vw, 14px); font-weight: bold; text-decoration: none; }
+        #ui { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; padding: 10px; background: rgba(0,255,255,0.1); border: 1px solid #00ffff; border-radius: 8px; color: #00ffff; font-size: clamp(10px, 1.5vw, 14px); }
+        #startScreen, #gameOverScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.9); color: #00ffff; z-index: 50; }
+        .hidden { display: none !important; }
+        h1 { font-size: clamp(24px, 5vw, 48px); margin-bottom: 20px; text-shadow: 0 0 20px #00ffff; }
+        p { font-size: clamp(12px, 2vw, 16px); margin-bottom: 30px; text-align: center; padding: 0 20px; }
+        button { background: transparent; border: 2px solid #00ffff; color: #00ffff; padding: 15px 40px; font-size: clamp(14px, 2.5vw, 18px); font-weight: bold; border-radius: 8px; cursor: pointer; }
+        button:hover { background: #00ffff; color: #000; }
+        #mobileControls { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: none; gap: 10px; }
+        .ctrl-btn { width: 60px; height: 60px; border-radius: 50%; background: rgba(0,255,255,0.2); border: 2px solid #00ffff; color: #00ffff; font-size: 24px; cursor: pointer; }
+        @media (max-width: 768px) { #mobileControls { display: flex; } }
+    </style>
+</head>
+<body>
+    <a href="../index.html" id="backBtn">← BACK</a>
+    <canvas id="gameCanvas"></canvas>
+    <div id="ui" class="hidden">
+        <span>Score: <span id="scoreDisplay">0</span></span>
+        <span>High: <span id="highScoreDisplay">0</span></span>
+    </div>
+    <div id="startScreen">
+        <h1>🐍 QUANTUM SNAKE</h1>
+        <p>Collect energy orbs to grow longer!</p>
+        <button id="startBtn">START</button>
+    </div>
+    <div id="gameOverScreen" class="hidden">
+        <h1>GAME OVER</h1>
+        <p>Score: <span id="finalScore">0</span></p>
+        <button id="restartBtn">RETRY</button>
+    </div>
+    <div id="mobileControls">
+        <button class="ctrl-btn" id="upBtn">▲</button>
+        <button class="ctrl-btn" id="leftBtn">◀</button>
+        <button class="ctrl-btn" id="rightBtn">▶</button>
+        <button class="ctrl-btn" id="downBtn">▼</button>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let snake, food, direction, nextDirection, score, highScore, gameRunning, gridSize, tileCount;
+        
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            gridSize = Math.min(canvas.width, canvas.height);
+            tileCount = 20;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+        
+        highScore = parseInt(localStorage.getItem('snake_highscore')) || 0;
+        document.getElementById('highScoreDisplay').textContent = highScore;
+        
+        function initGame() {
+            snake = [{x: 10, y: 10}, {x: 9, y: 10}, {x: 8, y: 10}];
+            direction = {x: 1, y: 0};
+            nextDirection = {x: 1, y: 0};
+            score = 0;
+            spawnFood();
+            gameRunning = true;
+            document.getElementById('scoreDisplay').textContent = score;
+            document.getElementById('ui').classList.remove('hidden');
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            gameLoop();
+        }
+        
+        function spawnFood() {
+            food = {
+                x: Math.floor(Math.random() * tileCount),
+                y: Math.floor(Math.random() * tileCount),
+                hue: Math.random() * 360
+            };
+        }
+        
+        function update() {
+            direction = nextDirection;
+            const head = {x: snake[0].x + direction.x, y: snake[0].y + direction.y};
+            
+            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount ||
+                snake.some(s => s.x === head.x && s.y === head.y)) {
+                gameOver();
+                return;
+            }
+            
+            snake.unshift(head);
+            
+            if (head.x === food.x && head.y === food.y) {
+                score += 10;
+                document.getElementById('scoreDisplay').textContent = score;
+                spawnFood();
+            } else {
+                snake.pop();
+            }
+        }
+        
+        function draw() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const tileSize = gridSize / tileCount;
+            const offsetX = (canvas.width - gridSize) / 2;
+            const offsetY = (canvas.height - gridSize) / 2;
+            
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = `hsl(${180 + i * 5}, 100%, 50%)`;
+                ctx.fillRect(offsetX + snake[i].x * tileSize, offsetY + snake[i].y * tileSize, tileSize - 2, tileSize - 2);
+            }
+            
+            ctx.fillStyle = `hsl(${food.hue}, 100%, 50%)`;
+            ctx.shadowColor = `hsl(${food.hue}, 100%, 50%)`;
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.arc(offsetX + food.x * tileSize + tileSize/2, offsetY + food.y * tileSize + tileSize/2, tileSize/2 - 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+        
+        function gameLoop() {
+            if (!gameRunning) return;
+            setTimeout(() => {
+                update();
+                draw();
+                if (gameRunning) requestAnimationFrame(gameLoop);
+            }, 100);
+        }
+        
+        function gameOver() {
+            gameRunning = false;
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('snake_highscore', highScore);
+                document.getElementById('highScoreDisplay').textContent = highScore;
+            }
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+            document.getElementById('ui').classList.add('hidden');
+        }
+        
+        window.addEventListener('keydown', e => {
+            if (e.key === 'ArrowUp' && direction.y === 0) nextDirection = {x: 0, y: -1};
+            if (e.key === 'ArrowDown' && direction.y === 0) nextDirection = {x: 0, y: 1};
+            if (e.key === 'ArrowLeft' && direction.x === 0) nextDirection = {x: -1, y: 0};
+            if (e.key === 'ArrowRight' && direction.x === 0) nextDirection = {x: 1, y: 0};
+        });
+        
+        document.getElementById('upBtn').addEventListener('click', () => { if (direction.y === 0) nextDirection = {x: 0, y: -1}; });
+        document.getElementById('downBtn').addEventListener('click', () => { if (direction.y === 0) nextDirection = {x: 0, y: 1}; });
+        document.getElementById('leftBtn').addEventListener('click', () => { if (direction.x === 0) nextDirection = {x: -1, y: 0}; });
+        document.getElementById('rightBtn').addEventListener('click', () => { if (direction.x === 0) nextDirection = {x: 1, y: 0}; });
+        
+        document.getElementById('startBtn').addEventListener('click', initGame);
+        document.getElementById('restartBtn').addEventListener('click', initGame);
+    </script>
+</body>
+</html>

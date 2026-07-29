@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tap Master</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; }
+        #backBtn { position: absolute; top: 10px; left: 10px; z-index: 100; background: rgba(255,255,255,0.3); border: none; color: #fff; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: clamp(10px, 1.5vw, 14px); font-weight: bold; text-decoration: none; }
+        #target { width: clamp(100px, 20vw, 200px); height: clamp(100px, 20vw, 200px); background: rgba(255,255,255,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s; user-select: none; }
+        #target:active { transform: scale(0.95); }
+        #innerCircle { width: 50%; height: 50%; background: #fff; border-radius: 50%; transition: all 0.3s; }
+        #ui { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.3); padding: 10px 20px; border-radius: 12px; color: #fff; font-size: clamp(12px, 2vw, 16px); font-weight: bold; }
+        #startScreen, #gameOverScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.5); color: #fff; z-index: 50; }
+        .hidden { display: none !important; }
+        h1 { font-size: clamp(24px, 5vw, 48px); margin-bottom: 20px; }
+        p { font-size: clamp(12px, 2vw, 16px); margin-bottom: 30px; text-align: center; padding: 0 20px; }
+        button { background: #fff; color: #fda085; padding: 15px 40px; font-size: clamp(14px, 2.5vw, 18px); font-weight: bold; border-radius: 30px; cursor: pointer; border: none; }
+        button:hover { transform: scale(1.05); }
+        #timer { position: absolute; bottom: 20px; font-size: clamp(48px, 10vw, 72px); color: #fff; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <a href="../index.html" id="backBtn">← BACK</a>
+    <div id="ui" class="hidden">Score: <span id="scoreDisplay">0</span> | Best: <span id="highScoreDisplay">0</span></div>
+    <div id="target" class="hidden"><div id="innerCircle"></div></div>
+    <div id="timer" class="hidden">3.00</div>
+    <div id="startScreen">
+        <h1>👆 Tap Master</h1>
+        <p>Tap when the timer hits exactly 0!</p>
+        <button id="startBtn">START</button>
+    </div>
+    <div id="gameOverScreen" class="hidden">
+        <h1>Result</h1>
+        <p>Difference: <span id="diffDisplay">0.00</span></p>
+        <p>Score: <span id="finalScore">0</span></p>
+        <button id="restartBtn">RETRY</button>
+    </div>
+    <script>
+        let score, highScore, gameRunning, targetTime, startTime, timerInterval;
+        
+        highScore = parseInt(localStorage.getItem('tapmaster_highscore')) || 0;
+        document.getElementById('highScoreDisplay').textContent = highScore;
+        
+        function startGame() {
+            score = 0;
+            gameRunning = true;
+            document.getElementById('scoreDisplay').textContent = score;
+            document.getElementById('ui').classList.remove('hidden');
+            document.getElementById('target').classList.remove('hidden');
+            document.getElementById('timer').classList.remove('hidden');
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            nextRound();
+        }
+        
+        function nextRound() {
+            if (!gameRunning) return;
+            targetTime = Math.random() * 3 + 2;
+            let timeLeft = targetTime;
+            
+            timerInterval = setInterval(() => {
+                timeLeft -= 0.01;
+                document.getElementById('timer').textContent = Math.max(0, timeLeft).toFixed(2);
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    autoFail();
+                }
+            }, 10);
+            
+            startTime = Date.now();
+        }
+        
+        document.getElementById('target').addEventListener('click', () => {
+            if (!gameRunning) return;
+            
+            const elapsed = (Date.now() - startTime) / 1000;
+            const diff = Math.abs(elapsed - targetTime);
+            
+            clearInterval(timerInterval);
+            
+            if (diff < 0.1) {
+                score += 100;
+                document.getElementById('scoreDisplay').textContent = score;
+                document.getElementById('innerCircle').style.background = '#4ade80';
+                setTimeout(() => {
+                    document.getElementById('innerCircle').style.background = '#fff';
+                    nextRound();
+                }, 300);
+            } else if (diff < 0.3) {
+                score += 50;
+                document.getElementById('scoreDisplay').textContent = score;
+                document.getElementById('innerCircle').style.background = '#fbbf24';
+                setTimeout(() => {
+                    document.getElementById('innerCircle').style.background = '#fff';
+                    nextRound();
+                }, 300);
+            } else {
+                endGame(diff);
+            }
+        });
+        
+        document.getElementById('target').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            document.getElementById('target').click();
+        });
+        
+        function autoFail() {
+            endGame(targetTime);
+        }
+        
+        function endGame(diff) {
+            gameRunning = false;
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('tapmaster_highscore', highScore);
+                document.getElementById('highScoreDisplay').textContent = highScore;
+            }
+            document.getElementById('diffDisplay').textContent = diff.toFixed(2);
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('timer').classList.add('hidden');
+            document.getElementById('target').classList.add('hidden');
+            document.getElementById('ui').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+        }
+        
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('restartBtn').addEventListener('click', startGame);
+    </script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Memory Matrix</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #backBtn { position: absolute; top: 10px; left: 10px; z-index: 100; background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: clamp(10px, 1.5vw, 14px); font-weight: bold; text-decoration: none; }
+        #gameBoard { display: grid; gap: 10px; margin: 20px; }
+        .tile { width: clamp(60px, 15vw, 100px); height: clamp(60px, 15vw, 100px); background: rgba(255,255,255,0.2); border-radius: 12px; cursor: pointer; transition: all 0.3s; }
+        .tile.active { background: #4ade80; box-shadow: 0 0 20px #4ade80; }
+        .tile.wrong { background: #f87171; }
+        #ui { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 12px; color: #fff; font-size: clamp(12px, 2vw, 16px); }
+        #startScreen, #gameOverScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.8); color: #fff; z-index: 50; }
+        .hidden { display: none !important; }
+        h1 { font-size: clamp(24px, 5vw, 48px); margin-bottom: 20px; }
+        p { font-size: clamp(12px, 2vw, 16px); margin-bottom: 30px; text-align: center; padding: 0 20px; }
+        button { background: #4ade80; border: none; color: #000; padding: 15px 40px; font-size: clamp(14px, 2.5vw, 18px); font-weight: bold; border-radius: 30px; cursor: pointer; }
+        button:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    <a href="../index.html" id="backBtn">← BACK</a>
+    <div id="ui">Level: <span id="levelDisplay">1</span> | High: <span id="highScoreDisplay">0</span></div>
+    <div id="gameBoard"></div>
+    <div id="startScreen">
+        <h1>🧠 Memory Matrix</h1>
+        <p>Watch the pattern and repeat it!</p>
+        <button id="startBtn">START</button>
+    </div>
+    <div id="gameOverScreen" class="hidden">
+        <h1>Game Over</h1>
+        <p>You reached Level <span id="finalLevel">1</span></p>
+        <button id="restartBtn">TRY AGAIN</button>
+    </div>
+    <script>
+        const board = document.getElementById('gameBoard');
+        let sequence = [], playerSequence = [], level, highScore, gameRunning, gridSize;
+        
+        function getGridSize() {
+            if (window.innerWidth < 400) return 2;
+            if (window.innerWidth < 768) return 3;
+            return 4;
+        }
+        
+        function initBoard() {
+            gridSize = getGridSize();
+            board.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+            board.innerHTML = '';
+            for (let i = 0; i < gridSize * gridSize; i++) {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.dataset.index = i;
+                tile.addEventListener('click', () => handleTileClick(i));
+                board.appendChild(tile);
+            }
+        }
+        
+        window.addEventListener('resize', initBoard);
+        initBoard();
+        
+        highScore = parseInt(localStorage.getItem('memory_highscore')) || 0;
+        document.getElementById('highScoreDisplay').textContent = highScore;
+        
+        function startGame() {
+            sequence = [];
+            playerSequence = [];
+            level = 1;
+            gameRunning = true;
+            document.getElementById('levelDisplay').textContent = level;
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            nextRound();
+        }
+        
+        function nextRound() {
+            playerSequence = [];
+            sequence.push(Math.floor(Math.random() * gridSize * gridSize));
+            playSequence();
+        }
+        
+        function playSequence() {
+            let i = 0;
+            const interval = setInterval(() => {
+                if (i >= sequence.length) {
+                    clearInterval(interval);
+                    return;
+                }
+                highlightTile(sequence[i]);
+                i++;
+            }, 600);
+        }
+        
+        function highlightTile(index) {
+            const tiles = document.querySelectorAll('.tile');
+            tiles[index].classList.add('active');
+            setTimeout(() => tiles[index].classList.remove('active'), 400);
+        }
+        
+        function handleTileClick(index) {
+            if (!gameRunning) return;
+            
+            highlightTile(index);
+            playerSequence.push(index);
+            
+            const currentIndex = playerSequence.length - 1;
+            if (playerSequence[currentIndex] !== sequence[currentIndex]) {
+                gameOver();
+                return;
+            }
+            
+            if (playerSequence.length === sequence.length) {
+                level++;
+                document.getElementById('levelDisplay').textContent = level;
+                setTimeout(nextRound, 1000);
+            }
+        }
+        
+        function gameOver() {
+            gameRunning = false;
+            if (level - 1 > highScore) {
+                highScore = level - 1;
+                localStorage.setItem('memory_highscore', highScore);
+                document.getElementById('highScoreDisplay').textContent = highScore;
+            }
+            document.getElementById('finalLevel').textContent = level - 1;
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+        }
+        
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('restartBtn').addEventListener('click', startGame);
+    </script>
+</body>
+</html>

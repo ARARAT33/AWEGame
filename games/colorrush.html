@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Color Rush</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #1a1a2e; font-family: 'Segoe UI', sans-serif; }
+        #gameCanvas { display: block; width: 100vw; height: 100vh; }
+        #backBtn { position: absolute; top: 10px; left: 10px; z-index: 100; background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: clamp(10px, 1.5vw, 14px); font-weight: bold; text-decoration: none; }
+        #ui { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: clamp(10px, 1.5vw, 14px); }
+        #startScreen, #gameOverScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.9); color: #fff; z-index: 50; }
+        .hidden { display: none !important; }
+        h1 { font-size: clamp(24px, 5vw, 48px); margin-bottom: 20px; }
+        p { font-size: clamp(12px, 2vw, 16px); margin-bottom: 30px; text-align: center; padding: 0 20px; }
+        button { background: linear-gradient(135deg, #667eea, #764ba2); border: none; color: #fff; padding: 15px 40px; font-size: clamp(14px, 2.5vw, 18px); font-weight: bold; border-radius: 30px; cursor: pointer; }
+        button:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    <a href="../index.html" id="backBtn">← BACK</a>
+    <canvas id="gameCanvas"></canvas>
+    <div id="ui" class="hidden">
+        <span>Score: <span id="scoreDisplay">0</span></span>
+        <span>High: <span id="highScoreDisplay">0</span></span>
+    </div>
+    <div id="startScreen">
+        <h1>🎨 Color Rush</h1>
+        <p>Match the falling color with your palette!</p>
+        <button id="startBtn">START</button>
+    </div>
+    <div id="gameOverScreen" class="hidden">
+        <h1>Game Over</h1>
+        <p>Score: <span id="finalScore">0</span></p>
+        <button id="restartBtn">RETRY</button>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let player, drops, score, highScore, gameRunning, currentColor, animationId;
+        
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+        
+        highScore = parseInt(localStorage.getItem('colorrush_highscore')) || 0;
+        document.getElementById('highScoreDisplay').textContent = highScore;
+        
+        const colors = ['#ff6b6b', '#4ade80', '#60a5fa', '#fbbf24'];
+        
+        function initGame() {
+            player = { x: canvas.width / 2, y: canvas.height - 80, width: 100, height: 50 };
+            drops = [];
+            score = 0;
+            currentColor = colors[Math.floor(Math.random() * colors.length)];
+            gameRunning = true;
+            document.getElementById('scoreDisplay').textContent = score;
+            document.getElementById('ui').classList.remove('hidden');
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            spawnDrop();
+            gameLoop();
+        }
+        
+        function spawnDrop() {
+            if (!gameRunning) return;
+            drops.push({
+                x: Math.random() * (canvas.width - 40) + 20,
+                y: -40,
+                size: 30,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                speed: Math.random() * 3 + 2
+            });
+            setTimeout(spawnDrop, Math.random() * 1500 + 500);
+        }
+        
+        function update() {
+            for (let i = drops.length - 1; i >= 0; i--) {
+                drops[i].y += drops[i].speed;
+                
+                if (drops[i].y > canvas.height) {
+                    if (drops[i].color === currentColor) {
+                        gameOver();
+                        return;
+                    }
+                    drops.splice(i, 1);
+                    continue;
+                }
+                
+                if (drops[i].y + drops[i].size/2 > player.y && 
+                    drops[i].x > player.x - player.width/2 && 
+                    drops[i].x < player.x + player.width/2) {
+                    if (drops[i].color === currentColor) {
+                        score += 10;
+                        document.getElementById('scoreDisplay').textContent = score;
+                        currentColor = colors[Math.floor(Math.random() * colors.length)];
+                    } else {
+                        gameOver();
+                        return;
+                    }
+                    drops.splice(i, 1);
+                }
+            }
+        }
+        
+        function draw() {
+            ctx.fillStyle = 'rgba(26, 26, 46, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw player zone indicator
+            ctx.fillStyle = currentColor;
+            ctx.shadowColor = currentColor;
+            ctx.shadowBlur = 20;
+            ctx.fillRect(player.x - player.width/2, player.y, player.width, player.height);
+            ctx.shadowBlur = 0;
+            
+            // Draw drops
+            for (let drop of drops) {
+                ctx.fillStyle = drop.color;
+                ctx.beginPath();
+                ctx.arc(drop.x, drop.y, drop.size/2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Draw color indicator
+            ctx.fillStyle = '#fff';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Match: ' + currentColor, canvas.width/2, 40);
+        }
+        
+        function gameLoop() {
+            if (!gameRunning) return;
+            update();
+            draw();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+        
+        function gameOver() {
+            gameRunning = false;
+            cancelAnimationFrame(animationId);
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('colorrush_highscore', highScore);
+                document.getElementById('highScoreDisplay').textContent = highScore;
+            }
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+            document.getElementById('ui').classList.add('hidden');
+        }
+        
+        canvas.addEventListener('mousemove', e => {
+            player.x = e.clientX;
+        });
+        
+        canvas.addEventListener('touchmove', e => {
+            e.preventDefault();
+            player.x = e.touches[0].clientX;
+        });
+        
+        document.getElementById('startBtn').addEventListener('click', initGame);
+        document.getElementById('restartBtn').addEventListener('click', initGame);
+    </script>
+</body>
+</html>

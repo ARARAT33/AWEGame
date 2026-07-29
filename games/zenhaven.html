@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zenhaven - Zen Garden</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: 'Segoe UI', sans-serif; }
+        #gameCanvas { display: block; width: 100vw; height: 100vh; cursor: crosshair; }
+        #backBtn { position: absolute; top: 10px; left: 10px; z-index: 100; background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: clamp(10px, 1.5vw, 14px); font-weight: bold; text-decoration: none; }
+        #ui { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 10px 20px; border-radius: 12px; color: #fff; font-size: clamp(12px, 2vw, 16px); }
+        #instructions { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 20px; color: #fff; font-size: clamp(10px, 1.5vw, 14px); text-align: center; }
+    </style>
+</head>
+<body>
+    <a href="../index.html" id="backBtn">← BACK</a>
+    <canvas id="gameCanvas"></canvas>
+    <div id="ui">Particles: <span id="particleCount">0</span></div>
+    <div id="instructions">Click or touch to create zen particles</div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+        
+        // Load saved particle count
+        let savedCount = parseInt(localStorage.getItem('zenhaven_particles')) || 0;
+        particles = JSON.parse(localStorage.getItem('zenhaven_particles_data')) || [];
+        document.getElementById('particleCount').textContent = particles.length;
+        
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 20 + 10;
+                this.speedX = Math.random() * 2 - 1;
+                this.speedY = Math.random() * 2 - 1;
+                this.hue = Math.random() * 60 + 200;
+                this.life = 1;
+                this.decay = Math.random() * 0.01 + 0.005;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.life -= this.decay;
+                this.size *= 0.99;
+            }
+            draw() {
+                ctx.fillStyle = `hsla(${this.hue}, 80%, 60%, ${this.life})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        function createParticles(x, y, count = 5) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y));
+            }
+            document.getElementById('particleCount').textContent = particles.length;
+            localStorage.setItem('zenhaven_particles', particles.length);
+            localStorage.setItem('zenhaven_particles_data', JSON.stringify(particles.slice(-100)));
+        }
+        
+        canvas.addEventListener('click', e => createParticles(e.clientX, e.clientY, 10));
+        canvas.addEventListener('touchstart', e => {
+            e.preventDefault();
+            for (let i = 0; i < e.touches.length; i++) {
+                createParticles(e.touches[i].clientX, e.touches[i].clientY, 10);
+            }
+        });
+        
+        function animate() {
+            ctx.fillStyle = 'rgba(102, 126, 234, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].life <= 0 || particles[i].size < 0.5) {
+                    particles.splice(i, 1);
+                }
+            }
+            
+            document.getElementById('particleCount').textContent = particles.length;
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    </script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Bricks</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #0a0a1a; font-family: 'Segoe UI', sans-serif; }
+        #gameCanvas { display: block; width: 100vw; height: 100vh; }
+        #backBtn { position: absolute; top: 10px; left: 10px; z-index: 100; background: rgba(255,0,136,0.2); border: 1px solid #ff0088; color: #ff0088; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: clamp(10px, 1.5vw, 14px); font-weight: bold; text-decoration: none; }
+        #ui { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; padding: 10px; background: rgba(255,0,136,0.1); border: 1px solid #ff0088; border-radius: 8px; color: #ff0088; font-size: clamp(10px, 1.5vw, 14px); }
+        #startScreen, #gameOverScreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(0,0,0,0.9); color: #ff0088; z-index: 50; }
+        .hidden { display: none !important; }
+        h1 { font-size: clamp(24px, 5vw, 48px); margin-bottom: 20px; text-shadow: 0 0 20px #ff0088; }
+        p { font-size: clamp(12px, 2vw, 16px); margin-bottom: 30px; text-align: center; padding: 0 20px; }
+        button { background: transparent; border: 2px solid #ff0088; color: #ff0088; padding: 15px 40px; font-size: clamp(14px, 2.5vw, 18px); font-weight: bold; border-radius: 8px; cursor: pointer; }
+        button:hover { background: #ff0088; color: #000; }
+        #mobilePaddle { position: absolute; bottom: 20px; left: 0; right: 0; height: 60px; display: none; }
+        @media (max-width: 768px) { #mobilePaddle { display: block; } }
+    </style>
+</head>
+<body>
+    <a href="../index.html" id="backBtn">← BACK</a>
+    <canvas id="gameCanvas"></canvas>
+    <div id="ui" class="hidden">
+        <span>Score: <span id="scoreDisplay">0</span></span>
+        <span>Lives: <span id="livesDisplay">3</span></span>
+        <span>High: <span id="highScoreDisplay">0</span></span>
+    </div>
+    <div id="startScreen">
+        <h1>🧱 NEON BRICKS</h1>
+        <p>Break all the bricks with your ball!</p>
+        <button id="startBtn">START GAME</button>
+    </div>
+    <div id="gameOverScreen" class="hidden">
+        <h1>GAME OVER</h1>
+        <p>Final Score: <span id="finalScore">0</span></p>
+        <button id="restartBtn">PLAY AGAIN</button>
+    </div>
+    <div id="mobilePaddle"></div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let paddle, ball, bricks, score, lives, highScore, gameRunning, animationId;
+        
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+        
+        highScore = parseInt(localStorage.getItem('bricks_highscore')) || 0;
+        document.getElementById('highScoreDisplay').textContent = highScore;
+        
+        function initGame() {
+            paddle = { width: 120, height: 15, x: canvas.width / 2 - 60, y: canvas.height - 40 };
+            ball = { x: canvas.width / 2, y: canvas.height - 60, radius: 8, dx: 5, dy: -5 };
+            bricks = [];
+            const rows = 5, cols = Math.floor(canvas.width / 80);
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    bricks.push({ x: c * 80 + 10, y: r * 35 + 50, width: 70, height: 25, active: true, hue: r * 40 });
+                }
+            }
+            score = 0;
+            lives = 3;
+            gameRunning = true;
+            updateUI();
+            document.getElementById('ui').classList.remove('hidden');
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            gameLoop();
+        }
+        
+        function updateUI() {
+            document.getElementById('scoreDisplay').textContent = score;
+            document.getElementById('livesDisplay').textContent = lives;
+            document.getElementById('highScoreDisplay').textContent = highScore;
+        }
+        
+        function update() {
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+            
+            if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) ball.dx *= -1;
+            if (ball.y - ball.radius < 0) ball.dy *= -1;
+            
+            if (ball.y + ball.radius > paddle.y && ball.x > paddle.x && ball.x < paddle.x + paddle.width) {
+                ball.dy = -Math.abs(ball.dy);
+            }
+            
+            if (ball.y > canvas.height) {
+                lives--;
+                updateUI();
+                if (lives <= 0) {
+                    gameOver();
+                    return;
+                }
+                ball.x = canvas.width / 2;
+                ball.y = canvas.height - 60;
+                ball.dy = -5;
+            }
+            
+            for (let b of bricks) {
+                if (b.active && ball.x > b.x && ball.x < b.x + b.width && ball.y > b.y && ball.y < b.y + b.height) {
+                    b.active = false;
+                    ball.dy *= -1;
+                    score += 10;
+                    updateUI();
+                }
+            }
+        }
+        
+        function draw() {
+            ctx.fillStyle = 'rgba(10, 10, 26, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#ff0088';
+            ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+            
+            ctx.fillStyle = '#00ffff';
+            ctx.shadowColor = '#00ffff';
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            for (let b of bricks) {
+                if (b.active) {
+                    ctx.fillStyle = `hsl(${b.hue}, 100%, 50%)`;
+                    ctx.fillRect(b.x, b.y, b.width, b.height);
+                }
+            }
+        }
+        
+        function gameLoop() {
+            if (!gameRunning) return;
+            update();
+            draw();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+        
+        function gameOver() {
+            gameRunning = false;
+            cancelAnimationFrame(animationId);
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('bricks_highscore', highScore);
+                document.getElementById('highScoreDisplay').textContent = highScore;
+            }
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+            document.getElementById('ui').classList.add('hidden');
+        }
+        
+        canvas.addEventListener('mousemove', e => {
+            paddle.x = e.clientX - paddle.width / 2;
+            paddle.x = Math.max(0, Math.min(canvas.width - paddle.width, paddle.x));
+        });
+        
+        canvas.addEventListener('touchmove', e => {
+            e.preventDefault();
+            paddle.x = e.touches[0].clientX - paddle.width / 2;
+            paddle.x = Math.max(0, Math.min(canvas.width - paddle.width, paddle.x));
+        });
+        
+        document.getElementById('mobilePaddle').addEventListener('touchmove', e => {
+            paddle.x = e.touches[0].clientX - paddle.width / 2;
+            paddle.x = Math.max(0, Math.min(canvas.width - paddle.width, paddle.x));
+        });
+        
+        document.getElementById('startBtn').addEventListener('click', initGame);
+        document.getElementById('restartBtn').addEventListener('click', initGame);
+    </script>
+</body>
+</html>
