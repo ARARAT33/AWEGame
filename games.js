@@ -22,4 +22,19 @@ const games = [
     developer: "AWEGames",
     icon: "☢"
   },
+  {
+    title: "✨ Starlight Meadow ✨",
+    folder: "starlightmeadow.html",
+    description: "Collect stars. Upgrade power. Explore forever. Wander through a breathtaking open meadow as a luminous spirit, gathering starlight in a calm, endless adventure. Earn stars, unlock golden treasures, and supercharge your abilities in the in-game shop. Your journey is always saved — pick up right where you left off, in any of 10 languages.",
+    developer: "AWEGames",
+    icon: "🌲🍀"
+  },
+  {
+    title: "Zen Haven",
+    folder: "zenhaven.html",
+    description: "Step into Zen Haven, a breathtaking open-sky sanctuary crafted for peace, mindfulness, and creative freedom. Float through magical islands, plant glowing celestial flora, summon majestic sky wildlife, and create your own tranquil melodies with interactive crystal chimes. Featuring a guided breathing mode, dynamic time-of-day atmospheres, and seamless 10-language support, it is the ultimate interactive retreat right in your browser.",
+    developer: "AWEGames",
+    icon: "🌱🌼🌻"
+  },
+  
 ];
