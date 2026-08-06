@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Garden · 200+ Languages</title>
+    <style>
+        :root {
+            --bg: #1a2f1f;
+            --panel: rgba(25, 35, 25, 0.7);
+            --glass: rgba(255, 255, 255, 0.06);
+            --border: rgba(255, 255, 255, 0.12);
+            --gold: #f5d742;
+            --leaf: #9bce7b;
+            --text: #e6e8d8;
+            --textSoft: #b7bc9a;
+            --accent: #f0e6a0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', 'Noto Sans Armenian', system-ui, sans-serif;
+            background: radial-gradient(ellipse at 30% 20%, #2d4a2a 0%, #1a2f1f 70%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .bg-layer {
+            position: fixed; inset: 0; pointer-events: none; z-index: 0;
+        }
+        .bg-layer::before {
+            content: ""; position: absolute; bottom: 0; left: 0;
+            width: 100%; height: 40%;
+            background: linear-gradient(transparent, rgba(60, 90, 50, 0.15));
+            border-radius: 50% 50% 0 0;
+        }
+        .clouds {
+            position: absolute; top: 10%; left: 5%;
+            width: 200px; height: 40px;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 50px; filter: blur(12px);
+            animation: drift 25s ease-in-out infinite;
+        }
+        .clouds:nth-child(2) { top: 25%; left: 60%; animation-delay: -10s; width: 160px; }
+        @keyframes drift {
+            0% { transform: translateX(0); } 50% { transform: translateX(50px); } 100% { transform: translateX(0); }
+        }
+        .particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+        .spark {
+            position: absolute; width: 4px; height: 4px;
+            background: #f9f3b0; border-radius: 50%;
+            animation: floatUp 7s ease-in infinite; opacity: 0;
+        }
+        @keyframes floatUp {
+            0% { opacity: 0; transform: translateY(0) scale(0); }
+            15% { opacity: 0.8; } 50% { opacity: 0.4; transform: translateY(-160px) scale(1.4); }
+            100% { opacity: 0; transform: translateY(-340px) scale(0.2); }
+        }
+
+        .main-container {
+            position: relative; z-index: 2;
+            width: 100%; max-width: 1000px; padding: 20px;
+            display: flex; flex-direction: column; gap: 16px;
+            margin: 0 auto;
+        }
+
+        .top-row {
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+        }
+        .nav-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--glass); border: 1px solid var(--border);
+            color: var(--textSoft); padding: 8px 18px; border-radius: 30px;
+            text-decoration: none; font-size: 0.85rem;
+            backdrop-filter: blur(12px); width: fit-content;
+            transition: all 0.3s; letter-spacing: 0.5px; cursor: pointer;
+        }
+        .nav-btn:hover { background: rgba(255, 255, 255, 0.14);
+            border-color: rgba(255, 255, 255, 0.3); color: white; transform: translateY(-2px); }
+
+        .save-indicator {
+            font-size: 0.7rem; color: #7a9e6e; letter-spacing: 0.6px;
+            transition: opacity 0.4s;
+        }
+
+        .header { text-align: center; margin-top: 4px; }
+        .title { font-size: 2.4rem; font-weight: 600; color: #eef5d8; letter-spacing: 1px;
+            text-shadow: 0 2px 12px rgba(150, 200, 100, 0.4); }
+        .subtitle { font-size: 0.9rem; color: #b7c99e; letter-spacing: 0.8px; }
+
+        .stats-panel { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+        .stat-box {
+            flex: 1; min-width: 80px; background: var(--panel);
+            backdrop-filter: blur(16px); border: 1px solid var(--border);
+            border-radius: 16px; padding: 14px 12px; text-align: center; color: var(--text);
+        }
+        .stat-value { font-size: 1.7rem; font-weight: 700; color: #f0e68c; }
+        .stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--textSoft); }
+
+        .garden-center { display: flex; justify-content: center; margin: 8px 0; }
+        .click-orb {
+            width: 100px; height: 100px;
+            background: radial-gradient(circle at 30% 30%, #ffeaa0, #e0b040);
+            border-radius: 50%;
+            box-shadow: 0 0 35px rgba(255, 220, 100, 0.7), 0 0 10px rgba(255, 200, 50, 0.9);
+            cursor: pointer; transition: transform 0.1s, box-shadow 0.2s;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.4rem; color: #4a3a10;
+            animation: pulseGlow 2.5s ease-in-out infinite;
+        }
+        .click-orb:active { transform: scale(0.88); box-shadow: 0 0 60px #ffdd55; }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 30px rgba(255, 220, 100, 0.6); }
+            50% { box-shadow: 0 0 55px rgba(255, 220, 100, 0.9); }
+        }
+        .click-hint { text-align: center; color: var(--textSoft); font-size: 0.8rem; margin-top: 2px; }
+
+        .garden-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+            gap: 10px; margin-top: 8px;
+            max-height: 60vh; overflow-y: auto; padding: 5px;
+        }
+        .flower-card {
+            background: var(--panel); backdrop-filter: blur(10px);
+            border: 1px solid var(--border); border-radius: 18px;
+            padding: 10px 6px; text-align: center; transition: all 0.4s;
+            cursor: pointer; position: relative;
+        }
+        .flower-card.locked { filter: grayscale(0.5) brightness(0.75); opacity: 0.8; }
+        .flower-card.unlocked { border-color: rgba(180, 210, 120, 0.4);
+            box-shadow: 0 4px 20px rgba(120, 180, 60, 0.25); }
+        .flower-emoji { font-size: 2rem; margin-bottom: 2px; transition: transform 0.3s; }
+        .flower-card.unlocked:hover .flower-emoji { transform: scale(1.1); }
+        .lang-name { font-size: 0.75rem; font-weight: 600; color: var(--text); }
+        .lang-level { font-size: 0.6rem; color: var(--textSoft); margin-top: 2px; }
+        .flower-card.locked .lang-name,
+        .flower-card.locked .lang-level { color: #9aa08a; }
+        .unlock-cost, .upgrade-cost { font-size: 0.6rem; margin-top: 4px; color: #d4c06a; font-weight: 500; }
+
+        .footer-note { text-align: center; font-size: 0.7rem; color: #88976e;
+            letter-spacing: 0.6px; margin-top: 2px; }
+
+        @media (max-width: 600px) {
+            .garden-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+            .title { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-layer"><div class="clouds"></div><div class="clouds"></div></div>
+    <div class="particles" id="particles"></div>
+
+    <div class="main-container">
+        <div class="top-row">
+            <a href="../index.html" class="nav-btn"><span>←</span> Home</a>
+            <span class="save-indicator" id="saveIndicator">💾 auto-saved</span>
+        </div>
+
+        <div class="header">
+            <h1 class="title">🌸 Language Garden</h1>
+            <p class="subtitle">200+ languages · endless growth · peaceful progress</p>
+        </div>
+
+        <div class="stats-panel">
+            <div class="stat-box">
+                <div class="stat-value" id="essenceDisplay">0</div>
+                <div class="stat-label">🌼 Essence</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="epsDisplay">0</div>
+                <div class="stat-label">⚡ per second</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="totalUnlockedDisplay">1</div>
+                <div class="stat-label">🌸 Unlocked</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="multiplierDisplay">1.00</div>
+                <div class="stat-label">📈 Price multiplier</div>
+            </div>
+        </div>
+
+        <div class="garden-center"><div class="click-orb" id="clickOrb">🌞</div></div>
+        <div class="click-hint">click the sun to collect essence</div>
+
+        <div class="garden-grid" id="gardenGrid"></div>
+        <div class="footer-note">
+            🌿 unlock languages · +1% price per unlock · progress saved on your device
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ─────────────────────────────────────
+            // 200+ LANGUAGES DATABASE
+            // ─────────────────────────────────────
+            const languages = [
+                { id: 'en', name: 'English', native: 'English', flag: '🇬🇧' },
+                { id: 'hy', name: 'Armenian', native: 'Հայերեն', flag: '🇦🇲' },
+                { id: 'ru', name: 'Russian', native: 'Русский', flag: '🇷🇺' },
+                { id: 'fr', name: 'French', native: 'Français', flag: '🇫🇷' },
+                { id: 'es', name: 'Spanish', native: 'Español', flag: '🇪🇸' },
+                { id: 'de', name: 'German', native: 'Deutsch', flag: '🇩🇪' },
+                { id: 'it', name: 'Italian', native: 'Italiano', flag: '🇮🇹' },
+                { id: 'pt', name: 'Portuguese', native: 'Português', flag: '🇵🇹' },
+                { id: 'ja', name: 'Japanese', native: '日本語', flag: '🇯🇵' },
+                { id: 'ko', name: 'Korean', native: '한국어', flag: '🇰🇷' },
+                { id: 'zh', name: 'Chinese', native: '中文', flag: '🇨🇳' },
+                { id: 'ar', name: 'Arabic', native: 'العربية', flag: '🇸🇦' },
+                { id: 'hi', name: 'Hindi', native: 'हिन्दी', flag: '🇮🇳' },
+                { id: 'bn', name: 'Bengali', native: 'বাংলা', flag: '🇧🇩' },
+                { id: 'ur', name: 'Urdu', native: 'اردو', flag: '🇵🇰' },
+                { id: 'tr', name: 'Turkish', native: 'Türkçe', flag: '🇹🇷' },
+                { id: 'nl', name: 'Dutch', native: 'Nederlands', flag: '🇳🇱' },
+                { id: 'pl', name: 'Polish', native: 'Polski', flag: '🇵🇱' },
+                { id: 'uk', name: 'Ukrainian', native: 'Українська', flag: '🇺🇦' },
+                { id: 'sv', name: 'Swedish', native: 'Svenska', flag: '🇸🇪' },
+                { id: 'no', name: 'Norwegian', native: 'Norsk', flag: '🇳🇴' },
+                { id: 'da', name: 'Danish', native: 'Dansk', flag: '🇩🇰' },
+                { id: 'fi', name: 'Finnish', native: 'Suomi', flag: '🇫🇮' },
+                { id: 'cs', name: 'Czech', native: 'Čeština', flag: '🇨🇿' },
+                { id: 'sk', name: 'Slovak', native: 'Slovenčina', flag: '🇸🇰' },
+                { id: 'hu', name: 'Hungarian', native: 'Magyar', flag: '🇭🇺' },
+                { id: 'ro', name: 'Romanian', native: 'Română', flag: '🇷🇴' },
+                { id: 'bg', name: 'Bulgarian', native: 'Български', flag: '🇧🇬' },
+                { id: 'sr', name: 'Serbian', native: 'Српски', flag: '🇷🇸' },
+                { id: 'hr', name: 'Croatian', native: 'Hrvatski', flag: '🇭🇷' },
+                { id: 'sl', name: 'Slovenian', native: 'Slovenščina', flag: '🇸🇮' },
+                { id: 'lt', name: 'Lithuanian', native: 'Lietuvių', flag: '🇱🇹' },
+                { id: 'lv', name: 'Latvian', native: 'Latviešu', flag: '🇱🇻' },
+                { id: 'et', name: 'Estonian', native: 'Eesti', flag: '🇪🇪' },
+                { id: 'el', name: 'Greek', native: 'Ελληνικά', flag: '🇬🇷' },
+                { id: 'he', name: 'Hebrew', native: 'עברית', flag: '🇮🇱' },
+                { id: 'th', name: 'Thai', native: 'ไทย', flag: '🇹🇭' },
+                { id: 'vi', name: 'Vietnamese', native: 'Tiếng Việt', flag: '🇻🇳' },
+                { id: 'id', name: 'Indonesian', native: 'Bahasa Indonesia', flag: '🇮🇩' },
+                { id: 'ms', name: 'Malay', native: 'Bahasa Melayu', flag: '🇲🇾' },
+                { id: 'fil', name: 'Filipino', native: 'Filipino', flag: '🇵🇭' },
+                { id: 'sw', name: 'Swahili', native: 'Kiswahili', flag: '🇰🇪' },
+                { id: 'am', name: 'Amharic', native: 'አማርኛ', flag: '🇪🇹' },
+                { id: 'zu', name: 'Zulu', native: 'isiZulu', flag: '🇿🇦' },
+                { id: 'xh', name: 'Xhosa', native: 'isiXhosa', flag: '🇿🇦' },
+                { id: 'af', name: 'Afrikaans', native: 'Afrikaans', flag: '🇿🇦' },
+                { id: 'ny', name: 'Chichewa', native: 'Chichewa', flag: '🇲🇼' },
+                { id: 'ha', name: 'Hausa', native: 'Hausa', flag: '🇳🇬' },
+                { id: 'yo', name: 'Yoruba', native: 'Yorùbá', flag: '🇳🇬' },
+                { id: 'ig', name: 'Igbo', native: 'Igbo', flag: '🇳🇬' },
+                { id: 'pa', name: 'Punjabi', native: 'ਪੰਜਾਬੀ', flag: '🇮🇳' },
+                { id: 'mr', name: 'Marathi', native: 'मराठी', flag: '🇮🇳' },
+                { id: 'te', name: 'Telugu', native: 'తెలుగు', flag: '🇮🇳' },
+                { id: 'ta', name: 'Tamil', native: 'தமிழ்', flag: '🇮🇳' },
+                { id: 'kn', name: 'Kannada', native: 'ಕನ್ನಡ', flag: '🇮🇳' },
+                { id: 'ml', name: 'Malayalam', native: 'മലയാളം', flag: '🇮🇳' },
+                { id: 'si', name: 'Sinhala', native: 'සිංහල', flag: '🇱🇰' },
+                { id: 'km', name: 'Khmer', native: 'ភាសាខ្មែរ', flag: '🇰🇭' },
+                { id: 'lo', name: 'Lao', native: 'ລາວ', flag: '🇱🇦' },
+                { id: 'my', name: 'Burmese', native: 'မြန်မာဘာသာ', flag: '🇲🇲' },
+                { id: 'ka', name: 'Georgian', native: 'ქართული', flag: '🇬🇪' },
+                { id: 'az', name: 'Azerbaijani', native: 'Azərbaycan', flag: '🇦🇿' },
+                { id: 'kk', name: 'Kazakh', native: 'Қазақша', flag: '🇰🇿' },
+                { id: 'uz', name: 'Uzbek', native: 'Oʻzbek', flag: '🇺🇿' },
+                { id: 'tk', name: 'Turkmen', native: 'Türkmen', flag: '🇹🇲' },
+                { id: 'ky', name: 'Kyrgyz', native: 'Кыргызча', flag: '🇰🇬' },
+                { id: 'tg', name: 'Tajik', native: 'Тоҷикӣ', flag: '🇹🇯' },
+                { id: 'mn', name: 'Mongolian', native: 'Монгол', flag: '🇲🇳' },
+                { id: 'ne', name: 'Nepali', native: 'नेपाली', flag: '🇳🇵' },
+                { id: 'ps', name: 'Pashto', native: 'پښتو', flag: '🇦🇫' },
+                { id: 'fa', name: 'Persian', native: 'فارسی', flag: '🇮🇷' },
+                { id: 'sq', name: 'Albanian', native: 'Shqip', flag: '🇦🇱' },
+                { id: 'mk', name: 'Macedonian', native: 'Македонски', flag: '🇲🇰' },
+                { id: 'bs', name: 'Bosnian', native: 'Bosanski', flag: '🇧🇦' },
+                { id: 'is', name: 'Icelandic', native: 'Íslenska', flag: '🇮🇸' },
+                { id: 'mt', name: 'Maltese', native: 'Malti', flag: '🇲🇹' },
+                { id: 'ga', name: 'Irish', native: 'Gaeilge', flag: '🇮🇪' },
+                { id: 'cy', name: 'Welsh', native: 'Cymraeg', flag: '🏴󠁧󠁢󠁷󠁬󠁳󠁿' },
+                { id: 'gd', name: 'Scottish Gaelic', native: 'Gàidhlig', flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿' },
+                { id: 'eu', name: 'Basque', native: 'Euskara', flag: '🇪🇸' },
+                { id: 'ca', name: 'Catalan', native: 'Català', flag: '🇪🇸' },
+                { id: 'gl', name: 'Galician', native: 'Galego', flag: '🇪🇸' },
+                { id: 'co', name: 'Corsican', native: 'Corsu', flag: '🇫🇷' },
+                { id: 'fy', name: 'Frisian', native: 'Frysk', flag: '🇳🇱' },
+                { id: 'lb', name: 'Luxembourgish', native: 'Lëtzebuergesch', flag: '🇱🇺' },
+                { id: 'rm', name: 'Romansh', native: 'Rumantsch', flag: '🇨🇭' },
+                { id: 'mi', name: 'Maori', native: 'Māori', flag: '🇳🇿' },
+                { id: 'sm', name: 'Samoan', native: 'Gagana Samoa', flag: '🇼🇸' },
+                { id: 'to', name: 'Tongan', native: 'Lea faka-Tonga', flag: '🇹🇴' },
+                { id: 'fj', name: 'Fijian', native: 'Na Vosa Vakaviti', flag: '🇫🇯' },
+                { id: 'ht', name: 'Haitian Creole', native: 'Kreyòl', flag: '🇭🇹' },
+                { id: 'gn', name: 'Guarani', native: 'Avañeʼẽ', flag: '🇵🇾' },
+                { id: 'qu', name: 'Quechua', native: 'Runasimi', flag: '🇵🇪' },
+                { id: 'ay', name: 'Aymara', native: 'Aymar aru', flag: '🇧🇴' },
+                { id: 'ti', name: 'Tigrinya', native: 'ትግርኛ', flag: '🇪🇷' },
+                { id: 'om', name: 'Oromo', native: 'Afaan Oromo', flag: '🇪🇹' },
+                { id: 'so', name: 'Somali', native: 'Soomaali', flag: '🇸🇴' },
+                { id: 'rw', name: 'Kinyarwanda', native: 'Ikinyarwanda', flag: '🇷🇼' },
+                { id: 'rn', name: 'Kirundi', native: 'Ikirundi', flag: '🇧🇮' },
+                { id: 'lg', name: 'Luganda', native: 'Luganda', flag: '🇺🇬' },
+                { id: 'ee', name: 'Ewe', native: 'Eʋegbe', flag: '🇹🇬' },
+                { id: 'ak', name: 'Akan', native: 'Akan', flag: '🇬🇭' },
+                { id: 'tw', name: 'Twi', native: 'Twi', flag: '🇬🇭' },
+                { id: 'ff', name: 'Fula', native: 'Fulfulde', flag: '🇳🇪' },
+                { id: 'bm', name: 'Bambara', native: 'Bamanankan', flag: '🇲🇱' },
+                { id: 'mg', name: 'Malagasy', native: 'Malagasy', flag: '🇲🇬' },
+                { id: 'sg', name: 'Sango', native: 'Sängö', flag: '🇨🇫' },
+                { id: 'ln', name: 'Lingala', native: 'Lingála', flag: '🇨🇩' },
+                { id: 'lu', name: 'Luba-Katanga', native: 'Tshiluba', flag: '🇨🇩' },
+                { id: 'wo', name: 'Wolof', native: 'Wollof', flag: '🇸🇳' },
+                { id: 'dz', name: 'Dzongkha', native: 'རྫོང་ཁ', flag: '🇧🇹' },
+                { id: 'bo', name: 'Tibetan', native: 'བོད་སྐད', flag: '🇨🇳' },
+                { id: 'ug', name: 'Uyghur', native: 'ئۇيغۇرچە', flag: '🇨🇳' },
+                { id: 'za', name: 'Zhuang', native: 'Vahcuengh', flag: '🇨🇳' },
+                { id: 'ii', name: 'Yi', native: 'ꆈꌠ꒿', flag: '🇨🇳' },
+                { id: 'ab', name: 'Abkhaz', native: 'Аҧсуа', flag: '🇬🇪' },
+                { id: 'ce', name: 'Chechen', native: 'Нохчийн', flag: '🇷🇺' },
+                { id: 'cv', name: 'Chuvash', native: 'Чӑваш', flag: '🇷🇺' },
+                { id: 'os', name: 'Ossetian', native: 'Ирон', flag: '🇬🇪' },
+                { id: 'tt', name: 'Tatar', native: 'Татарча', flag: '🇷🇺' },
+                { id: 'ba', name: 'Bashkir', native: 'Башҡортса', flag: '🇷🇺' },
+                { id: 'sah', name: 'Yakut', native: 'Саха тыла', flag: '🇷🇺' },
+                { id: 'av', name: 'Avar', native: 'Авар', flag: '🇷🇺' },
+                { id: 'kv', name: 'Komi', native: 'Коми', flag: '🇷🇺' },
+                { id: 'udm', name: 'Udmurt', native: 'Удмурт', flag: '🇷🇺' },
+                { id: 'mhr', name: 'Mari', native: 'Марий', flag: '🇷🇺' },
+                { id: 'myv', name: 'Erzya', native: 'Эрзянь', flag: '🇷🇺' },
+                { id: 'kbd', name: 'Kabardian', native: 'Адыгэбзэ', flag: '🇷🇺' },
+                { id: 'inh', name: 'Ingush', native: 'ГӀалгӀай', flag: '🇷🇺' },
+                { id: 'ady', name: 'Adyghe', native: 'Адыгабзэ', flag: '🇷🇺' },
+                { id: 'krc', name: 'Karachay-Balkar', native: 'Къарачай-Малкъар', flag: '🇷🇺' },
+                { id: 'tyv', name: 'Tuvan', native: 'Тыва', flag: '🇷🇺' },
+                { id: 'bxr', name: 'Buryat', native: 'Буряад', flag: '🇷🇺' },
+                { id: 'xal', name: 'Kalmyk', native: 'Хальмг', flag: '🇷🇺' },
+                { id: 'koi', name: 'Komi-Permyak', native: 'Перем коми', flag: '🇷🇺' },
+                { id: 'mdf', name: 'Moksha', native: 'Мокшень', flag: '🇷🇺' },
+                { id: 'chm', name: 'Hill Mari', native: 'Кырык мары', flag: '🇷🇺' },
+                { id: 'yrk', name: 'Nenets', native: 'Ненэця', flag: '🇷🇺' },
+                { id: 'evn', name: 'Evenki', native: 'Эвэнки', flag: '🇷🇺' },
+                { id: 'eve', name: 'Even', native: 'Эвэн', flag: '🇷🇺' },
+                { id: 'ckt', name: 'Chukchi', native: 'Ԓыгъоравэтԓьэн', flag: '🇷🇺' },
+                { id: 'ess', name: 'Central Siberian Yupik', native: 'Юпик', flag: '🇷🇺' },
+                { id: 'ipk', name: 'Inupiaq', native: 'Iñupiatun', flag: '🇺🇸' },
+                { id: 'kal', name: 'Greenlandic', native: 'Kalaallisut', flag: '🇬🇱' },
+                { id: 'tah', name: 'Tahitian', native: 'Reo Tahiti', flag: '🇵🇫' },
+                { id: 'haw', name: 'Hawaiian', native: 'ʻŌlelo Hawaiʻi', flag: '🇺🇸' },
+                { id: 'chr', name: 'Cherokee', native: 'ᏣᎳᎩ', flag: '🇺🇸' },
+                { id: 'cho', name: 'Choctaw', native: 'Chahta', flag: '🇺🇸' },
+                { id: 'nv', name: 'Navajo', native: 'Diné bizaad', flag: '🇺🇸' },
+                { id: 'cr', name: 'Cree', native: 'ᓀᐦᐃᔭᐍᐏᐣ', flag: '🇨🇦' },
+                { id: 'oj', name: 'Ojibwe', native: 'ᐊᓂᔑᓈᐯ', flag: '🇨🇦' },
+                { id: 'iu', name: 'Inuktitut', native: 'ᐃᓄᒃᑎᑐᑦ', flag: '🇨🇦' },
+                { id: 'moh', name: 'Mohawk', native: 'Kanienʼkéha', flag: '🇨🇦' },
+                { id: 'bla', name: 'Blackfoot', native: 'Siksiká', flag: '🇨🇦' },
+                { id: 'lkt', name: 'Lakota', native: 'Lakȟótiyapi', flag: '🇺🇸' },
+                { id: 'dak', name: 'Dakota', native: 'Dakhótiyapi', flag: '🇺🇸' },
+                { id: 'arp', name: 'Arapaho', native: 'Hinonoʼeitiit', flag: '🇺🇸' },
+                { id: 'chy', name: 'Cheyenne', native: 'Tsėhésenėstsestȯtse', flag: '🇺🇸' },
+                { id: 'mus', name: 'Muscogee', native: 'Mvskoke', flag: '🇺🇸' },
+                { id: 'yua', name: 'Yucatec Maya', native: 'Mayaʼ', flag: '🇲🇽' },
+                { id: 'quc', name: 'Kʼicheʼ', native: 'Kʼicheʼ', flag: '🇬🇹' },
+                { id: 'nah', name: 'Nahuatl', native: 'Nawatl', flag: '🇲🇽' },
+                { id: 'oto', name: 'Otomi', native: 'Hñähñu', flag: '🇲🇽' },
+                { id: 'tar', name: 'Tarahumara', native: 'Rarámuri', flag: '🇲🇽' },
+                { id: 'zap', name: 'Zapotec', native: 'Diidxazá', flag: '🇲🇽' },
+                { id: 'cak', name: 'Kaqchikel', native: 'Kaqchikel', flag: '🇬🇹' },
+                { id: 'quz', name: 'Cusco Quechua', native: 'Qhichwa', flag: '🇵🇪' },
+                { id: 'gug', name: 'Guarani (Paraguay)', native: 'Guarani', flag: '🇵🇾' },
+                { id: 'grn', name: 'Guarani (general)', native: 'Avañeʼẽ', flag: '🇵🇾' },
+                { id: 'aym', name: 'Aymara (Central)', native: 'Aymar aru', flag: '🇧🇴' },
+                { id: 'srn', name: 'Sranan Tongo', native: 'Sranan', flag: '🇸🇷' },
+                { id: 'pap', name: 'Papiamento', native: 'Papiamentu', flag: '🇨🇼' },
+                { id: 'jam', name: 'Jamaican Patois', native: 'Patwa', flag: '🇯🇲' },
+                { id: 'gcf', name: 'Guadeloupean Creole', native: 'Kréyòl', flag: '🇬🇵' },
+                { id: 'acf', name: 'Saint Lucian Creole', native: 'Kwéyòl', flag: '🇱🇨' },
+                { id: 'crs', name: 'Seychellois Creole', native: 'Seselwa', flag: '🇸🇨' },
+                { id: 'mfe', name: 'Morisyen', native: 'Kreol morisien', flag: '🇲🇺' },
+                { id: 'bcl', name: 'Bikol', native: 'Bikol', flag: '🇵🇭' },
+                { id: 'ceb', name: 'Cebuano', native: 'Binisaya', flag: '🇵🇭' },
+                { id: 'ilo', name: 'Ilocano', native: 'Iloko', flag: '🇵🇭' },
+                { id: 'war', name: 'Waray', native: 'Winaray', flag: '🇵🇭' },
+                { id: 'hil', name: 'Hiligaynon', native: 'Ilonggo', flag: '🇵🇭' },
+                { id: 'pam', name: 'Kapampangan', native: 'Kapampangan', flag: '🇵🇭' },
+                { id: 'pag', name: 'Pangasinan', native: 'Pangasinan', flag: '🇵🇭' },
+                { id: 'min', name: 'Minangkabau', native: 'Baso Minang', flag: '🇮🇩' },
+                { id: 'bug', name: 'Buginese', native: 'Basa Ugi', flag: '🇮🇩' },
+                { id: 'mak', name: 'Makassarese', native: 'Basa Mangkasara', flag: '🇮🇩' },
+                { id: 'ban', name: 'Balinese', native: 'Basa Bali', flag: '🇮🇩' },
+                { id: 'ace', name: 'Acehnese', native: 'Bahsa Acèh', flag: '🇮🇩' },
+                { id: 'bts', name: 'Batak', native: 'Hata Batak', flag: '🇮🇩' },
+                { id: 'mad', name: 'Madurese', native: 'Basa Mathura', flag: '🇮🇩' },
+                { id: 'sas', name: 'Sasak', native: 'Basa Sasak', flag: '🇮🇩' },
+                { id: 'sun', name: 'Sundanese', native: 'Basa Sunda', flag: '🇮🇩' },
+                { id: 'jav', name: 'Javanese', native: 'Basa Jawa', flag: '🇮🇩' },
+                { id: 'tet', name: 'Tetum', native: 'Tetun', flag: '🇹🇱' },
+                { id: 'la', name: 'Latin', native: 'Latina', flag: '🏛️' },
+                { id: 'eo', name: 'Esperanto', native: 'Esperanto', flag: '🌐' },
+                { id: 'io', name: 'Ido', native: 'Ido', flag: '🌐' },
+                { id: 'vo', name: 'Volapük', native: 'Volapük', flag: '🌐' },
+                { id: 'ia', name: 'Interlingua', native: 'Interlingua', flag: '🌐' },
+                { id: 'ie', name: 'Interlingue', native: 'Interlingue', flag: '🌐' },
+                { id: 'nov', name: 'Novial', native: 'Novial', flag: '🌐' },
+                { id: 'lfn', name: 'Lingua Franca Nova', native: 'Lingua Franca Nova', flag: '🌐' },
+                { id: 'tok', name: 'Toki Pona', native: 'toki pona', flag: '🌐' },
+                { id: 'art', name: 'Lojban', native: 'la .lojban.', flag: '🌐' },
+            ];
+
+            // ─────────────────────────────────────
+            // LOCAL STORAGE SAVE / LOAD
+            // ─────────────────────────────────────
+            const SAVE_KEY = 'languageGarden_save_v1';
+
+            function saveGame() {
+                const unlockedData = {};
+                for (const [id, data] of unlockedLanguages.entries()) {
+                    unlockedData[id] = { level: data.level, epsContribution: data.epsContribution };
+                }
+                const saveObj = {
+                    essence: essence,
+                    unlockedLanguages: unlockedData,
+                    unlockPriceMultiplier: unlockPriceMultiplier,
+                    lastSaved: Date.now(),
+                };
+                try {
+                    localStorage.setItem(SAVE_KEY, JSON.stringify(saveObj));
+                    showSavedIndicator();
+                } catch (e) {
+                    console.warn('Could not save game:', e);
+                }
+            }
+
+            function loadGame() {
+                try {
+                    const raw = localStorage.getItem(SAVE_KEY);
+                    if (!raw) return false;
+                    const saveObj = JSON.parse(raw);
+                    essence = saveObj.essence ?? 10;
+                    unlockPriceMultiplier = saveObj.unlockPriceMultiplier ?? 1.0;
+                    unlockedLanguages.clear();
+                    if (saveObj.unlockedLanguages) {
+                        for (const [id, data] of Object.entries(saveObj.unlockedLanguages)) {
+                            unlockedLanguages.set(id, {
+                                level: data.level || 1,
+                                epsContribution: data.epsContribution || 0.08,
+                            });
+                        }
+                    }
+                    return true;
+                } catch (e) {
+                    console.warn('Could not load save, starting fresh:', e);
+                    return false;
+                }
+            }
+
+            function showSavedIndicator() {
+                const indicator = document.getElementById('saveIndicator');
+                indicator.textContent = '💾 saved';
+                indicator.style.opacity = '1';
+                setTimeout(() => {
+                    indicator.textContent = '💾 auto-saved';
+                    indicator.style.opacity = '0.7';
+                }, 800);
+            }
+
+            // ─────────────────────────────────────
+            // GAME STATE
+            // ─────────────────────────────────────
+            let essence = 10;
+            const essencePerClick = 1;
+            let essencePerSecond = 0;
+            let unlockedLanguages = new Map();
+            let unlockPriceMultiplier = 1.0;
+            const baseUnlockCost = 10;
+            const levelBaseCost = 25;
+
+            // Initialize English if not loaded
+            if (!unlockedLanguages.has('en')) {
+                unlockedLanguages.set('en', { level: 1, epsContribution: 0.1 });
+            }
+
+            // ─────────────────────────────────────
+            // DOM ELEMENTS
+            // ─────────────────────────────────────
+            const essenceDisplay = document.getElementById('essenceDisplay');
+            const epsDisplay = document.getElementById('epsDisplay');
+            const totalUnlockedDisplay = document.getElementById('totalUnlockedDisplay');
+            const multiplierDisplay = document.getElementById('multiplierDisplay');
+            const gardenGrid = document.getElementById('gardenGrid');
+            const clickOrb = document.getElementById('clickOrb');
+            const particlesContainer = document.getElementById('particles');
+
+            // ─────────────────────────────────────
+            // FUNCTIONS
+            // ─────────────────────────────────────
+            function getCurrentUnlockCost() {
+                return Math.floor(baseUnlockCost * unlockPriceMultiplier);
+            }
+
+            function getLevelUpCost(langId) {
+                const lang = unlockedLanguages.get(langId);
+                if (!lang) return 0;
+                return Math.floor(levelBaseCost * Math.pow(1.6, lang.level));
+            }
+
+            function recalcEPS() {
+                let total = 0;
+                for (const [, data] of unlockedLanguages) {
+                    total += data.epsContribution * data.level;
+                }
+                essencePerSecond = total;
+                epsDisplay.textContent = essencePerSecond.toFixed(1);
+            }
+
+            function updateUI() {
+                essenceDisplay.textContent = Math.floor(essence);
+                totalUnlockedDisplay.textContent = unlockedLanguages.size;
+                multiplierDisplay.textContent = unlockPriceMultiplier.toFixed(2);
+                recalcEPS();
+                renderGarden();
+            }
+
+            function renderGarden() {
+                gardenGrid.innerHTML = '';
+                languages.forEach(lang => {
+                    const isUnlocked = unlockedLanguages.has(lang.id);
+                    const card = document.createElement('div');
+                    card.className = `flower-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+                    card.dataset.lang = lang.id;
+
+                    const emojiDiv = document.createElement('div');
+                    emojiDiv.className = 'flower-emoji';
+                    emojiDiv.textContent = lang.flag;
+
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = 'lang-name';
+                    nameDiv.textContent = lang.native || lang.name;
+
+                    const levelDiv = document.createElement('div');
+                    levelDiv.className = 'lang-level';
+
+                    const costDiv = document.createElement('div');
+                    costDiv.className = isUnlocked ? 'upgrade-cost' : 'unlock-cost';
+
+                    if (isUnlocked) {
+                        const data = unlockedLanguages.get(lang.id);
+                        levelDiv.textContent = `Lv. ${data.level}`;
+                        costDiv.textContent = `⬆️ ${getLevelUpCost(lang.id)} essence`;
+                        card.addEventListener('click', () => upgradeLanguage(lang.id));
+                    } else {
+                        levelDiv.textContent = '🔒 locked';
+                        const cost = getCurrentUnlockCost();
+                        costDiv.textContent = `🔓 ${cost} essence`;
+                        card.addEventListener('click', () => unlockLanguage(lang.id));
+                    }
+
+                    card.appendChild(emojiDiv);
+                    card.appendChild(nameDiv);
+                    card.appendChild(levelDiv);
+                    card.appendChild(costDiv);
+                    gardenGrid.appendChild(card);
+                });
+            }
+
+            function unlockLanguage(langId) {
+                if (unlockedLanguages.has(langId)) return;
+                const cost = getCurrentUnlockCost();
+                if (essence < cost) return;
+                essence -= cost;
+                unlockedLanguages.set(langId, { level: 1, epsContribution: 0.08 });
+                unlockPriceMultiplier *= 1.01;
+                createClickBurst();
+                updateUI();
+                saveGame();
+            }
+
+            function upgradeLanguage(langId) {
+                const langData = unlockedLanguages.get(langId);
+                if (!langData) return;
+                const cost = getLevelUpCost(langId);
+                if (essence < cost) return;
+                essence -= cost;
+                langData.level += 1;
+                langData.epsContribution = Math.min(0.5, langData.epsContribution + 0.02);
+                updateUI();
+                createClickBurst();
+                saveGame();
+            }
+
+            // ─────────────────────────────────────
+            // EVENT LISTENERS
+            // ─────────────────────────────────────
+            clickOrb.addEventListener('click', (e) => {
+                essence += essencePerClick;
+                updateUI();
+                createClickParticles(e.clientX, e.clientY);
+                clickOrb.style.transform = 'scale(0.9)';
+                setTimeout(() => { clickOrb.style.transform = ''; }, 120);
+                saveGame();
+            });
+
+            function createClickParticles(x, y) {
+                for (let i = 0; i < 6; i++) {
+                    const spark = document.createElement('div');
+                    spark.className = 'spark';
+                    spark.style.left = (x + (Math.random() - 0.5) * 30) + 'px';
+                    spark.style.top = (y + (Math.random() - 0.5) * 30) + 'px';
+                    spark.style.animationDuration = (1 + Math.random() * 1.5) + 's';
+                    spark.style.background = '#f9e076';
+                    particlesContainer.appendChild(spark);
+                    setTimeout(() => spark.remove(), 1500);
+                }
+            }
+
+            function createClickBurst() {
+                const cx = window.innerWidth / 2,
+                    cy = window.innerHeight / 2;
+                for (let i = 0; i < 10; i++) {
+                    const spark = document.createElement('div');
+                    spark.className = 'spark';
+                    spark.style.left = (cx + (Math.random() - 0.5) * 180) + 'px';
+                    spark.style.top = (cy + (Math.random() - 0.5) * 120) + 'px';
+                    spark.style.animationDuration = (0.8 + Math.random() * 1) + 's';
+                    spark.style.background = '#e0f0a0';
+                    particlesContainer.appendChild(spark);
+                    setTimeout(() => spark.remove(), 1400);
+                }
+            }
+
+            // ─────────────────────────────────────
+            // PASSIVE INCOME LOOP
+            // ─────────────────────────────────────
+            let saveCounter = 0;
+            setInterval(() => {
+                if (essencePerSecond > 0) {
+                    essence += essencePerSecond / 10;
+                    updateUI();
+                }
+                saveCounter++;
+                if (saveCounter >= 50) {
+                    saveCounter = 0;
+                    saveGame();
+                }
+            }, 100);
+
+            // ─────────────────────────────────────
+            // AMBIENT SPARKLES
+            // ─────────────────────────────────────
+            for (let i = 0; i < 22; i++) {
+                const spark = document.createElement('div');
+                spark.className = 'spark';
+                spark.style.left = Math.random() * 100 + '%';
+                spark.style.top = (60 + Math.random() * 40) + '%';
+                spark.style.animationDelay = Math.random() * 8 + 's';
+                spark.style.animationDuration = (5 + Math.random() * 7) + 's';
+                particlesContainer.appendChild(spark);
+            }
+
+            // ─────────────────────────────────────
+            // INIT
+            // ─────────────────────────────────────
+            const loaded = loadGame();
+            if (!loaded) {
+                unlockedLanguages.set('en', { level: 1, epsContribution: 0.1 });
+                saveGame();
+            }
+            updateUI();
+            console.log(
+                '🌍 Language Garden ready — 200+ languages, progress saved on your device'
+                );
+            console.log('💾 Save key:', SAVE_KEY);
+            console.log('📂 Place in /games/ folder, nav button links to ../index.html');
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Lumina — an endless garden of light</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌙</text></svg>">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/quicksand@5.1.0/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/quicksand@5.1.0/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/quicksand@5.1.0/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/cormorant-garamond@5.1.0/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/cormorant-garamond@5.1.0/600-italic.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-armenian@5.1.0/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-armenian@5.1.0/700.css">
+<style>
+:root{
+  --ink:#eef0ff; --muted:rgba(238,240,255,.55); --faint:rgba(238,240,255,.32);
+  --gold:#ffd9a3; --gold2:#ffe9c9; --lav:#b9a7ff; --teal:#7fd8d4;
+  --card:rgba(255,255,255,.055); --card-b:rgba(255,255,255,.11);
+  --r-lg:26px; --r-md:18px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Quicksand','Noto Sans Armenian',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color:var(--ink); background:#070a1c; min-height:100dvh; overflow-x:hidden;
+  display:flex; flex-direction:column;
+}
+#sky{position:fixed;inset:0;z-index:0;pointer-events:none}
+header,main,#ticker,#toasts,#flash{position:relative;z-index:2}
+
+/* ---------- header ---------- */
+header{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  padding:18px clamp(16px,4vw,48px) 4px; max-width:1440px;width:100%;margin:0 auto;
+}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-orb{
+  width:34px;height:34px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 35% 30%,#fff8ea,#ffd9a3 55%,rgba(255,180,110,.15) 85%);
+  box-shadow:0 0 22px rgba(255,205,140,.6);animation:breath 5s ease-in-out infinite;
+}
+.brand h1{
+  font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;
+  font-size:1.9rem;letter-spacing:.06em;line-height:1;
+  background:linear-gradient(100deg,#fff6e3,#ffd9a3 55%,#cdbcff);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.brand p{font-size:.8rem;color:var(--muted);letter-spacing:.08em;margin-top:2px}
+.hud{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pill{
+  display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;
+  background:var(--card);border:1px solid var(--card-b);color:var(--ink);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  font-family:inherit;font-size:.9rem;font-weight:500;text-decoration:none;cursor:pointer;transition:.25s;
+}
+.pill:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.22);box-shadow:0 0 18px rgba(185,167,255,.15)}
+.lang-pill{padding:9px 12px}
+.lang-pill select{
+  background:transparent;border:none;color:var(--ink);font-family:inherit;font-size:.9rem;
+  font-weight:500;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;padding-right:4px;
+}
+.lang-pill select option{background:#151233;color:var(--ink)}
+.home-btn{color:var(--gold2);border-color:rgba(255,220,170,.3)}
+.home-btn:hover{box-shadow:0 0 20px rgba(255,205,140,.25)}
+
+#ticker{text-align:center;padding:2px 16px 2px;min-height:1.6em}
+#tickerTxt{
+  font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.02rem;
+  color:rgba(233,235,255,.45);transition:opacity .7s;letter-spacing:.03em;
+}
+
+/* ---------- layout ---------- */
+main{
+  flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(350px,440px);
+  gap:28px;width:100%;max-width:1440px;margin:0 auto;
+  padding:8px clamp(16px,4vw,48px) 40px;align-items:start;
+}
+.stage{display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:6px}
+
+/* ---------- counter ---------- */
+.counter{text-align:center}
+#lightNum{
+  font-family:'Cormorant Garamond',serif;font-weight:600;line-height:1.05;
+  font-size:clamp(2.9rem,7.5vw,5.2rem);
+  background:linear-gradient(115deg,#fff6e3 10%,#ffd9a3 50%,#cdbcff 95%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 24px rgba(255,205,140,.25));
+}
+#lightLbl{font-size:.85rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+#rateLine{font-size:.95rem;color:var(--lav);margin-top:8px;font-weight:500}
+#buffBadge{
+  display:none;margin-top:10px;padding:7px 18px;border-radius:99px;
+  background:rgba(255,196,120,.13);border:1px solid rgba(255,196,120,.45);
+  color:var(--gold);font-weight:700;font-size:.9rem;animation:readyGlow 2s ease-in-out infinite;
+}
+#buffBadge.show{display:inline-block}
+
+/* ---------- orb ---------- */
+#orbWrap{position:relative;display:flex;justify-content:center;padding:12px 0 2px;width:100%}
+#orb{
+  position:relative;width:clamp(140px,22vw,210px);aspect-ratio:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;outline:none;
+  user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+#orb:focus-visible .core{box-shadow:0 0 0 3px rgba(255,217,163,.4)}
+#orb .core{
+  position:absolute;inset:12%;border-radius:50%;
+  background:radial-gradient(circle at 38% 30%,#fffdf6 0%,#ffe9c4 30%,#ffc98a 58%,rgba(255,170,110,.25) 78%,transparent 100%);
+  filter:drop-shadow(0 0 38px rgba(255,205,140,.55));animation:breath 5s ease-in-out infinite;
+}
+#orb .ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(255,230,190,.35);animation:ringP 5s ease-in-out infinite}
+#orb .r2{inset:-10%;border-color:rgba(185,167,255,.28);animation-delay:1.4s}
+@keyframes breath{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes ringP{0%,100%{transform:scale(.95);opacity:.45}50%{transform:scale(1.06);opacity:1}}
+#orb.pressed .core{animation:press .28s ease}
+@keyframes press{0%{transform:scale(1)}40%{transform:scale(.92)}100%{transform:scale(1)}}
+.float{
+  position:absolute;top:10%;font-weight:700;font-size:1.2rem;color:var(--gold2);pointer-events:none;
+  text-shadow:0 0 14px rgba(255,215,160,.85);animation:floatUp 1.15s ease-out forwards;white-space:nowrap;
+}
+@keyframes floatUp{
+  0%{opacity:0;transform:translate(-50%,14px) scale(.8)}
+  18%{opacity:1}
+  100%{opacity:0;transform:translate(-50%,-76px) scale(1.08)}
+}
+#tapHint{font-size:.82rem;color:var(--faint);letter-spacing:.06em;margin-bottom:6px}
+
+/* ---------- cards ---------- */
+.card{
+  background:var(--card);border:1px solid var(--card-b);border-radius:var(--r-lg);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  box-shadow:0 18px 50px rgba(0,0,0,.28);
+}
+.prestige{width:min(560px,100%);padding:18px 22px;margin-top:6px}
+.p-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.p-title{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.4rem;color:var(--gold2)}
+.p-sd{font-size:.88rem;color:var(--lav);font-weight:700}
+.p-desc{font-size:.82rem;color:var(--muted);margin:5px 0 12px;line-height:1.5}
+.p-bar{height:7px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:12px}
+#pFill{height:100%;width:2%;border-radius:99px;background:linear-gradient(90deg,var(--lav),var(--gold));transition:width .4s;box-shadow:0 0 12px rgba(255,217,163,.5)}
+.rebirth-btn{
+  width:100%;padding:12px;border-radius:99px;border:1px solid rgba(255,220,170,.35);
+  background:linear-gradient(120deg,rgba(255,217,163,.14),rgba(185,167,255,.14));
+  color:var(--gold2);font-family:inherit;font-size:.98rem;font-weight:700;letter-spacing:.04em;cursor:pointer;transition:.3s;
+}
+.rebirth-btn.ready{border-color:rgba(255,220,170,.65);box-shadow:0 0 26px rgba(255,205,140,.3);animation:readyGlow 2.6s ease-in-out infinite}
+.rebirth-btn.ready:hover{transform:translateY(-1px)}
+.rebirth-btn:not(.ready){opacity:.45;cursor:default}
+@keyframes readyGlow{0%,100%{box-shadow:0 0 16px rgba(255,205,140,.22)}50%{box-shadow:0 0 34px rgba(255,205,140,.45)}}
+
+/* ---------- stats ---------- */
+.stats{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+.stat{
+  display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 14px;border-radius:16px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);min-width:88px;
+}
+.stat b{font-size:1rem;color:var(--gold2)}
+.stat span{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);text-align:center}
+.reset-link{
+  margin-top:10px;background:none;border:none;color:var(--faint);font-family:inherit;font-size:.76rem;
+  letter-spacing:.08em;cursor:pointer;text-decoration:underline dotted;transition:.25s;
+}
+.reset-link:hover{color:var(--muted)}
+
+/* ---------- shop ---------- */
+.shop{padding:20px;position:sticky;top:14px;max-height:calc(100dvh - 32px);overflow-y:auto}
+.shop::-webkit-scrollbar{width:5px}
+.shop::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:99px}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tab{
+  flex:1;position:relative;padding:10px 4px;border-radius:14px;border:1px solid transparent;
+  background:rgba(255,255,255,.03);color:var(--muted);font-family:inherit;font-size:.8rem;font-weight:700;
+  cursor:pointer;transition:.25s;white-space:nowrap;
+}
+.tab:hover{background:rgba(255,255,255,.06)}
+.tab.on{background:rgba(255,217,163,.1);border-color:rgba(255,220,170,.35);color:var(--gold2)}
+.tab .badge{
+  position:absolute;top:-6px;right:-3px;min-width:18px;height:18px;border-radius:99px;
+  background:var(--gold);color:#2a1c08;font-size:.66rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;padding:0 5px;box-shadow:0 0 10px rgba(255,205,140,.6);
+}
+.panel{display:none}.panel.on{display:block}
+.qty-row{display:flex;gap:8px;margin-bottom:14px;align-items:center}
+.qty{
+  padding:6px 14px;border-radius:99px;border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.04);color:var(--muted);font-family:inherit;font-weight:700;font-size:.78rem;cursor:pointer;transition:.2s;
+}
+.qty.on{background:rgba(185,167,255,.16);border-color:rgba(185,167,255,.45);color:#e6dfff}
+
+#genList,#blessList{display:flex;flex-direction:column;gap:11px}
+.gen{
+  position:relative;display:grid;grid-template-columns:50px minmax(0,1fr) auto;gap:12px;align-items:center;
+  padding:13px;border-radius:var(--r-md);background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.06);transition:.3s;
+}
+.gen:hover{background:rgba(255,255,255,.06);transform:translateY(-1px)}
+.g-ico{
+  width:50px;height:50px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;
+  background:radial-gradient(circle at 30% 28%,rgba(255,255,255,.15),rgba(255,255,255,.03));
+  border:1px solid rgba(255,255,255,.1);transition:.3s;
+}
+.g-name{font-weight:700;font-size:.94rem}
+.g-desc{font-size:.74rem;color:var(--muted);margin:2px 0;line-height:1.35}
+.g-rate{font-size:.72rem;color:var(--teal);font-weight:700}
+.g-buy{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+.g-count{font-weight:700;font-size:1.1rem;color:#d3cbff;min-height:1.15em}
+.g-btn{
+  min-width:92px;padding:8px 13px;border-radius:99px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.16);
+  background:linear-gradient(135deg,rgba(255,215,160,.13),rgba(185,167,255,.13));
+  color:var(--gold2);font-family:inherit;font-size:.86rem;font-weight:700;transition:.25s;
+}
+.g-btn.can{border-color:rgba(255,220,170,.55);box-shadow:0 0 16px rgba(255,205,140,.22)}
+.g-btn.can:hover{transform:translateY(-1px);box-shadow:0 0 22px rgba(255,205,140,.35)}
+.g-btn:not(.can){opacity:.4;cursor:default}
+.g-mask{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:1.2rem;letter-spacing:.6em;color:rgba(233,235,255,.4);pointer-events:none}
+.gen.mystery .g-ico,.gen.mystery .g-info,.gen.mystery .g-buy{opacity:.13;filter:blur(6px)}
+.gen.mystery .g-mask{display:flex}
+.empty{color:var(--faint);text-align:center;padding:26px 10px;font-style:italic;font-family:'Cormorant Garamond',serif;font-size:1.1rem}
+
+/* achievements */
+.ach-head{font-size:.95rem;color:var(--gold2);font-weight:700;margin-bottom:4px}
+.ach-note{font-size:.72rem;color:var(--faint);margin-bottom:12px}
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px}
+.ach{
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;
+  padding:12px 10px;text-align:center;transition:.35s;opacity:.5;
+}
+.ach.done{opacity:1;border-color:rgba(255,220,170,.4);box-shadow:0 0 18px rgba(255,205,140,.15)}
+.a-ic{font-size:1.45rem}
+.a-name{font-size:.74rem;font-weight:700;margin:6px 0 8px;min-height:2.2em}
+.a-bar{height:5px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.a-bar div{height:100%;width:0;background:linear-gradient(90deg,var(--lav),var(--gold));transition:width .5s}
+.a-prog{font-size:.66rem;color:var(--faint);margin-top:6px}
+
+/* ---------- toasts & flash ---------- */
+#toasts{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);display:flex;flex-direction:column;gap:10px;align-items:center;z-index:50;pointer-events:none;width:max-content;max-width:92vw}
+.toast{
+  padding:12px 22px;border-radius:99px;background:rgba(20,18,51,.85);border:1px solid rgba(255,220,170,.3);
+  color:var(--gold2);font-size:.88rem;font-weight:500;backdrop-filter:blur(12px);
+  box-shadow:0 10px 30px rgba(0,0,0,.4);opacity:0;transform:translateY(16px);transition:.45s;text-align:center;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.hide{opacity:0;transform:translateY(-8px)}
+#flash{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 45%,rgba(255,240,215,.9),rgba(255,217,163,.35) 40%,transparent 75%)}
+#flash.go{animation:flashA 1.3s ease-out}
+@keyframes flashA{0%{opacity:0}12%{opacity:.9}100%{opacity:0}}
+
+@media (max-width:960px){
+  main{grid-template-columns:1fr;gap:20px;padding-bottom:60px}
+  .shop{position:static;max-height:none;overflow:visible}
+  header{justify-content:center;text-align:center}
+}
+</style>
+</head>
+<body>
+<canvas id="sky"></canvas>
+
+<header>
+  <div class="brand">
+    <div class="brand-orb"></div>
+    <div>
+      <h1>Lumina</h1>
+      <p id="tagline">an endless garden of light</p>
+    </div>
+  </div>
+  <div class="hud">
+    <div class="pill lang-pill">
+      <span>🌐</span>
+      <select id="langSel" aria-label="Language"></select>
+    </div>
+    <button id="soundBtn" class="pill" title="sound">🔊</button>
+    <a class="pill home-btn" href="../index.html" id="homeBtn"><span>⌂</span><span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<div id="ticker"><span id="tickerTxt"></span></div>
+
+<main>
+  <section class="stage">
+    <div class="counter">
+      <div id="lightNum">0</div>
+      <div id="lightLbl"><span id="moon">🌑</span> <span id="lightLblTxt">Light</span></div>
+      <div id="rateLine"></div>
+      <div><span id="buffBadge"></span></div>
+    </div>
+
+    <div id="orbWrap">
+      <div id="orb" role="button" tabindex="0" aria-label="tap to gather light">
+        <div class="ring r1"></div><div class="ring r2"></div><div class="core"></div>
+      </div>
+    </div>
+    <p id="tapHint"></p>
+
+    <div class="prestige card">
+      <div class="p-top">
+        <span class="p-title" id="pTitle">Rebirth</span>
+        <span class="p-sd" id="pSd">✦ 0 · +0%</span>
+      </div>
+      <p class="p-desc" id="pDesc"></p>
+      <div class="p-bar"><div id="pFill"></div></div>
+      <button id="rebirthBtn" class="rebirth-btn"></button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><b id="stTaps">0</b><span id="stTapsL"></span></div>
+      <div class="stat"><b id="stTime">0</b><span id="stTimeL"></span></div>
+      <div class="stat"><b id="stTotal">0</b><span id="stTotalL"></span></div>
+      <div class="stat"><b id="stReb">0</b><span id="stRebL"></span></div>
+      <div class="stat"><b id="stStars">0</b><span id="stStarsL"></span></div>
+    </div>
+    <button id="resetBtn" class="reset-link"></button>
+  </section>
+
+  <aside class="shop card">
+    <div class="tabs">
+      <button class="tab on" data-p="garden">🌱 <span id="tabLG"></span></button>
+      <button class="tab" data-p="bless">✦ <span id="tabLB"></span><span class="badge" id="blessBadge" hidden></span></button>
+      <button class="tab" data-p="awards">🏅 <span id="tabLA"></span></button>
+    </div>
+
+    <div class="panel on" id="p-garden">
+      <div class="qty-row">
+        <button class="qty on" data-q="1">×1</button>
+        <button class="qty" data-q="10">×10</button>
+        <button class="qty" data-q="max" id="qtyMax">max</button>
+      </div>
+      <div id="genList"></div>
+    </div>
+
+    <div class="panel" id="p-bless"><div id="blessList"></div></div>
+
+    <div class="panel" id="p-awards">
+      <div class="ach-head" id="achHead"></div>
+      <p class="ach-note" id="achNote"></p>
+      <div class="ach-grid" id="achGrid"></div>
+    </div>
+  </aside>
+</main>
+
+<div id="flash"></div>
+<div id="toasts"></div>
+
+<script>
+/* ================= i18n — 10 languages + Armenian ================= */
+const T={
+en:{tag:"an endless garden of light",light:"Light",tap:"tap the glow to gather light",garden:"Garden",
+rebirth:"Rebirth",rebirthDesc:"Begin again as a seed. Each Stardust grants +5% light, forever.",
+rebirthBtn:"Rebirth",stardust:"Stardust",need:"gathering…",perTap:"per tap",
+taps:"taps",time:"time in garden",total:"light gathered",home:"Home",
+bless:"Blessings",awards:"Awards",max:"max",
+frenzy:"Star frenzy ×7",lucky:"Gift of the falling star",achU:"Achievement unlocked",
+none:"silence… the garden is dreaming",achBonus:"each award gives +2% light",
+rebirths:"rebirths",starsC:"stars caught",
+offline:"While you were away, your garden gathered",unlock:"A new friend joined your garden",
+reset:"begin anew",resetQ:"Erase everything and begin anew?",
+upB:"Blessing of {g}",upBD:"{g} shines twice as bright",
+tapUps:[["Warm Hands","taps ×2"],["Open Heart","taps ×3"],["Fingers of Starlight","taps ×4"]],
+globUps:[["Moon Dew","all light ×1.5"],["Deep Silence","all light ×2"]],
+achs:["First Light","Gentle Hands","Devoted Hands","Candle of Fireflies","Full Garden","Reborn","Star Collector","A Million Lights","A Billion Lights","Star Catcher"],
+news:["the night breathes slowly here…","every tap plants a tiny star","the garden grows while the world sleeps","light remembers every gentle touch","somewhere, a comet is smiling"],
+gens:[["Firefly","a tiny spark drifting in the dark"],["Lotus","blooms quietly on still water"],
+["Lantern","a warm light that never sleeps"],["Moonflower","opens its petals to the moon"],
+["Comet","carries light across the night sky"],["Galaxy","an ocean of stars, breathing slowly"],
+["Nebula","a cloud where stars are born"],["Aurora","the sky itself, singing in color"]]},
+
+hy:{tag:"լույսի անվերջ պարտեզ",light:"Լույս",tap:"հպվիր լույսին ու հավաքիր այն",garden:"Պարտեզ",
+rebirth:"Վերածնունդ",rebirthDesc:"Սկսիր նորից՝ որպես սերմ։ Յուրաքանչյուր Աստղափոշի ընդմիշտ տալիս է +5% լույս։",
+rebirthBtn:"Վերածնվել",stardust:"Աստղափոշի",need:"դեռ հավաքում ենք…",perTap:"մեկ հպումով",
+taps:"հպում",time:"ժամանակ պարտեզում",total:"հավաքած լույս",home:"Գլխավոր",
+bless:"Օրհնություններ",awards:"Մրցանակներ",max:"մաքս",
+frenzy:"Աստղային տենդ ×7",lucky:"Ընկնող աստղի պարգև",achU:"Նոր նվաճում",
+none:"լռություն… պարտեզը երազում է",achBonus:"ամեն մրցանակ տալիս է +2% լույս",
+rebirths:"վերածնունդ",starsC:"որսացած աստղ",
+offline:"Քանի դեռ բացակայում էիր, պարտեզդ հավաքել է",unlock:"Նոր ընկեր միացավ պարտեզիդ",
+reset:"սկսել նորից",resetQ:"Ջնջե՞լ ամեն ինչ ու սկսել նորից։",
+upB:"{g} · օրհնություն",upBD:"{g}՝ ×2 ավելի վառ է փայլում",
+tapUps:[["Տաք ձեռքեր","հպումները ×2"],["Բաց սիրտ","հպումները ×3"],["Աստղային մատներ","հպումները ×4"]],
+globUps:[["Լուսնային ցող","ամբողջ լույսը ×1.5"],["Խոր լռություն","ամբողջ լույսը ×2"]],
+achs:["Առաջին լույս","Հանգիստ ձեռքեր","Նվիրված ձեռքեր","Լուսատտիկների մոմ","Լիքը պարտեզ","Վերածնված","Աստղահավաք","Միլիոն լույս","Միլիարդ լույս","Աստղ որսացող"],
+news:["գիշերը այստեղ դանդաղ է շնչում…","ամեն հպում մի փոքրիկ աստղ է տնկում","պարտեզը աճում է, մինչ աշխարհը քնած է","լույսը հիշում է ամեն նուրբ հպում","ինչ-որ տեղ մի գիսաստղ ժպտում է"],
+gens:[["Լուսատտիկ","փոքրիկ կայծ մթության մեջ"],["Լոտոս","հանգիստ ծաղկում է լուռ ջրերին"],
+["Լապտեր","տաք լույս, որ երբեք չի քնում"],["Լուսնածաղիկ","բացում է թերթերը լուսնին"],
+["Գիսաստղ","լույս է տանում գիշերային երկնքով"],["Գալակտիկա","աստղերի օվկիանոս՝ դանդաղ շնչող"],
+["Միգամածություն","ամպ, որտեղ աստղեր են ծնվում"],["Հյուսիսափայլ","երկինքը՝ գույներով երգող"]]},
+
+ru:{tag:"бесконечный сад света",light:"Свет",tap:"касайся света, чтобы собрать его",garden:"Сад",
+rebirth:"Перерождение",rebirthDesc:"Начни заново, как семя. Каждая Звёздная пыль даёт +5% света навсегда.",
+rebirthBtn:"Переродиться",stardust:"Звёздная пыль",need:"собираем…",perTap:"за касание",
+taps:"касаний",time:"времени в саду",total:"собрано света",home:"Домой",
+bless:"Благословения",awards:"Награды",max:"макс",
+frenzy:"Звёздный вихрь ×7",lucky:"Дар падающей звезды",achU:"Достижение открыто",
+none:"тишина… сад видит сон",achBonus:"каждая награда даёт +2% света",
+rebirths:"перерождений",starsC:"пойманных звёзд",
+offline:"Пока тебя не было, сад собрал",unlock:"Новый друг присоединился к саду",
+reset:"начать заново",resetQ:"Стереть всё и начать заново?",
+upB:"Благословение: {g}",upBD:"{g} сияет вдвое ярче",
+tapUps:[["Тёплые ладони","касания ×2"],["Открытое сердце","касания ×3"],["Пальцы из звёзд","касания ×4"]],
+globUps:[["Лунная роса","весь свет ×1.5"],["Глубокая тишина","весь свет ×2"]],
+achs:["Первый свет","Нежные руки","Преданные руки","Свеча светлячков","Полный сад","Перерождённый","Собиратель звёзд","Миллион света","Миллиард света","Ловец звёзд"],
+news:["ночь дышит здесь медленно…","каждое касание сажает маленькую звезду","сад растёт, пока мир спит","свет помнит каждое нежное касание","где-то там улыбается комета"],
+gens:[["Светлячок","маленькая искра в темноте"],["Лотос","тихо цветёт на тихой воде"],
+["Фонарик","тёплый свет, что не спит"],["Лунный цветок","раскрывает лепестки луне"],
+["Комета","несёт свет по ночному небу"],["Галактика","океан звёзд, дышащий медленно"],
+["Туманность","облако, где рождаются звёзды"],["Северное сияние","само небо поёт в цвете"]]},
+
+es:{tag:"un jardín infinito de luz",light:"Luz",tap:"toca el resplandor para reunir luz",garden:"Jardín",
+rebirth:"Renacer",rebirthDesc:"Vuelve a empezar como semilla. Cada Polvo de estrellas da +5% de luz para siempre.",
+rebirthBtn:"Renacer",stardust:"Polvo de estrellas",need:"reuniendo…",perTap:"por toque",
+taps:"toques",time:"tiempo en el jardín",total:"luz reunida",home:"Inicio",
+bless:"Bendiciones",awards:"Logros",max:"máx",
+frenzy:"Frenesí estelar ×7",lucky:"Regalo de la estrella fugaz",achU:"Logro desbloqueado",
+none:"silencio… el jardín sueña",achBonus:"cada logro da +2% de luz",
+rebirths:"renacimientos",starsC:"estrellas atrapadas",
+offline:"Mientras no estabas, tu jardín reunió",unlock:"Un nuevo amigo se unió a tu jardín",
+reset:"empezar de nuevo",resetQ:"¿Borrar todo y empezar de nuevo?",
+upB:"Bendición de {g}",upBD:"{g} brilla el doble",
+tapUps:[["Manos cálidas","toques ×2"],["Corazón abierto","toques ×3"],["Dedos de estrella","toques ×4"]],
+globUps:[["Rocío de luna","toda la luz ×1.5"],["Silencio profundo","toda la luz ×2"]],
+achs:["Primera luz","Manos serenas","Manos devotas","Vela de luciérnagas","Jardín pleno","Renacido","Coleccionista de estrellas","Un millón de luces","Mil millones de luces","Cazador de estrellas"],
+news:["la noche respira despacio aquí…","cada toque planta una pequeña estrella","el jardín crece mientras el mundo duerme","la luz recuerda cada toque gentil","en algún lugar, un cometa sonríe"],
+gens:[["Luciérnaga","una chispa pequeña en la oscuridad"],["Loto","florece en silencio sobre aguas quietas"],
+["Farol","una luz cálida que nunca duerme"],["Flor de luna","abre sus pétalos a la luna"],
+["Cometa","lleva luz por el cielo nocturno"],["Galaxia","un océano de estrellas que respira lento"],
+["Nebulosa","una nube donde nacen estrellas"],["Aurora","el cielo mismo, cantando en colores"]]},
+
+fr:{tag:"un jardin infini de lumière",light:"Lumière",tap:"touche la lueur pour cueillir la lumière",garden:"Jardin",
+rebirth:"Renaissance",rebirthDesc:"Recommence comme une graine. Chaque Poussière d’étoile donne +5% de lumière, pour toujours.",
+rebirthBtn:"Renaître",stardust:"Poussière d’étoile",need:"cueillette…",perTap:"par touche",
+taps:"touches",time:"temps au jardin",total:"lumière cueillie",home:"Accueil",
+bless:"Bénédictions",awards:"Récompenses",max:"max",
+frenzy:"Frénésie d’étoiles ×7",lucky:"Don de l’étoile filante",achU:"Récompense débloquée",
+none:"silence… le jardin rêve",achBonus:"chaque récompense donne +2% de lumière",
+rebirths:"renaissances",starsC:"étoiles attrapées",
+offline:"Pendant ton absence, ton jardin a cueilli",unlock:"Un nouvel ami a rejoint ton jardin",
+reset:"recommencer",resetQ:"Tout effacer et recommencer ?",
+upB:"Bénédiction : {g}",upBD:"{g} brille deux fois plus",
+tapUps:[["Mains chaudes","touches ×2"],["Cœur ouvert","touches ×3"],["Doigts d’étoile","touches ×4"]],
+globUps:[["Rosée de lune","toute la lumière ×1.5"],["Grand silence","toute la lumière ×2"]],
+achs:["Première lumière","Mains sereines","Mains dévouées","Bougie des lucioles","Jardin complet","Renaissant","Collectionneur d’étoiles","Un million de lumières","Un milliard de lumières","Chasseur d’étoiles"],
+news:["la nuit respire lentement ici…","chaque touche plante une petite étoile","le jardin grandit pendant que le monde dort","la lumière se souvient de chaque geste doux","quelque part, une comète sourit"],
+gens:[["Luciole","une petite étincelle dans le noir"],["Lotus","fleurit en silence sur l’eau calme"],
+["Lanterne","une lumière chaude qui ne dort jamais"],["Fleur de lune","ouvre ses pétales à la lune"],
+["Comète","porte la lumière à travers le ciel"],["Galaxie","un océan d’étoiles qui respire lentement"],
+["Nébuleuse","un nuage où naissent les étoiles"],["Aurore","le ciel lui-même chante en couleurs"]]},
+
+de:{tag:"ein endloser Garten des Lichts",light:"Licht",tap:"berühre das Leuchten, um Licht zu sammeln",garden:"Garten",
+rebirth:"Wiedergeburt",rebirthDesc:"Beginne neu als Samen. Jeder Sternenstaub gibt für immer +5% Licht.",
+rebirthBtn:"Wiedergeboren werden",stardust:"Sternenstaub",need:"sammeln…",perTap:"pro Berührung",
+taps:"Berührungen",time:"Zeit im Garten",total:"gesammeltes Licht",home:"Startseite",
+bless:"Segen",awards:"Auszeichnungen",max:"max",
+frenzy:"Sternenrausch ×7",lucky:"Geschenk der Sternschnuppe",achU:"Auszeichnung erhalten",
+none:"Stille… der Garten träumt",achBonus:"jede Auszeichnung gibt +2% Licht",
+rebirths:"Wiedergeburten",starsC:"gefangene Sterne",
+offline:"Während du weg warst, sammelte dein Garten",unlock:"Ein neuer Freund ist deinem Garten beigetreten",
+reset:"neu beginnen",resetQ:"Alles löschen und neu beginnen?",
+upB:"Segen: {g}",upBD:"{g} leuchtet doppelt so hell",
+tapUps:[["Warme Hände","Berührungen ×2"],["Offenes Herz","Berührungen ×3"],["Sternenfinger","Berührungen ×4"]],
+globUps:[["Mondtau","alles Licht ×1.5"],["Tiefe Stille","alles Licht ×2"]],
+achs:["Erstes Licht","Sanfte Hände","Hingebungsvolle Hände","Kerze der Glühwürmchen","Voller Garten","Wiedergeboren","Sternensammler","Eine Million Licht","Eine Milliarde Licht","Sternenfänger"],
+news:["die Nacht atmet hier langsam…","jede Berührung pflanzt einen kleinen Stern","der Garten wächst, während die Welt schläft","das Licht erinnert sich an jede sanfte Berührung","irgendwo lächelt ein Komet"],
+gens:[["Glühwürmchen","ein kleiner Funke im Dunkeln"],["Lotus","blüht still auf ruhigem Wasser"],
+["Laterne","ein warmes Licht, das nie schläft"],["Mondblume","öffnet ihre Blütenblätter dem Mond"],
+["Komet","trägt Licht über den Nachthimmel"],["Galaxie","ein Meer aus Sternen, das langsam atmet"],
+["Nebel","eine Wolke, in der Sterne geboren werden"],["Polarlicht","der Himmel selbst singt in Farben"]]},
+
+it:{tag:"un giardino infinito di luce",light:"Luce",tap:"tocca il bagliore per raccogliere luce",garden:"Giardino",
+rebirth:"Rinascita",rebirthDesc:"Ricomincia come un seme. Ogni Polvere di stelle dà +5% di luce, per sempre.",
+rebirthBtn:"Rinascere",stardust:"Polvere di stelle",need:"raccogliendo…",perTap:"per tocco",
+taps:"tocchi",time:"tempo nel giardino",total:"luce raccolta",home:"Home",
+bless:"Benedizioni",awards:"Premi",max:"max",
+frenzy:"Frenesia stellare ×7",lucky:"Dono della stella cadente",achU:"Premio sbloccato",
+none:"silenzio… il giardino sogna",achBonus:"ogni premio dà +2% di luce",
+rebirths:"rinascite",starsC:"stelle catturate",
+offline:"Mentre eri via, il tuo giardino ha raccolto",unlock:"Un nuovo amico si è unito al tuo giardino",
+reset:"ricomincia",resetQ:"Cancellare tutto e ricominciare?",
+upB:"Benedizione di {g}",upBD:"{g} brilla il doppio",
+tapUps:[["Mani calde","tocchi ×2"],["Cuore aperto","tocchi ×3"],["Dita di stella","tocchi ×4"]],
+globUps:[["Rugiada di luna","tutta la luce ×1.5"],["Silenzio profondo","tutta la luce ×2"]],
+achs:["Prima luce","Mani serene","Mani devote","Candela di lucciole","Giardino pieno","Rinato","Collezionista di stelle","Un milione di luci","Un miliardo di luci","Cacciatore di stelle"],
+news:["la notte respira piano qui…","ogni tocco pianta una piccola stella","il giardino cresce mentre il mondo dorme","la luce ricorda ogni tocco gentile","da qualche parte, una cometa sorride"],
+gens:[["Lucciola","una piccola scintilla nel buio"],["Loto","fiorisce in silenzio sull’acqua ferma"],
+["Lanterna","una luce calda che non dorme mai"],["Fiore di luna","apre i petali alla luna"],
+["Cometa","porta luce nel cielo notturno"],["Galassia","un oceano di stelle che respira piano"],
+["Nebulosa","una nube dove nascono le stelle"],["Aurora","il cielo stesso canta a colori"]]},
+
+pt:{tag:"um jardim infinito de luz",light:"Luz",tap:"toque no brilho para colher luz",garden:"Jardim",
+rebirth:"Renascimento",rebirthDesc:"Comece de novo como semente. Cada Poeira estelar dá +5% de luz, para sempre.",
+rebirthBtn:"Renascer",stardust:"Poeira estelar",need:"colhendo…",perTap:"por toque",
+taps:"toques",time:"tempo no jardim",total:"luz colhida",home:"Início",
+bless:"Bênçãos",awards:"Conquistas",max:"máx",
+frenzy:"Frenesi estelar ×7",lucky:"Presente da estrela cadente",achU:"Conquista desbloqueada",
+none:"silêncio… o jardim sonha",achBonus:"cada conquista dá +2% de luz",
+rebirths:"renascimentos",starsC:"estrelas capturadas",
+offline:"Enquanto você estava fora, seu jardim colheu",unlock:"Um novo amigo entrou no seu jardim",
+reset:"recomeçar",resetQ:"Apagar tudo e recomeçar?",
+upB:"Bênção de {g}",upBD:"{g} brilha o dobro",
+tapUps:[["Mãos quentes","toques ×2"],["Coração aberto","toques ×3"],["Dedos de estrela","toques ×4"]],
+globUps:[["Orvalho da lua","toda a luz ×1.5"],["Silêncio profundo","toda a luz ×2"]],
+achs:["Primeira luz","Mãos serenas","Mãos dedicadas","Vela dos vaga-lumes","Jardim pleno","Renascido","Colecionador de estrelas","Um milhão de luzes","Um bilhão de luzes","Caçador de estrelas"],
+news:["a noite respira devagar aqui…","cada toque planta uma pequena estrela","o jardim cresce enquanto o mundo dorme","a luz lembra cada toque gentil","em algum lugar, um cometa sorri"],
+gens:[["Vaga-lume","uma faísca pequena no escuro"],["Lótus","floresce em silêncio na água parada"],
+["Lamparina","uma luz quente que nunca dorme"],["Flor da lua","abre as pétalas para a lua"],
+["Cometa","leva luz pelo céu da noite"],["Galáxia","um oceano de estrelas respirando devagar"],
+["Nebulosa","uma nuvem onde nascem estrelas"],["Aurora","o próprio céu cantando em cores"]]},
+
+tr:{tag:"sonsuz bir ışık bahçesi",light:"Işık",tap:"ışığı toplamak için parıltıya dokun",garden:"Bahçe",
+rebirth:"Yeniden Doğuş",rebirthDesc:"Bir tohum olarak yeniden başla. Her Yıldız tozu kalıcı olarak +%5 ışık verir.",
+rebirthBtn:"Yeniden doğ",stardust:"Yıldız tozu",need:"toplanıyor…",perTap:"dokunuş başına",
+taps:"dokunuş",time:"bahçede geçen süre",total:"toplanan ışık",home:"Ana sayfa",
+bless:"Kutsamalar",awards:"Ödüller",max:"maks",
+frenzy:"Yıldız coşkusu ×7",lucky:"Kayan yıldızın armağanı",achU:"Başarım açıldı",
+none:"sessizlik… bahçe hayal kuruyor",achBonus:"her ödül +%2 ışık verir",
+rebirths:"yeniden doğuş",starsC:"yakalanan yıldız",
+offline:"Sen yokken bahçen topladı",unlock:"Bahçene yeni bir arkadaş katıldı",
+reset:"baştan başla",resetQ:"Her şeyi silip baştan başlamak istiyor musun?",
+upB:"Kutsama: {g}",upBD:"{g} iki kat parlak parlar",
+tapUps:[["Sıcak eller","dokunuşlar ×2"],["Açık kalp","dokunuşlar ×3"],["Yıldız parmakları","dokunuşlar ×4"]],
+globUps:[["Ay çiyi","tüm ışık ×1.5"],["Derin sessizlik","tüm ışık ×2"]],
+achs:["İlk ışık","Sakin eller","Adanmış eller","Ateşböceği mumu","Dolu bahçe","Yeniden doğmuş","Yıldız toplayıcı","Bir milyon ışık","Bir milyar ışık","Yıldız avcısı"],
+news:["gece burada yavaşça nefes alıyor…","her dokunuş küçük bir yıldız ekiyor","dünya uyurken bahçe büyüyor","ışık her nazik dokunuşu hatırlar","bir yerde bir kuyruklu yıldız gülümsüyor"],
+gens:[["Ateşböceği","karanlıkta minik bir kıvılcım"],["Nilüfer","durgun suda sessizce açar"],
+["Fener","asla uyumayan sıcak bir ışık"],["Aygülü","yaprağını aya açar"],
+["Kuyruklu yıldız","gece göğünde ışık taşır"],["Galaksi","yavaşça nefes alan bir yıldız okyanusu"],
+["Bulutsu","yıldızların doğduğu bulut"],["Kutup ışığı","gökyüzünün renklerle şarkısı"]]},
+
+ja:{tag:"ひかりの永遠の庭",light:"ひかり",tap:"かがやきに触れて、ひかりを集めよう",garden:"庭",
+rebirth:"転生",rebirthDesc:"たねとして、もういちど。星のかけら1つにつき、ひかりが永遠に+5%。",
+rebirthBtn:"転生する",stardust:"星のかけら",need:"あつめています…",perTap:"タップ",
+taps:"タップ",time:"庭での時間",total:"集めたひかり",home:"ホーム",
+bless:"祝福",awards:"きろく",max:"最大",
+frenzy:"星のフィーバー ×7",lucky:"流れ星の贈り物",achU:"実績解除",
+none:"しずけさ… にわはゆめみている",achBonus:"きろく1こでひかり+2%",
+rebirths:"転生",starsC:"つかまえた星",
+offline:"いないあいだに、庭が集めました",unlock:"新しい仲間が庭に加わりました",
+reset:"はじめから",resetQ:"すべて消して、はじめからやり直しますか？",
+upB:"{g}の祝福",upBD:"{g}が2倍かがやく",
+tapUps:[["温かな手","タップ×2"],["開いた心","タップ×3"],["星あかりの指","タップ×4"]],
+globUps:[["月のつゆ","すべてのひかり×1.5"],["深い静けさ","すべてのひかり×2"]],
+achs:["はじめてのひかり","やさしい手","熱心な手","ホタルのあかり","満ちた庭","転生者","星あつめ","百万のひかり","十億のひかり","星つかみ"],
+news:["よるはここでゆっくりいきづいている…","いちどのタップがちいさなほしをうえる","せかいがねむるあいだ、にわはそだつ","ひかりはやさしいてざわりをおぼえている","どこかで、すいせいがわらっている"],
+gens:[["ホタル","やみの中の小さなひかり"],["蓮","しずかな水の上にさいている"],
+["ランタン","ねむらない、あたたかいひかり"],["月の花","月に花びらを開く"],
+["彗星","よぞらをひかりがかけぬける"],["銀河","ゆっくりいきづく星の海"],
+["星雲","ほしがうまれるくも"],["オーロラ","そらじたいがいろでうたう"]]},
+
+zh:{tag:"无尽的光之庭园",light:"光",tap:"轻触光晕，收集光芒",garden:"庭园",
+rebirth:"重生",rebirthDesc:"化作种子，重新开始。每颗星尘永久提升 5% 光芒。",
+rebirthBtn:"重生",stardust:"星尘",need:"正在收集…",perTap:"每次点击",
+taps:"点击次数",time:"庭园时光",total:"收集的光",home:"主页",
+bless:"祝福",awards:"成就",max:"最大",
+frenzy:"星光狂热 ×7",lucky:"流星之礼",achU:"成就达成",
+none:"静谧……庭园正在入梦",achBonus:"每个成就 +2% 光芒",
+rebirths:"重生次数",starsC:"捕获的流星",
+offline:"你离开时，庭园收集了",unlock:"新朋友加入了你的庭园",
+reset:"重新开始",resetQ:"清空一切，重新开始吗？",
+upB:"{g}的祝福",upBD:"{g}的光芒翻倍",
+tapUps:[["温暖之手","点击 ×2"],["敞开心扉","点击 ×3"],["星光之指","点击 ×4"]],
+globUps:[["月之露珠","所有光芒 ×1.5"],["深邃寂静","所有光芒 ×2"]],
+achs:["初光","温柔之手","专注之手","萤火之烛","满园","重生者","集星者","百万光芒","十亿光芒","捕星人"],
+news:["这里的夜晚缓缓呼吸…","每一次点击，都种下一颗小星星","世界沉睡时，庭园悄悄生长","光记得每一次温柔的触碰","某处，一颗彗星在微笑"],
+gens:[["萤火虫","黑暗中的小小火花"],["莲花","静水上悄然绽放"],
+["灯笼","一盏不眠的暖光"],["月光花","向月亮展开花瓣"],
+["彗星","划过夜空的流光"],["银河","缓缓呼吸的星海"],
+["星云","恒星诞生的云"],["极光","天空本身在歌唱"]]}
+};
+const LANGS=[["en","English"],["hy","Հայերեն"],["ru","Русский"],["es","Español"],["fr","Français"],
+["de","Deutsch"],["it","Italiano"],["pt","Português"],["tr","Türkçe"],["ja","日本語"],["zh","中文"]];
+
+/* ================= game data ================= */
+const GEN=[
+ {icon:"✨",cost:15,rate:0.1},
+ {icon:"🪷",cost:100,rate:1},
+ {icon:"🏮",cost:1100,rate:8},
+ {icon:"🌙",cost:12000,rate:47},
+ {icon:"☄️",cost:130000,rate:260},
+ {icon:"🌌",cost:1400000,rate:1400},
+ {icon:"💫",cost:20000000,rate:7800},
+ {icon:"🌠",cost:330000000,rate:44000}
+];
+const TIERS=[5,25,50],TIERC=[12,90,620];
+const ACHDEFS=[
+ {ic:"✨",cur:s=>s.total,goal:10,lab:()=>t("light")},
+ {ic:"👐",cur:s=>s.taps,goal:100,lab:()=>t("taps")},
+ {ic:"🙌",cur:s=>s.taps,goal:1000,lab:()=>t("taps")},
+ {ic:"🕯️",cur:s=>s.owned[0],goal:10,lab:()=>genTxt(0,0)},
+ {ic:"🪷",cur:s=>s.owned.filter(o=>o>0).length,goal:8,lab:()=>t("garden")},
+ {ic:"🌱",cur:s=>s.rebirths,goal:1,lab:()=>t("rebirth")},
+ {ic:"✦",cur:s=>s.totalSd,goal:10,lab:()=>t("stardust")},
+ {ic:"🌕",cur:s=>s.total,goal:1e6,lab:()=>t("light")},
+ {ic:"🌌",cur:s=>s.total,goal:1e9,lab:()=>t("light")},
+ {ic:"🌠",cur:s=>s.starsCaught,goal:1,lab:()=>t("starsC")}
+];
+const MOONS=["🌑","🌒","🌓","🌔","🌕"];
+const PALS=[
+ ["#0a0d22","#161442","#0b1c2c"],
+ ["#070a1c","#141238","#0a1c2e"],
+ ["#0a0726","#221a52","#0c2136"],
+ ["#100a30","#342068","#123047"],
+ ["#1a0f3e","#4a2a7e","#1c3c55"]
+];
+const KEY="lumina-save-v2";
+const state={light:0,run:0,total:0,taps:0,timePlayed:0,sd:0,totalSd:0,rebirths:0,starsCaught:0,
+ owned:[0,0,0,0,0,0,0,0],seen:[0,0,0,0,0,0,0,0],revealed:[0,0,0,0,0,0,0,0],
+ mults:[1,1,1,1,1,1,1,1],tapMult:1,globMult:1,ups:{},ach:[0,0,0,0,0,0,0,0,0,0],
+ buyQty:"1",buffUntil:0,sound:true,lang:"en",last:Date.now()};
+
+/* ================= helpers ================= */
+const $=id=>document.getElementById(id);
+const UN=["","K","M","B","T","Qa","Qi","Sx","Sp","Oc","No","Dc"];
+function fmt(n){
+ if(!isFinite(n))return"∞"; if(n<0)return"-"+fmt(-n);
+ if(n<1000){const v=Math.floor(n*10)/10;return String(v).replace(/\.0$/,"");}
+ let u=0;while(n>=1000&&u<UN.length-1){n/=1000;u++;}
+ return(n>=100?n.toFixed(0):n>=10?n.toFixed(1):n.toFixed(2))+UN[u];
+}
+function ftime(s){s=Math.floor(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;
+ return h>0?h+"h "+m+"m":m>0?m+"m "+sec+"s":sec+"s";}
+function t(k){const L=T[state.lang]||T.en;return L[k]!==undefined?L[k]:T.en[k];}
+function arrT(key,i,k){const L=T[state.lang]||T.en;const a=(L&&L[key])||T.en[key];const v=a[i];return k===undefined?v:v[k];}
+function genTxt(i,k){return arrT("gens",i,k);}
+function buffOn(){return Date.now()<state.buffUntil;}
+function buffMult(){return buffOn()?7:1;}
+function achMult(){let c=0;for(let i=0;i<10;i++)if(state.ach[i])c++;return 1+0.02*c;}
+function getLps(){let s=0;for(let i=0;i<8;i++)s+=state.owned[i]*GEN[i].rate*state.mults[i];
+ return s*state.globMult*(1+state.sd*0.05)*achMult()*buffMult();}
+function tapGain(){return state.tapMult*state.globMult*(1+state.sd*0.05)*achMult()*buffMult()+getLps()*0.05;}
+function cost(i){return Math.ceil(GEN[i].cost*Math.pow(1.15,state.owned[i]));}
+function sdGain(){return Math.floor(Math.sqrt(state.run/1e5));}
+function bulkInfo(i){
+ if(state.buyQty==="max"){
+  let n=0,tot=0,l=state.light,c=cost(i);
+  while(n<500&&l>=c){l-=c;tot+=c;n++;c=Math.ceil(GEN[i].cost*Math.pow(1.15,state.owned[i]+n));}
+  return n>0?{n,cost:tot}:{n:1,cost:cost(i)};
+ }
+ const q=+state.buyQty;let tot=0;
+ for(let k=0;k<q;k++)tot+=Math.ceil(GEN[i].cost*Math.pow(1.15,state.owned[i]+k));
+ return{n:q,cost:tot};
+}
+function hexRgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
+function lerpHex(a,b,f){const A=hexRgb(a),B=hexRgb(b);
+ return"rgb("+Math.round(A[0]+(B[0]-A[0])*f)+","+Math.round(A[1]+(B[1]-A[1])*f)+","+Math.round(A[2]+(B[2]-A[2])*f)+")";}
+
+/* ================= save / load ================= */
+function save(){state.last=Date.now();try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function load(){
+ try{const d=JSON.parse(localStorage.getItem(KEY));
+  if(d){Object.assign(state,d);
+   if(!state.ups)state.ups={};
+   ["owned","seen","revealed","mults"].forEach(k=>{while(state[k].length<8)state[k].push(k==="mults"?1:0);});
+   while(state.ach.length<10)state.ach.push(0);
+  }}catch(e){}
+}
+
+/* ================= sound ================= */
+let AC=null;
+function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+ if(AC&&AC.state==="suspended")AC.resume();return AC;}
+function tone(freq,dur,type,vol,delay){
+ const a=ac();if(!a||!state.sound)return;dur=dur||.8;type=type||"sine";vol=vol||.09;delay=delay||0;
+ const t0=a.currentTime+delay,o=a.createOscillator(),g=a.createGain();
+ o.type=type;o.frequency.value=freq;
+ g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(vol,t0+.02);
+ g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+ o.connect(g);g.connect(a.destination);o.start(t0);o.stop(t0+dur+.05);
+}
+const PENT=[523.25,587.33,659.25,783.99,880];
+function sndTap(){tone(PENT[(Math.random()*5)|0]*(Math.random()<.25?2:1),.55,"sine",.055);}
+function sndBuy(){tone(392,.5,"sine",.06);tone(587.33,.7,"sine",.055,.09);}
+function sndRebirth(){[523.25,659.25,783.99,1046.5].forEach((f,i)=>tone(f,1.3,"sine",.065,i*.13));}
+
+/* ================= toasts & float ================= */
+function toast(msg){
+ const el=document.createElement("div");el.className="toast";el.textContent=msg;
+ $("toasts").appendChild(el);requestAnimationFrame(()=>el.classList.add("show"));
+ setTimeout(()=>{el.classList.add("hide");setTimeout(()=>el.remove(),450);},4200);
+}
+function spawnFloat(txt){
+ const el=document.createElement("span");el.className="float";el.textContent=txt;
+ el.style.left=(50+(Math.random()*28-14))+"%";
+ $("orbWrap").appendChild(el);el.addEventListener("animationend",()=>el.remove());
+}
+
+/* ================= sky canvas ================= */
+const sky=$("sky"),ctx=sky.getContext("2d");let DPR=1;
+const stars=[],dust=[],sparks=[];
+for(let i=0;i<160;i++)stars.push({x:Math.random(),y:Math.random(),r:Math.random()*1.4+.3,ph:Math.random()*7,sp:.4+Math.random()*1.2,a:.4+Math.random()*.6});
+for(let i=0;i<42;i++)dust.push({x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*.006,vy:-.004-Math.random()*.008,r:Math.random()*2+.6,a:.06+Math.random()*.16});
+function resize(){DPR=Math.min(window.devicePixelRatio||1,2);
+ sky.width=innerWidth*DPR;sky.height=innerHeight*DPR;
+ sky.style.width=innerWidth+"px";sky.style.height=innerHeight+"px";}
+addEventListener("resize",resize);resize();
+function blob(x,y,r,color){const g=ctx.createRadialGradient(x,y,0,x,y,r);
+ g.addColorStop(0,color);g.addColorStop(1,"rgba(0,0,0,0)");
+ ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);}
+function burst(x,y){
+ for(let i=0;i<14;i++){const a=Math.random()*Math.PI*2,sp=.6+Math.random()*2.4;
+  sparks.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-.6,life:1,r:1+Math.random()*2.4,
+   c:Math.random()<.6?"255,214,150":"185,167,255"});}
+ if(sparks.length>300)sparks.splice(0,sparks.length-300);
+}
+
+/* shooting star */
+const star={active:false,next:Date.now()+25000,x:0,y:0,vx:0,vy:0};
+function scheduleStar(){star.next=Date.now()+(40+Math.random()*80)*1000;}
+function spawnStar(){star.active=true;star.x=-50;star.y=20+Math.random()*innerHeight*.35;
+ star.vx=150+Math.random()*110;star.vy=35+Math.random()*35;}
+function catchStar(){
+ star.active=false;state.starsCaught++;
+ burst(star.x,star.y);burst(star.x,star.y);
+ if(Math.random()<0.5){
+  const gain=Math.max(getLps()*60,tapGain()*40)+50;
+  state.light+=gain;state.run+=gain;state.total+=gain;
+  toast("🌠 "+t("lucky")+"  +"+fmt(gain)+" "+t("light"));
+ }else{
+  state.buffUntil=Date.now()+30000;
+  toast("☄️ "+t("frenzy"));
+ }
+ sndRebirth();scheduleStar();refreshUI();
+}
+window.addEventListener("pointerdown",e=>{
+ if(star.active){const dx=e.clientX-star.x,dy=e.clientY-star.y;
+  if(dx*dx+dy*dy<52*52){e.stopPropagation();e.preventDefault();catchStar();}}
+},true);
+
+function drawSky(now,dt){
+ const w=innerWidth,h=innerHeight;ctx.setTransform(DPR,0,0,DPR,0,0);
+ const sf=Math.min(4,Math.log10(state.total+1)/3),si=Math.min(3,Math.floor(sf)),fr=sf-si;
+ const bg=ctx.createLinearGradient(0,0,0,h);
+ bg.addColorStop(0,lerpHex(PALS[si][0],PALS[si+1][0],fr));
+ bg.addColorStop(.55,lerpHex(PALS[si][1],PALS[si+1][1],fr));
+ bg.addColorStop(1,lerpHex(PALS[si][2],PALS[si+1][2],fr));
+ ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+ blob(w*(.2+.05*Math.sin(now*.00003)),h*.28,h*.5,"rgba(124,96,255,"+(0.08+sf*.02)+")");
+ blob(w*(.85+.04*Math.cos(now*.00002)),h*.68,h*.55,"rgba(64,196,255,"+(0.06+sf*.015)+")");
+ blob(w*.5,h*.98,h*.5,"rgba(255,196,140,0.07)");
+ for(const s of stars){const al=s.a*(.45+.55*(0.5+0.5*Math.sin(now*.001*s.sp+s.ph)));
+  ctx.globalAlpha=al;ctx.fillStyle="#dfe6ff";ctx.beginPath();ctx.arc(s.x*w,s.y*h,s.r,0,7);ctx.fill();}
+ ctx.globalAlpha=1;
+ for(const d of dust){d.x+=d.vx*dt;d.y+=d.vy*dt;
+  if(d.y<-.02){d.y=1.02;d.x=Math.random();}if(d.x<-.02)d.x=1.02;if(d.x>1.02)d.x=-.02;
+  ctx.globalAlpha=d.a;ctx.fillStyle="#cfd8ff";ctx.beginPath();ctx.arc(d.x*w,d.y*h,d.r,0,7);ctx.fill();}
+ ctx.globalAlpha=1;
+ for(let i=sparks.length-1;i>=0;i--){const p=sparks[i];
+  p.x+=p.vx*dt*60;p.y+=p.vy*dt*60;p.vy-=dt*.5;p.vx*=.985;p.life-=dt*1.1;
+  if(p.life<=0){sparks.splice(i,1);continue;}
+  ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle="rgba("+p.c+",1)";
+  ctx.shadowColor="rgba("+p.c+",1)";ctx.shadowBlur=8;
+  ctx.beginPath();ctx.arc(p.x,p.y,p.r*p.life+0.4,0,7);ctx.fill();ctx.shadowBlur=0;}
+ ctx.globalAlpha=1;
+ /* shooting star */
+ if(star.active){
+  star.x+=star.vx*dt;star.y+=star.vy*dt;
+  if(star.x>w+90){star.active=false;scheduleStar();}
+  else{
+   const tx=star.x-star.vx*.4,ty=star.y-star.vy*.4;
+   const tr=ctx.createLinearGradient(tx,ty,star.x,star.y);
+   tr.addColorStop(0,"rgba(255,230,180,0)");tr.addColorStop(1,"rgba(255,230,180,.8)");
+   ctx.strokeStyle=tr;ctx.lineWidth=2.4;ctx.lineCap="round";
+   ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(star.x,star.y);ctx.stroke();
+   const pu=1+.2*Math.sin(now*.02);
+   blob(star.x,star.y,26*pu,"rgba(255,224,170,.5)");
+   ctx.fillStyle="#fff8ea";ctx.beginPath();ctx.arc(star.x,star.y,4.2,0,7);ctx.fill();
+   if(Math.random()<.5)sparks.push({x:star.x,y:star.y,vx:-star.vx/60+(Math.random()-.5),vy:-star.vy/60+(Math.random()-.5),life:.5,r:1.2,c:"255,224,170"});
+  }
+ }
+}
+
+/* ================= garden (generators) ================= */
+let rows=[];
+function buildShop(){
+ const list=$("genList");list.innerHTML="";rows=[];
+ GEN.forEach((g,i)=>{
+  const el=document.createElement("div");el.className="gen";
+  el.innerHTML='<div class="g-ico">'+g.icon+'</div>'+
+   '<div class="g-info"><div class="g-name"></div><div class="g-desc"></div><div class="g-rate"></div></div>'+
+   '<div class="g-buy"><div class="g-count">0</div><button class="g-btn" data-i="'+i+'"></button></div>'+
+   '<div class="g-mask">· · ·</div>';
+  list.appendChild(el);
+  rows[i]={el,name:el.querySelector(".g-name"),desc:el.querySelector(".g-desc"),
+   rate:el.querySelector(".g-rate"),count:el.querySelector(".g-count"),btn:el.querySelector(".g-btn")};
+ });
+ $("genList").addEventListener("click",e=>{
+  const b=e.target.closest(".g-btn");if(!b)return;
+  const i=+b.dataset.i,bi=bulkInfo(i);
+  if(state.light>=bi.cost){state.light-=bi.cost;state.owned[i]+=bi.n;sndBuy();refreshUI();}
+ });
+}
+function updateRow(i){
+ const r=rows[i];if(!r)return;const bi=bulkInfo(i);
+ r.count.textContent=state.owned[i];
+ r.btn.textContent=fmt(bi.cost);
+ r.btn.classList.toggle("can",state.light>=bi.cost);
+}
+function revealCheck(){
+ for(let i=0;i<8;i++){
+  const c=GEN[i].cost;
+  const vis=state.owned[i]>0||state.run>=c*0.25;
+  const myst=!vis&&state.run>=c*0.12;
+  if(myst&&!state.seen[i])state.seen[i]=1;
+  if(vis&&!state.revealed[i]){state.revealed[i]=1;if(state.seen[i]){toast("🌱 "+t("unlock"));sndBuy();}}
+  const r=rows[i];if(!r)continue;
+  r.el.classList.toggle("mystery",!vis);
+  r.el.style.display=(!vis&&!myst)?"none":"";
+ }
+}
+
+/* ================= blessings (upgrades) ================= */
+let blessEls=[],lastSig="";
+function blessDefs(){
+ const arr=[];
+ for(let i=0;i<8;i++)for(let ti=0;ti<3;ti++){
+  if(state.owned[i]>=TIERS[ti])arr.push({id:"g"+i+"t"+ti,icon:GEN[i].icon,
+   cost:GEN[i].cost*TIERC[ti],
+   name:t("upB").replace("{g}",genTxt(i,0)),desc:t("upBD").replace("{g}",genTxt(i,0)),
+   buy:()=>{state.mults[i]*=2;}});
+ }
+ if(state.total>=150)arr.push({id:"t0",icon:"👐",cost:400,name:arrT("tapUps",0,0),desc:arrT("tapUps",0,1),buy:()=>{state.tapMult*=2;}});
+ if(state.total>=8000)arr.push({id:"t1",icon:"💖",cost:25000,name:arrT("tapUps",1,0),desc:arrT("tapUps",1,1),buy:()=>{state.tapMult*=3;}});
+ if(state.total>=400000)arr.push({id:"t2",icon:"🤲",cost:1200000,name:arrT("tapUps",2,0),desc:arrT("tapUps",2,1),buy:()=>{state.tapMult*=4;}});
+ if(state.total>=60000)arr.push({id:"q0",icon:"💧",cost:200000,name:arrT("globUps",0,0),desc:arrT("globUps",0,1),buy:()=>{state.globMult*=1.5;}});
+ if(state.total>=2500000)arr.push({id:"q1",icon:"🌘",cost:8000000,name:arrT("globUps",1,0),desc:arrT("globUps",1,1),buy:()=>{state.globMult*=2;}});
+ return arr;
+}
+function blessSig(){
+ return state.owned.join(",")+"|"+(state.total>=150?1:0)+(state.total>=8000?1:0)+(state.total>=400000?1:0)+(state.total>=60000?1:0)+(state.total>=2500000?1:0);
+}
+function renderBless(){
+ const list=$("blessList");list.innerHTML="";blessEls=[];
+ const defs=blessDefs();let any=false;
+ defs.forEach(d=>{
+  if(state.ups[d.id])return;any=true;
+  const el=document.createElement("div");el.className="gen";
+  el.innerHTML='<div class="g-ico">'+d.icon+'</div>'+
+   '<div class="g-info"><div class="g-name">'+d.name+'</div><div class="g-desc">'+d.desc+'</div></div>'+
+   '<div class="g-buy"><button class="g-btn"></button></div>';
+  const btn=el.querySelector(".g-btn");
+  btn.textContent=fmt(d.cost);
+  btn.addEventListener("click",()=>{
+   if(state.light>=d.cost){state.light-=d.cost;state.ups[d.id]=1;d.buy();sndBuy();renderBless();refreshUI();}
+  });
+  list.appendChild(el);blessEls.push({btn,cost:d.cost});
+ });
+ if(!any)list.innerHTML='<p class="empty">✦ '+t("none")+' ✦</p>';
+}
+function refreshBless(){
+ let can=0;
+ blessEls.forEach(b=>{const ok=state.light>=b.cost;b.btn.classList.toggle("can",ok);if(ok)can++;});
+ const bd=$("blessBadge");
+ if(can>0){bd.hidden=false;bd.textContent=can;}else bd.hidden=true;
+}
+
+/* ================= achievements ================= */
+let achEls=[];
+function buildAch(){
+ const grid=$("achGrid");grid.innerHTML="";achEls=[];
+ ACHDEFS.forEach((a,i)=>{
+  const el=document.createElement("div");el.className="ach";
+  el.innerHTML='<div class="a-ic">'+a.ic+'</div><div class="a-name">'+arrT("achs",i)+'</div>'+
+   '<div class="a-bar"><div></div></div><div class="a-prog"></div>';
+  grid.appendChild(el);
+  achEls.push({el,bar:el.querySelector(".a-bar div"),prog:el.querySelector(".a-prog")});
+ });
+}
+function checkAch(){
+ let unlocked=0;
+ ACHDEFS.forEach((a,i)=>{
+  const v=a.cur(state),done=state.ach[i]===1||v>=a.goal;
+  if(done&&!state.ach[i]){state.ach[i]=1;toast("🏅 "+t("achU")+" — "+arrT("achs",i));sndBuy();}
+  if(state.ach[i])unlocked++;
+  const r=achEls[i];if(!r)return;
+  r.el.classList.toggle("done",!!state.ach[i]);
+  r.bar.style.width=Math.min(100,v/a.goal*100)+"%";
+  r.prog.textContent=state.ach[i]?"✓":fmt(Math.min(v,a.goal))+" / "+fmt(a.goal);
+ });
+ $("achHead").textContent="🏅 "+unlocked+"/"+ACHDEFS.length+"  ·  +"+(unlocked*2)+"%";
+}
+
+/* ================= UI refresh ================= */
+function refreshUI(){
+ const lps=getLps();
+ $("lightNum").textContent=fmt(Math.floor(state.light));
+ $("rateLine").textContent=fmt(lps)+"/s   ·   +"+fmt(tapGain())+" "+t("perTap");
+ const mi=Math.min(4,Math.floor(Math.log10(state.total+1)/2.5));
+ $("moon").textContent=MOONS[mi];
+ for(let i=0;i<8;i++)updateRow(i);
+ const gain=sdGain();
+ $("pSd").textContent="✦ "+fmt(state.sd)+" · +"+(state.sd*5)+"%";
+ const rb=$("rebirthBtn");
+ if(gain>0){rb.disabled=false;rb.classList.add("ready");rb.textContent=t("rebirthBtn")+"  +"+fmt(gain)+" ✦";}
+ else{rb.disabled=true;rb.classList.remove("ready");rb.textContent=t("need");}
+ const prev=gain*gain*1e5,next=(gain+1)*(gain+1)*1e5;
+ $("pFill").style.width=Math.max(2,Math.min(100,(state.run-prev)/(next-prev)*100))+"%";
+ $("stTaps").textContent=fmt(state.taps);
+ $("stTime").textContent=ftime(state.timePlayed);
+ $("stTotal").textContent=fmt(state.total);
+ $("stReb").textContent=fmt(state.rebirths);
+ $("stStars").textContent=fmt(state.starsCaught);
+ checkAch();refreshBless();
+ const sig=blessSig();if(sig!==lastSig){lastSig=sig;renderBless();refreshBless();}
+}
+
+/* ================= language ================= */
+function applyLang(){
+ const L=T[state.lang]||T.en;
+ document.documentElement.lang=state.lang;
+ $("tagline").textContent=L.tag;$("lightLblTxt").textContent=L.light;$("tapHint").textContent=L.tap;
+ $("pTitle").textContent=L.rebirth;$("pDesc").textContent=L.rebirthDesc;
+ $("homeTxt").textContent=L.home;$("langSel").value=state.lang;
+ $("tabLG").textContent=t("garden");$("tabLB").textContent=t("bless");$("tabLA").textContent=t("awards");
+ $("qtyMax").textContent=t("max");
+ $("achNote").textContent=t("achBonus");
+ $("stTapsL").textContent=L.taps;$("stTimeL").textContent=L.time;$("stTotalL").textContent=L.total;
+ $("stRebL").textContent=L.rebirths;$("stStarsL").textContent=L.starsC;
+ $("resetBtn").textContent=L.reset;
+ $("tickerTxt").textContent="❝ "+arrT("news",0)+" ❞";
+ rows.forEach((r,i)=>{if(!r)return;
+  r.name.textContent=genTxt(i,0);r.desc.textContent=genTxt(i,1);
+  r.rate.textContent="+"+fmt(GEN[i].rate)+"/s";});
+ renderBless();buildAch();refreshUI();
+}
+function initLangSel(){
+ const sel=$("langSel");
+ LANGS.forEach(([c,n])=>{const o=document.createElement("option");o.value=c;o.textContent=n;sel.appendChild(o);});
+ sel.addEventListener("change",()=>{state.lang=sel.value;save();applyLang();});
+}
+
+/* ================= tabs & qty ================= */
+document.querySelectorAll(".tab").forEach(tb=>{
+ tb.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll(".panel").forEach(x=>x.classList.remove("on"));
+  tb.classList.add("on");$("p-"+tb.dataset.p).classList.add("on");
+ });
+});
+document.querySelectorAll(".qty").forEach(q=>{
+ q.addEventListener("click",()=>{
+  document.querySelectorAll(".qty").forEach(x=>x.classList.remove("on"));
+  q.classList.add("on");state.buyQty=q.dataset.q;save();refreshUI();
+ });
+});
+
+/* ================= interactions ================= */
+function doTap(cx,cy){
+ const g=tapGain();
+ state.light+=g;state.run+=g;state.total+=g;state.taps++;
+ spawnFloat("+"+fmt(g));burst(cx,cy);
+ const orb=$("orb");orb.classList.remove("pressed");void orb.offsetWidth;orb.classList.add("pressed");
+ sndTap();
+}
+$("orb").addEventListener("pointerdown",e=>{e.preventDefault();doTap(e.clientX,e.clientY);});
+$("orb").addEventListener("keydown",e=>{
+ if(e.key==="Enter"||e.key===" "){e.preventDefault();
+  const r=$("orb").getBoundingClientRect();doTap(r.left+r.width/2,r.top+r.height/2);}});
+$("rebirthBtn").addEventListener("click",()=>{
+ const g=sdGain();if(g<1)return;
+ state.sd+=g;state.totalSd+=g;state.rebirths++;
+ state.light=0;state.run=0;
+ state.owned=[0,0,0,0,0,0,0,0];state.mults=[1,1,1,1,1,1,1,1];
+ state.tapMult=1;state.globMult=1;state.ups={};state.buffUntil=0;
+ sndRebirth();
+ const f=$("flash");f.classList.remove("go");void f.offsetWidth;f.classList.add("go");
+ toast("✨ +"+fmt(g)+" "+t("stardust"));
+ lastSig="";refreshUI();save();
+});
+$("resetBtn").addEventListener("click",()=>{
+ if(confirm(t("resetQ"))){try{localStorage.removeItem(KEY);}catch(e){}location.reload();}
+});
+$("soundBtn").addEventListener("click",()=>{
+ state.sound=!state.sound;$("soundBtn").textContent=state.sound?"🔊":"🔇";save();
+ if(state.sound)sndTap();
+});
+
+/* ================= news ticker ================= */
+let newsIdx=0;
+setInterval(()=>{
+ const el=$("tickerTxt");el.style.opacity=0;
+ setTimeout(()=>{newsIdx=(newsIdx+1)%5;el.textContent="❝ "+arrT("news",newsIdx)+" ❞";el.style.opacity=1;},700);
+},11000);
+
+/* ================= main loop ================= */
+let lastT=performance.now(),uiAcc=0;
+function loop(now){
+ const dt=Math.min((now-lastT)/1000,.25);lastT=now;
+ const g=getLps()*dt;
+ state.light+=g;state.run+=g;state.total+=g;state.timePlayed+=dt;
+ if(!star.active&&Date.now()>star.next)spawnStar();
+ revealCheck();
+ const bb=$("buffBadge");
+ if(buffOn()){bb.classList.add("show");
+  bb.textContent="☄️ "+t("frenzy")+" · "+Math.ceil((state.buffUntil-Date.now())/1000)+"s";}
+ else bb.classList.remove("show");
+ uiAcc+=dt;if(uiAcc>.12){uiAcc=0;refreshUI();}
+ drawSky(now,dt);
+ requestAnimationFrame(loop);
+}
+
+/* ================= init ================= */
+load();
+(function offlineGain(){
+ const away=(Date.now()-(state.last||Date.now()))/1000;
+ if(away>30){const gain=getLps()*Math.min(away,7200);
+  if(gain>0){state.light+=gain;state.run+=gain;state.total+=gain;
+   setTimeout(()=>toast("🌙 "+t("offline")+" +"+fmt(gain)+" "+t("light")),900);}}
+})();
+$("soundBtn").textContent=state.sound?"🔊":"🔇";
+buildShop();initLangSel();
+if(!T[state.lang]){
+ const nav=(navigator.language||"en").slice(0,2);
+ state.lang=T[nav]?nav:"en";
+}
+document.querySelectorAll(".qty").forEach(x=>x.classList.toggle("on",x.dataset.q===state.buyQty));
+applyLang();
+requestAnimationFrame(t0=>{lastT=t0;requestAnimationFrame(loop);});
+setInterval(save,5000);
+document.addEventListener("visibilitychange",()=>{if(document.hidden)save();});
+addEventListener("beforeunload",save);
+</script>
+</body>
+</html>

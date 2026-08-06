@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aetheria - Endless Zen Sanctuary</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        zen: {
+                            50: '#fbfaff',
+                            100: '#f4f0ff',
+                            200: '#e8e0fe',
+                            300: '#d3c3fd',
+                            400: '#b499fa',
+                            500: '#9369f4',
+                            600: '#7a42e7',
+                            700: '#672ed0',
+                            800: '#5627ab',
+                            900: '#47228a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            user-select: none;
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #f0f4ff 0%, #faefff 50%, #fff5f0 100%);
+            min-height: 100vh;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            box-shadow: 0 20px 40px rgba(147, 105, 244, 0.07);
+        }
+
+        .glass-button {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-button:hover {
+            background: rgba(255, 255, 255, 0.98);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(147, 105, 244, 0.15);
+        }
+
+        .glass-button:active {
+            transform: translateY(0);
+        }
+
+        .floating-orb {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-16px) rotate(4deg); }
+        }
+
+        .pulse-glow {
+            animation: pulseGlow 3s infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 20px rgba(180, 153, 250, 0.3); }
+            100% { box-shadow: 0 0 55px rgba(180, 153, 250, 0.75); }
+        }
+
+        .track-card {
+            transition: all 0.2s ease;
+        }
+        .track-card.active {
+            background: rgba(147, 105, 244, 0.12);
+            border-color: rgba(147, 105, 244, 0.5);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(180, 153, 250, 0.45);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(147, 105, 244, 0.7);
+        }
+    </style>
+</head>
+<body class="text-slate-700 flex flex-col min-h-screen relative overflow-x-hidden selection:bg-purple-200">
+
+    <canvas id="zenCanvas" class="fixed inset-0 pointer-events-auto z-0"></canvas>
+
+    <!-- Main Content Layout Wrapper -->
+    <div class="relative z-10 flex flex-col min-h-screen justify-between pointer-events-none">
+        
+        <!-- Header -->
+        <header class="p-4 md:p-6 w-full max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4 pointer-events-auto">
+            <!-- Back Link to Root -->
+            <a href="/index.html" class="glass-button px-4 py-2.5 rounded-2xl flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-purple-600 shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                <span id="txt-backHome">← Home (root/index.html)</span>
+            </a>
+
+            <!-- Logo Title -->
+            <div class="text-center flex-1 md:flex-initial">
+                <h1 class="text-2xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 via-pink-500 to-amber-500 tracking-wide">
+                    AETHERIA
+                </h1>
+                <p id="txt-subtitle" class="text-xs text-slate-500 tracking-widest uppercase font-semibold">Endless Zen Sanctuary</p>
+            </div>
+
+            <!-- Header Controls -->
+            <div class="flex items-center gap-3">
+                <button id="audioBtn" onclick="toggleAudioMaster()" class="glass-button p-2.5 px-3.5 rounded-2xl text-slate-700 hover:text-purple-600 flex items-center gap-2 text-sm font-semibold shadow-sm">
+                    <svg id="audioIcon" class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                    </svg>
+                    <span id="txt-soundState" class="hidden sm:inline">Audio Off</span>
+                </button>
+
+                <!-- Language Selector Dropdown -->
+                <div class="relative">
+                    <select id="langSelect" onchange="changeLanguage(this.value)" class="glass-button px-3 py-2.5 rounded-2xl text-sm font-semibold text-slate-700 bg-transparent border-0 outline-none cursor-pointer pr-8 appearance-none">
+                        <option value="en">🌐 English</option>
+                        <option value="hy">🇦🇲 Հայերեն</option>
+                        <option value="es">🇪🇸 Español</option>
+                        <option value="fr">🇫🇷 Français</option>
+                        <option value="de">🇩🇪 Deutsch</option>
+                        <option value="ru">🇷🇺 Русский</option>
+                        <option value="zh">🇨🇳 中文</option>
+                        <option value="ja">🇯🇵 日本語</option>
+                        <option value="it">🇮🇹 Italiano</option>
+                        <option value="pt">🇵🇹 Português</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="w-full max-w-7xl mx-auto px-4 py-2 flex-1 flex flex-col lg:flex-row items-center lg:items-start justify-between gap-6 pointer-events-none">
+            
+            <!-- Left Info Panel & Interactive Lotus -->
+            <div class="w-full lg:w-1/3 flex flex-col items-center lg:items-start text-center lg:text-left gap-4 pointer-events-auto">
+                <div class="glass-panel p-6 rounded-3xl w-full max-w-md shadow-lg">
+                    <p id="txt-essenceLabel" class="text-xs font-bold tracking-wider text-purple-600 uppercase mb-1">Starlight Essence</p>
+                    <div class="flex items-baseline gap-2 justify-center lg:justify-start">
+                        <span id="essenceDisplay" class="text-4xl sm:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-700 via-indigo-600 to-pink-600">0</span>
+                        <span class="text-lg font-medium text-amber-500">✨</span>
+                    </div>
+                    
+                    <div class="mt-3 flex items-center justify-between text-xs text-slate-600 border-t border-purple-100/60 pt-3">
+                        <span id="txt-perSecLabel">Generation rate:</span>
+                        <span id="epsDisplay" class="font-extrabold text-purple-700">0.0 / sec</span>
+                    </div>
+
+                    <div class="mt-2.5 p-2 px-3 bg-purple-50/80 rounded-2xl border border-purple-100 flex items-center justify-between text-[11px]">
+                        <span id="txt-inflationLabel" class="text-slate-500 font-medium">Global Price Multiplier:</span>
+                        <span id="globalMultDisplay" class="font-extrabold text-pink-600">x1.00 (+20%/buy)</span>
+                    </div>
+                </div>
+
+                <!-- Interactive Lotus Orb -->
+                <div class="relative py-6 my-auto flex flex-col items-center justify-center">
+                    <button id="zenOrb" onclick="handleOrbClick(event)" class="floating-orb pulse-glow w-48 h-48 sm:w-56 sm:h-56 rounded-full bg-gradient-to-tr from-purple-300 via-pink-200 to-amber-100 border-4 border-white/90 shadow-2xl flex items-center justify-center relative group active:scale-95 transition-transform duration-200 focus:outline-none cursor-pointer">
+                        <div class="absolute inset-2 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center group-hover:bg-white/60 transition-colors">
+                            <span class="text-6xl sm:text-7xl transform group-hover:scale-110 transition-transform duration-300 drop-shadow-sm">🌸</span>
+                        </div>
+                    </button>
+                    <p id="txt-clickHint" class="mt-4 text-xs font-semibold text-purple-600 tracking-wide animate-pulse">Tap the Lotus to gather serenity</p>
+                </div>
+            </div>
+
+            <!-- Right Tabbed Panel -->
+            <div class="w-full lg:w-3/5 glass-panel rounded-3xl p-5 pointer-events-auto flex flex-col h-[600px] shadow-2xl">
+                <!-- Navigation Tabs -->
+                <div class="flex items-center gap-1 p-1.5 bg-white/60 rounded-2xl mb-4 border border-white/80 shadow-sm">
+                    <button onclick="switchTab('cultivate')" id="tab-cultivate" class="tab-btn flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all bg-white text-purple-700 shadow-sm">
+                        🌱 <span id="txt-tabCultivate">Cultivate (18)</span>
+                    </button>
+                    <button onclick="switchTab('music')" id="tab-music" class="tab-btn flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all text-slate-500 hover:text-purple-600">
+                        🎵 <span id="txt-tabMusic">Music (50)</span>
+                    </button>
+                    <button onclick="switchTab('atmosphere')" id="tab-atmosphere" class="tab-btn flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all text-slate-500 hover:text-purple-600">
+                        🌌 <span id="txt-tabAtmosphere">Realms</span>
+                    </button>
+                    <button onclick="switchTab('transcend')" id="tab-transcend" class="tab-btn flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all text-slate-500 hover:text-purple-600">
+                        ✨ <span id="txt-tabTranscend">Ascend</span>
+                    </button>
+                </div>
+
+                <!-- Tab 1: Cultivate Upgrades -->
+                <div id="panel-cultivate" class="tab-panel flex-1 overflow-y-auto pr-1 space-y-2.5"></div>
+
+                <!-- Tab 2: 50 Ambient Soundscapes -->
+                <div id="panel-music" class="tab-panel hidden flex-1 flex flex-col overflow-hidden">
+                    <div class="p-3 bg-purple-50/70 rounded-2xl border border-purple-100/80 mb-3 flex items-center justify-between">
+                        <div>
+                            <div id="txt-nowPlayingLabel" class="text-[10px] uppercase font-bold text-purple-500">Currently Playing</div>
+                            <div id="nowPlayingTrack" class="text-xs font-bold text-slate-800 flex items-center gap-1.5 mt-0.5">
+                                <span>🎶</span> Select a track below to play
+                            </div>
+                        </div>
+                        <button id="trackPlayPauseBtn" onclick="toggleCurrentTrack()" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow transition-all">
+                            ▶ Play
+                        </button>
+                    </div>
+
+                    <p id="txt-musicDesc" class="text-xs text-slate-500 mb-2 font-medium">Choose from 50 soothing ambient soundscapes generated live in high definition:</p>
+
+                    <div id="musicTracksContainer" class="flex-1 overflow-y-auto pr-1 grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+                </div>
+
+                <!-- Tab 3: Themes -->
+                <div id="panel-atmosphere" class="tab-panel hidden flex-1 overflow-y-auto pr-1 space-y-3">
+                    <p id="txt-atmoDesc" class="text-xs text-slate-500 mb-3 font-medium">Choose the aesthetic mood of your endless sanctuary:</p>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="setTheme('dawn')" class="p-3.5 rounded-2xl border border-white/80 bg-gradient-to-br from-pink-100 to-purple-100 text-left hover:shadow-md transition-all">
+                            <span class="text-2xl">🌅</span>
+                            <div class="font-bold text-xs text-slate-800 mt-1" id="txt-themeDawn">Pastel Dawn</div>
+                        </button>
+                        <button onclick="setTheme('twilight')" class="p-3.5 rounded-2xl border border-white/80 bg-gradient-to-br from-indigo-100 to-purple-200 text-left hover:shadow-md transition-all">
+                            <span class="text-2xl">🌆</span>
+                            <div class="font-bold text-xs text-slate-800 mt-1" id="txt-themeTwilight">Serene Twilight</div>
+                        </button>
+                        <button onclick="setTheme('night')" class="p-3.5 rounded-2xl border border-white/80 bg-gradient-to-br from-slate-200 to-indigo-200 text-left hover:shadow-md transition-all">
+                            <span class="text-2xl">🌌</span>
+                            <div class="font-bold text-xs text-slate-800 mt-1" id="txt-themeNight">Starlight Night</div>
+                        </button>
+                        <button onclick="setTheme('meadow')" class="p-3.5 rounded-2xl border border-white/80 bg-gradient-to-br from-emerald-100 to-teal-100 text-left hover:shadow-md transition-all">
+                            <span class="text-2xl">🌿</span>
+                            <div class="font-bold text-xs text-slate-800 mt-1" id="txt-themeMeadow">Golden Meadow</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Transcendence -->
+                <div id="panel-transcend" class="tab-panel hidden flex-1 flex flex-col justify-between p-2">
+                    <div class="text-center space-y-3 my-auto">
+                        <span class="text-6xl inline-block floating-orb">☸️</span>
+                        <h3 id="txt-prestigeTitle" class="text-xl font-bold text-purple-900">Harmonic Transcendence</h3>
+                        <p id="txt-prestigeDesc" class="text-xs text-slate-600 max-w-sm mx-auto leading-relaxed">
+                            Reset your garden progress to awaken Harmony Shards. Each shard permanently boosts all future light generation by +20%.
+                        </p>
+                        <div class="bg-purple-50/90 p-3.5 rounded-2xl border border-purple-100 inline-block text-xs font-semibold">
+                            <span id="txt-shardsEarned">Shards to Gain:</span> 
+                            <span id="shardsToGain" class="font-extrabold text-purple-700 text-sm">0</span> ✨
+                        </div>
+                    </div>
+
+                    <button onclick="doPrestige()" id="prestigeBtn" class="w-full py-3.5 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-bold text-xs shadow-lg shadow-purple-200 hover:from-purple-700 hover:to-indigo-700 transition-all active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span id="txt-prestigeBtn">Transcend Now</span>
+                    </button>
+                </div>
+            </div>
+
+        </main>
+
+        <footer class="p-4 text-center text-xs text-slate-500 font-medium pointer-events-auto flex flex-col sm:flex-row items-center justify-center gap-3">
+            <p>Aetheria Zen Ecosystem &bull; Infinite Harmony &bull; <span id="txt-footerSave">Saved on local device</span></p>
+            <div class="flex items-center gap-2">
+                <button onclick="exportSaveData()" class="px-2.5 py-1 bg-white/70 hover:bg-white text-purple-700 rounded-lg border border-purple-200 text-[11px] font-semibold transition-all shadow-sm">💾 Save File</button>
+                <button onclick="showResetModal()" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg border border-rose-200 text-[11px] font-semibold transition-all shadow-sm">🗑️ Reset Progress</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Custom In-App Modal for Reset Confirmation -->
+    <div id="resetModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel p-6 rounded-3xl max-w-sm w-full text-center space-y-4 shadow-2xl">
+            <span class="text-4xl">⚠️</span>
+            <h4 class="text-lg font-bold text-slate-800">Reset Local Progress?</h4>
+            <p class="text-xs text-slate-500 leading-relaxed">This will permanently erase your garden progress, essence, and upgrades saved on this device. Are you sure?</p>
+            <div class="flex items-center gap-2 pt-2">
+                <button onclick="hideResetModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all">Cancel</button>
+                <button onclick="confirmResetLocalData()" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-md">Yes, Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let state = {
+            essence: 0,
+            shards: 0,
+            totalPurchases: 0,
+            soundMaster: false,
+            activeTrackId: 1,
+            isPlayingTrack: false,
+            theme: 'dawn',
+            lang: 'en',
+            upgrades: {}
+        };
+
+        const UPGRADE_DEFINITIONS = [
+            { id: 'lotus_petal', name: 'Lotus Petal Garden', icon: '🌸', baseCost: 15, baseEps: 0.5, desc: 'Cultivate soft lotus blossoms.' },
+            { id: 'dewdrop_collector', name: 'Dewdrop Condenser', icon: '💧', baseCost: 100, baseEps: 3, desc: 'Gather pure morning dew.' },
+            { id: 'zen_bonsai', name: 'Whispering Bonsai', icon: '🪴', baseCost: 500, baseEps: 12, desc: 'Ancient bonsai tree emitting quiet wisdom.' },
+            { id: 'bamboo_fountain', name: 'Shishi-Odoshi Fountain', icon: '🎋', baseCost: 2000, baseEps: 45, desc: 'Rhythmic water clack bringing serenity.' },
+            { id: 'singing_bowl', name: 'Sacred Resonance Bowl', icon: '🥣', baseCost: 8000, baseEps: 150, desc: 'Vibrational singing bowls tuned to 432Hz.' },
+            { id: 'koi_pond', name: 'Tranquil Koi Pond', icon: '🐟', baseCost: 32000, baseEps: 500, desc: 'Gracefully swimming golden fish.' },
+            { id: 'wind_chime_tower', name: 'Celestial Chime Spire', icon: '🎐', baseCost: 125000, baseEps: 1800, desc: 'Glass chimes ringing in cosmic wind.' },
+            { id: 'cherry_blossom', name: 'Eternal Sakura Tree', icon: '🌸', baseCost: 500000, baseEps: 6500, desc: 'Cascading pink petals drifting forever.' },
+            { id: 'stone_lantern', name: 'Spirit Lantern Shrine', icon: '🏮', baseCost: 2000000, baseEps: 22000, desc: 'Warm glowing stone beacons of light.' },
+            { id: 'moon_bridge', name: 'Moonlight Arch Bridge', icon: '🌉', baseCost: 8500000, baseEps: 80000, desc: 'Archway connecting dreams to reality.' },
+            { id: 'crystal_cave', name: 'Harmonic Amethyst Grotto', icon: '💎', baseCost: 35000000, baseEps: 300000, desc: 'Glowing crystal formations radiating light.' },
+            { id: 'sunken_sanctuary', name: 'Submerged Zen Temple', icon: '🏛️', baseCost: 150000000, baseEps: 1100000, desc: 'Ancient underwater hall of quiet reflection.' },
+            { id: 'starlight_altar', name: 'Astral Light Altar', icon: '✨', baseCost: 700000000, baseEps: 4500000, desc: 'Direct conduit to starlight energies.' },
+            { id: 'nebula_fountain', name: 'Cosmic Nebula Well', icon: '🌌', baseCost: 3000000000, baseEps: 18000000, desc: 'Wellspring of galactic stardust.' },
+            { id: 'time_hourglass', name: 'Sands of Serenity', icon: '⏳', baseCost: 15000000000, baseEps: 75000000, desc: 'Endless golden sands echoing peace.' },
+            { id: 'ether_blossom', name: 'Void Lotus Blossom', icon: '🪷', baseCost: 80000000000, baseEps: 320000000, desc: 'Ethereal bloom transcending space.' },
+            { id: 'celestial_gate', name: 'Nirvana Gateway', icon: '⛩️', baseCost: 400000000000, baseEps: 1400000000, desc: 'Portal into absolute harmony.' },
+            { id: 'infinite_sanctum', name: 'Omnipresent Sanctum', icon: '🕉️', baseCost: 2000000000000, baseEps: 6000000000, desc: 'The ultimate sanctuary of infinity.' }
+        ];
+
+        const I18N = {
+            en: {
+                backHome: "← Home (root/index.html)",
+                subtitle: "Endless Zen Sanctuary",
+                essenceLabel: "Starlight Essence",
+                perSecLabel: "Generation rate:",
+                inflationLabel: "Global Price Multiplier:",
+                clickHint: "Tap the Lotus to gather serenity",
+                tabCultivate: "Cultivate (18)",
+                tabMusic: "Music (50)",
+                tabAtmosphere: "Realms",
+                tabTranscend: "Ascend",
+                soundStateOn: "Audio On",
+                soundStateOff: "Audio Off",
+                nowPlayingLabel: "Currently Playing",
+                musicDesc: "Choose from 50 soothing ambient soundscapes generated live on your device:",
+                atmoDesc: "Choose the aesthetic mood of your endless sanctuary:",
+                themeDawn: "Pastel Dawn",
+                themeTwilight: "Serene Twilight",
+                themeNight: "Starlight Night",
+                themeMeadow: "Golden Meadow",
+                prestigeTitle: "Harmonic Transcendence",
+                prestigeDesc: "Reset your garden progress to awaken Harmony Shards. Each shard permanently boosts all future light generation by +20%.",
+                shardsEarned: "Shards to Gain:",
+                prestigeBtn: "Transcend Now",
+                footerSave: "Saved on local device",
+                play: "▶ Play",
+                playing: "🔊 Playing",
+                pause: "⏸ Pause"
+            },
+            hy: {
+                backHome: "← Գլխավոր (root/index.html)",
+                subtitle: "Անվերջ Զեն Սրբավայր",
+                essenceLabel: "Աստղային Էսենցիա",
+                perSecLabel: "Արտադրողականություն:",
+                inflationLabel: "Գնային Գործակից:",
+                clickHint: "Հպվեք Լոտոսին՝ հանգստություն ստանալու համար",
+                tabCultivate: "Մշակել (18)",
+                tabMusic: "Երգեր (50)",
+                tabAtmosphere: "Մթնոլորտ",
+                tabTranscend: "Վերելք",
+                soundStateOn: "Ձայնը միացված է",
+                soundStateOff: "Ձայնը անջատված է",
+                nowPlayingLabel: "Ընթացիկ Երգը",
+                musicDesc: "Ընտրեք 50 հանգստացնող ձայնային մթնոլորտներից որևէ մեկը․",
+                atmoDesc: "Ընտրեք ձեր անվերջ սրբավայրի գեղեցիկ թեման․",
+                themeDawn: "Փափուկ Այգաբաց",
+                themeTwilight: "Խաղաղ Վերջալույս",
+                themeNight: "Աստղազարդ Գիշեր",
+                themeMeadow: "Ոսկե Մարգագետին",
+                prestigeTitle: "Հարմոնիկ Տրանսցենդենտություն",
+                prestigeDesc: "Վերաբեռնեք այգին՝ Ներդաշնակության Բյուրեղներ ստանալու համար: Ամեն բյուրեղ մշտապես ավելացնում է էսենցիան +20%-ով:",
+                shardsEarned: "Ստացվող Բյուրեղներ:",
+                prestigeBtn: "Վերանալ Հիմա",
+                footerSave: "Պահպանված է ձեր սարքում",
+                play: "▶ Նվագել",
+                playing: "🔊 Հնչում է",
+                pause: "⏸ Դադար"
+            },
+            es: {
+                backHome: "← Inicio (root/index.html)",
+                subtitle: "Santuario Zen Infinito",
+                essenceLabel: "Esencia de Luz",
+                perSecLabel: "Generación:",
+                inflationLabel: "Multiplicador Global:",
+                clickHint: "Toca el Loto para obtener serenidad",
+                tabCultivate: "Cultivar (18)",
+                tabMusic: "Música (50)",
+                tabAtmosphere: "Atmósfera",
+                tabTranscend: "Ascender",
+                soundStateOn: "Audio Activo",
+                soundStateOff: "Audio Silenciado",
+                nowPlayingLabel: "Sonando Ahora",
+                musicDesc: "Elige entre 50 relajantes paisajes sonoros ambientales:",
+                atmoDesc: "Elige el ambiente de tu santuario infinito:",
+                themeDawn: "Amanecer Pastel",
+                themeTwilight: "Atardecer Sereno",
+                themeNight: "Noche Estrellada",
+                themeMeadow: "Prado Dorado",
+                prestigeTitle: "Trascendencia Armónica",
+                prestigeDesc: "Reinicia el jardín para despertar Fragmentos de Armonía (+20% luz constante).",
+                shardsEarned: "Fragmentos a ganar:",
+                prestigeBtn: "Trascender Ahora",
+                footerSave: "Guardado en dispositivo local",
+                play: "▶ Reproducir",
+                playing: "🔊 Sonando",
+                pause: "⏸ Pausa"
+            },
+            fr: {
+                backHome: "← Accueil (root/index.html)",
+                subtitle: "Sanctuaire Zen Infini",
+                essenceLabel: "Essence Étoilée",
+                perSecLabel: "Taux de génération:",
+                inflationLabel: "Multiplicateur Global:",
+                clickHint: "Touchez le Lotus pour la sérénité",
+                tabCultivate: "Cultiver (18)",
+                tabMusic: "Musique (50)",
+                tabAtmosphere: "Atmosphère",
+                tabTranscend: "Ascension",
+                soundStateOn: "Audio Activé",
+                soundStateOff: "Audio Désactivé",
+                nowPlayingLabel: "En Lecture",
+                musicDesc: "Choisissez parmi 50 ambiances sonores apaisantes générées en direct :",
+                atmoDesc: "Choisissez l'ambiance de votre sanctuaire :",
+                themeDawn: "Aurore Pastel",
+                themeTwilight: "Crépuscule Serein",
+                themeNight: "Nuit Étoilée",
+                themeMeadow: "Prairie Dorée",
+                prestigeTitle: "Transcendance Harmonique",
+                prestigeDesc: "Réinitialisez le jardin pour obtenir des Éclats d'Harmonie (+20% de lumière).",
+                shardsEarned: "Éclats à gagner:",
+                prestigeBtn: "Transcender",
+                footerSave: "Enregistré sur l'appareil local",
+                play: "▶ Jouer",
+                playing: "🔊 En lecture",
+                pause: "⏸ Pause"
+            },
+            de: {
+                backHome: "← Startseite (root/index.html)",
+                subtitle: "Endloses Zen-Heiligtum",
+                essenceLabel: "Sternenlicht-Essenz",
+                perSecLabel: "Generierung:",
+                inflationLabel: "Preismultiplikator:",
+                clickHint: "Tippe auf den Lotus für Gelassenheit",
+                tabCultivate: "Kultivieren (18)",
+                tabMusic: "Musik (50)",
+                tabAtmosphere: "Atmosphäre",
+                tabTranscend: "Aufsteigen",
+                soundStateOn: "Audio An",
+                soundStateOff: "Audio Aus",
+                nowPlayingLabel: "Läuft Gerade",
+                musicDesc: "Wähle aus 50 beruhigenden Ambient-Soundscapes:",
+                atmoDesc: "Wähle die Stimmung deines Heiligtums:",
+                themeDawn: "Pastell-Morgen",
+                themeTwilight: "Ruhige Dämmerung",
+                themeNight: "Sternennacht",
+                themeMeadow: "Goldene Wiese",
+                prestigeTitle: "Harmonische Transzendenz",
+                prestigeDesc: "Setze den Garten zurück für Harmonie-Scherben (+20% dauerhafter Bonus).",
+                shardsEarned: "Scherben zu verdienen:",
+                prestigeBtn: "Jetzt Transzendieren",
+                footerSave: "Auf lokalem Gerät gespeichert",
+                play: "▶ Abspielen",
+                playing: "🔊 Läuft",
+                pause: "⏸ Pause"
+            },
+            ru: {
+                backHome: "← Главная (root/index.html)",
+                subtitle: "Бесконечное Дзен Обиталище",
+                essenceLabel: "Звездная Эссенция",
+                perSecLabel: "Скорость прироста:",
+                inflationLabel: "Множитель Цен:",
+                clickHint: "Нажмите на Лотос для обретения покоя",
+                tabCultivate: "Развитие (18)",
+                tabMusic: "Музыка (50)",
+                tabAtmosphere: "Атмосфера",
+                tabTranscend: "Вознесение",
+                soundStateOn: "Звук Вкл",
+                soundStateOff: "Звук Выкл",
+                nowPlayingLabel: "Сейчас Играет",
+                musicDesc: "Выберите одну из 50 умиротворяющих звуковых композиций:",
+                atmoDesc: "Выберите атмосферу вашего дзен-сада:",
+                themeDawn: "Пастельный Рассвет",
+                themeTwilight: "Безмятежный Закат",
+                themeNight: "Звездная Ночь",
+                themeMeadow: "Золотой Луг",
+                prestigeTitle: "Гармоническая Трансцендентность",
+                prestigeDesc: "Сбросьте сад для получения Осколков Гармонии (+20% к добыче навсегда).",
+                shardsEarned: "Осколков к получению:",
+                prestigeBtn: "Совершить Вознесение",
+                footerSave: "Сохранено на вашем устройстве",
+                play: "▶ Играть",
+                playing: "🔊 Звучит",
+                pause: "⏸ Пауза"
+            },
+            zh: {
+                backHome: "← 返回主页 (root/index.html)",
+                subtitle: "无尽禅意圣地",
+                essenceLabel: "星光精粹",
+                perSecLabel: "每秒生成速度:",
+                inflationLabel: "全局价格倍率:",
+                clickHint: "轻触莲花，收集宁静",
+                tabCultivate: "培育 (18)",
+                tabMusic: "音乐 (50)",
+                tabAtmosphere: "氛围",
+                tabTranscend: "飞升",
+                soundStateOn: "声音: 开启",
+                soundStateOff: "声音: 静音",
+                nowPlayingLabel: "正在播放",
+                musicDesc: "从 50 首舒缓的氛围声景中自由选择：",
+                atmoDesc: "选择你的无尽圣地氛围：",
+                themeDawn: "柔和黎明",
+                themeTwilight: "宁静黄昏",
+                themeNight: "星光璀璨",
+                themeMeadow: "金色草地",
+                prestigeTitle: "和谐超越",
+                prestigeDesc: "重置花园以唤醒和谐碎片（每个永久提升+20%生成）。",
+                shardsEarned: "可获得碎片:",
+                prestigeBtn: "立即飞升",
+                footerSave: "已保存在本地设备",
+                play: "▶ 播放",
+                playing: "🔊 播放中",
+                pause: "⏸ 暂停"
+            },
+            ja: {
+                backHome: "← ホームへ (root/index.html)",
+                subtitle: "無限の禅サンクチュアリ",
+                essenceLabel: "星 akari エッセンス",
+                perSecLabel: "毎秒の生成量:",
+                inflationLabel: "価格倍率:",
+                clickHint: "ロータスをタップして安らぎを集める",
+                tabCultivate: "育成 (18)",
+                tabMusic: "音楽 (50)",
+                tabAtmosphere: "雰囲気",
+                tabTranscend: "超越",
+                soundStateOn: "サウンド オン",
+                soundStateOff: "サウンド オフ",
+                nowPlayingLabel: "再生中",
+                musicDesc: "心やすらぐ50種類のアンビエントサウンドから選択:",
+                atmoDesc: "あなたの聖地の雰囲気を選択してください:",
+                themeDawn: "パステル黎明",
+                themeTwilight: "静寂の黄昏",
+                themeNight: "星空の夜",
+                themeMeadow: "黄金の草原",
+                prestigeTitle: "調和の超越",
+                prestigeDesc: "庭園をリセットして調和の欠片を獲得します（永久に+20%ブースト）。",
+                shardsEarned: "獲得できる欠片:",
+                prestigeBtn: "今すぐ超越する",
+                footerSave: "ローカル端末に保存済み",
+                play: "▶ 再生",
+                playing: "🔊 再生中",
+                pause: "⏸ 一時停止"
+            },
+            it: {
+                backHome: "← Home (root/index.html)",
+                subtitle: "Santuario Zen Infinito",
+                essenceLabel: "Essenza Stellare",
+                perSecLabel: "Tasso di generazione:",
+                inflationLabel: "Moltiplicatore Prezzi:",
+                clickHint: "Tocca il Loto per raccogliere serenità",
+                tabCultivate: "Coltiva (18)",
+                tabMusic: "Musica (50)",
+                tabAtmosphere: "Atmosfera",
+                tabTranscend: "Ascendi",
+                soundStateOn: "Audio Attivo",
+                soundStateOff: "Audio Disattivato",
+                nowPlayingLabel: "In Riproduzione",
+                musicDesc: "Scegli tra 50 paesaggi sonori ambientali rilassanti:",
+                atmoDesc: "Scegli l'atmosfera del tuo santuario:",
+                themeDawn: "Alba Pastello",
+                themeTwilight: "Crepuscolo Sereno",
+                themeNight: "Notte Stellata",
+                themeMeadow: "Prato Dorato",
+                prestigeTitle: "Trascendenza Armonica",
+                prestigeDesc: "Riavvia il giardino per risvegliare Frammenti di Armonia (+20% di luce permanente).",
+                shardsEarned: "Frammenti da guadagnare:",
+                prestigeBtn: "Trascendi Ora",
+                footerSave: "Salvato sul dispositivo locale",
+                play: "▶ Riproduci",
+                playing: "🔊 In corso",
+                pause: "⏸ Pausa"
+            },
+            pt: {
+                backHome: "← Início (root/index.html)",
+                subtitle: "Santuário Zen Infinito",
+                essenceLabel: "Essência Estelar",
+                perSecLabel: "Taxa de geração:",
+                inflationLabel: "Multiplicador de Preço:",
+                clickHint: "Toque no Lótus para colher serenidade",
+                tabCultivate: "Cultivar (18)",
+                tabMusic: "Música (50)",
+                tabAtmosphere: "Atmosfera",
+                tabTranscend: "Ascender",
+                soundStateOn: "Som Ligado",
+                soundStateOff: "Som Desligado",
+                nowPlayingLabel: "Tocando Agora",
+                musicDesc: "Escolha entre 50 paisagens sonoras ambientais relaxantes:",
+                atmoDesc: "Escolha o ambiente do seu santuário infinito:",
+                themeDawn: "Alvorada Pastel",
+                themeTwilight: "Crepúsculo Sereno",
+                themeNight: "Noite Estrelada",
+                themeMeadow: "Prado Dourado",
+                prestigeTitle: "Trascendência Harmônica",
+                prestigeDesc: "Reinicie o jardim para despertar Fragmentos de Harmonia (+20% bônus permanente).",
+                shardsEarned: "Fragmentos a ganhar:",
+                prestigeBtn: "Transcender Agora",
+                footerSave: "Salvo no dispositivo local",
+                play: "▶ Tocar",
+                playing: "🔊 Tocando",
+                pause: "⏸ Pausa"
+            }
+        };
+
+        const MUSIC_TRACKS = [
+            { id: 1, title: 'Cosmic Pentatonic Harmony', icon: '🌌', desc: 'Soothing C-major pentatonic arpeggio bells & soft drone' },
+            { id: 2, title: 'Celestial Surf & Waves', icon: '🌊', desc: 'Oceanic white noise swells with gentle bass warmth' },
+            { id: 3, title: 'Zen Temple Chimes', icon: '🔔', desc: 'Resonant bell echoes echoing across mountain peaks' },
+            { id: 4, title: 'Rainfall Solace', icon: '🌧️', desc: 'Soft pink noise rain synthesis with delicate drops' },
+            { id: 5, title: 'Bamboo Wind Flute', icon: '🎋', desc: 'Vibrato sine tones reminiscent of oriental flutes' },
+            { id: 6, title: 'Crystal Singing Bowl 432Hz', icon: '🥣', desc: 'Deep binaural resonance for meditation and focus' },
+            { id: 7, title: 'Morning Meadow Birds', icon: '🐦', desc: 'High frequency birdsong with gentle breeze filters' },
+            { id: 8, title: 'Deep Starlight Drone', icon: '✨', desc: 'Warm ambient chord swells evolving over long cycles' },
+            { id: 9, title: 'Solar Winds', icon: '☀️', desc: 'Rhythmic LFO filtered wind sweeping softly' },
+            { id: 10, title: 'Monastery Gong', icon: '🧘', desc: 'Low fundamental harmonic pulses hitting every few seconds' },
+            { id: 11, title: 'Cosmic Resonance', icon: '🪐', desc: 'Sub-bass 60Hz hum with high sparkling chime notes' },
+            { id: 12, title: 'Wind Chimes in Breeze', icon: '🎐', desc: 'Stochastic glass chime drops playing harmonic intervals' },
+            { id: 13, title: 'Aurora Glissando', icon: '🌌', desc: 'Smooth frequency sweeps sliding across peaceful scales' },
+            { id: 14, title: 'Ethereal Plucked Harp', icon: '🪕', desc: 'Plucked string decay playing serene chord motifs' },
+            { id: 15, title: 'Tranquil River Stream', icon: '🏞️', desc: 'Continuous bubbling water and gentle stream noise' },
+            { id: 16, title: 'Night Sky Lullaby', icon: '🌙', desc: 'Continuous 4-note soothing sequence loop' },
+            { id: 17, title: 'Forest Whispers', icon: '🌲', desc: 'Dual bandpass noise simulating pine forest winds' },
+            { id: 18, title: 'Angelic Choir Pad', icon: '👼', desc: 'Multi-saw harmonic stack creating vocal chorus pads' },
+            { id: 19, title: 'Timeless Aeon Drone', icon: '⏳', desc: 'Ultra-slow 12-second swells evolving through fifths' },
+            { id: 20, title: 'Nirvana Master Fusion', icon: '🌸', desc: 'Complete ambient mix of bowls, chimes and soft harp' },
+            { id: 21, title: 'Sacred Tibetan Bell', icon: '🔔', desc: 'Singing metal harmonics with rich upper overtones' },
+            { id: 22, title: 'Whispering Pines', icon: '🌲', desc: 'Gentle atmospheric wind rushing through forest leaves' },
+            { id: 23, title: 'Mystic Solfeggio 528Hz', icon: '✨', desc: 'Transformation tone praised for inner peace and warmth' },
+            { id: 24, title: 'Oceanic Abyss', icon: '🌊', desc: 'Deep sub-aquatic low frequency soothing hum' },
+            { id: 25, title: 'Celestial Harp Arpeggio', icon: '🪕', desc: 'Ascending modal scale pattern with cathedral reverb' },
+            { id: 26, title: 'Mountain Rain & Breeze', icon: '⛈️', desc: 'Distant soft rainfall with low rumble atmosphere' },
+            { id: 27, title: 'Golden Lotus Bloom', icon: '🪷', desc: 'Warm pentatonic glockenspiel pulses' },
+            { id: 28, title: 'Zen Water Basin (Shishi-odoshi)', icon: '💧', desc: 'Rhythmic water drop chime pulse every 5 seconds' },
+            { id: 29, title: 'Astral Portal Drift', icon: '🌀', desc: 'Phased binaural drone shifting gently between ears' },
+            { id: 30, title: 'Moonlight Serenade', icon: '🌕', desc: 'Soft minor pentatonic keys floating over sub drone' },
+            { id: 31, title: 'Silent Forest Dawn', icon: '🌅', desc: 'Morning ambience with ambient swell and light chirps' },
+            { id: 32, title: 'Solfeggio 639Hz Harmonic', icon: '🔮', desc: 'Frequency tuned for connection, clarity, and balance' },
+            { id: 33, title: 'Emerald Valley Wind', icon: '🌿', desc: 'Sweeping low-pass filter white noise with gentle warm tilt' },
+            { id: 34, title: 'Soft Celestial Chants', icon: '🧘', desc: 'Synthesized voice formant hums with long decay' },
+            { id: 35, title: 'Cosmic Starlight Bells', icon: '🌌', desc: 'High crystal tinkles randomly generating cosmic sparkle' },
+            { id: 36, title: 'Gentle Waterfall Glow', icon: '🌊', desc: 'Cascading water noise with tuned high frequency sheen' },
+            { id: 37, title: 'Radiant Solar Pulse', icon: '☀️', desc: 'Warm analog-style sawtooth swell filtered to 200Hz' },
+            { id: 38, title: 'Shamanic Drum Soft Pulse', icon: '🥁', desc: '60 BPM deep warm bass heartbeat thump' },
+            { id: 39, title: 'Crystal Caves Echo', icon: '💎', desc: 'Dual delay bell tones echoing into deep cavernous space' },
+            { id: 40, title: 'Deep Delta Brainwaves 3Hz', icon: '🧠', desc: '100Hz and 103Hz binaural tones for deep sleep relaxation' },
+            { id: 41, title: 'Peaceful Horizon', icon: '🌅', desc: 'Warm string orchestra pad evolving smoothly' },
+            { id: 42, title: 'Stardust Lullaby', icon: '⭐', desc: 'High soft sine arpeggios repeating soothing patterns' },
+            { id: 43, title: 'Ancient Sanctuary Organ', icon: '🏛️', desc: 'Soft pipe organ ambient drone in fifths' },
+            { id: 44, title: 'Serene Evening Breeze', icon: '🍃', desc: 'Filtered noise sweeping softly across the stereo field' },
+            { id: 45, title: 'Pure Sine Oasis', icon: '🧘', desc: 'Multi-sine chordstack playing pure harmonic series' },
+            { id: 46, title: 'Floating Cloud Soundscape', icon: '☁️', desc: 'Weightless drone evolving over 15 second cycles' },
+            { id: 47, title: 'Warm Sunset Strings', icon: '🎻', desc: 'Warm polyphonic choir & string simulation' },
+            { id: 48, title: 'Infinite Space Pad', icon: '🌌', desc: 'Deep atmospheric cosmic pad with subtle chorus modulation' },
+            { id: 49, title: 'Spirit Whispers', icon: '✨', desc: 'Ethereal high harmonic hums with long reverberation' },
+            { id: 50, title: 'Supreme Enlightenment Suite', icon: '🕉️', desc: 'Complete master blend of bowls, chimes, stream, and drones' }
+        ];
+
+        let audioCtx = null;
+        let activeAudioNodes = [];
+        let trackTimer = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function stopCurrentTrackAudio() {
+            if (trackTimer) {
+                clearInterval(trackTimer);
+                trackTimer = null;
+            }
+            activeAudioNodes.forEach(node => {
+                try {
+                    if (node.stop) node.stop();
+                    if (node.disconnect) node.disconnect();
+                } catch(e) {}
+            });
+            activeAudioNodes = [];
+        }
+
+        function startTrackAudio(trackId) {
+            stopCurrentTrackAudio();
+            if (!state.soundMaster || !state.isPlayingTrack) return;
+
+            const ctx = getAudioContext();
+            const masterGain = ctx.createGain();
+            masterGain.gain.setValueAtTime(0.22, ctx.currentTime);
+            masterGain.connect(ctx.destination);
+            activeAudioNodes.push(masterGain);
+
+            const notesC = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99];
+
+            if (trackId === 1) {
+                trackTimer = setInterval(() => {
+                    const osc = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    const freq = notesC[Math.floor(Math.random() * notesC.length)];
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                    g.gain.setValueAtTime(0.001, ctx.currentTime);
+                    g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.1);
+                    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 2.5);
+                    osc.connect(g);
+                    g.connect(masterGain);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 2.6);
+                }, 1400);
+            } else if (trackId === 2) {
+                const bufferSize = ctx.sampleRate * 2;
+                const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+                const whiteNoise = ctx.createBufferSource();
+                whiteNoise.buffer = noiseBuffer;
+                whiteNoise.loop = true;
+
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(300, ctx.currentTime);
+                const surfGain = ctx.createGain();
+                surfGain.gain.setValueAtTime(0.06, ctx.currentTime);
+
+                const lfo = ctx.createOscillator();
+                lfo.frequency.setValueAtTime(0.12, ctx.currentTime);
+                lfo.connect(filter.frequency);
+
+                whiteNoise.connect(filter);
+                filter.connect(surfGain);
+                surfGain.connect(masterGain);
+                whiteNoise.start();
+                lfo.start();
+                activeAudioNodes.push(whiteNoise, lfo);
+            } else if (trackId === 6 || trackId === 23 || trackId === 32 || trackId === 40) {
+                const targetFreq = trackId === 6 ? 432 : trackId === 23 ? 528 : trackId === 32 ? 639 : 100;
+                const beat = trackId === 40 ? 3 : 4;
+                const b1 = ctx.createOscillator();
+                const b2 = ctx.createOscillator();
+                const bg = ctx.createGain();
+                b1.frequency.setValueAtTime(targetFreq, ctx.currentTime);
+                b2.frequency.setValueAtTime(targetFreq + beat, ctx.currentTime);
+                bg.gain.setValueAtTime(0.07, ctx.currentTime);
+                b1.connect(bg);
+                b2.connect(bg);
+                bg.connect(masterGain);
+                b1.start();
+                b2.start();
+                activeAudioNodes.push(b1, b2);
+            } else {
+                const intervalRate = 800 + ((trackId * 17) % 1600);
+                trackTimer = setInterval(() => {
+                    const osc = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    
+                    const noteIndex = (Math.floor(Math.random() * notesC.length) + trackId) % notesC.length;
+                    const octaveMult = (trackId % 4 === 0) ? 0.5 : (trackId % 3 === 0) ? 2.0 : 1.0;
+                    const freq = notesC[noteIndex] * octaveMult;
+                    
+                    osc.type = (trackId % 5 === 0) ? 'triangle' : (trackId % 7 === 0) ? 'sawtooth' : 'sine';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+
+                    g.gain.setValueAtTime(0.001, ctx.currentTime);
+                    g.gain.exponentialRampToValueAtTime(0.09, ctx.currentTime + 0.15);
+                    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 2.0);
+
+                    osc.connect(g);
+                    g.connect(masterGain);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 2.1);
+                }, intervalRate);
+            }
+        }
+
+        function getGlobalPriceMultiplier() {
+            return 1.0 + (state.totalPurchases * 0.20);
+        }
+
+        function getEPS() {
+            let base = 0;
+            UPGRADE_DEFINITIONS.forEach(u => {
+                const count = state.upgrades[u.id]?.count || 0;
+                base += count * u.baseEps;
+            });
+            const shardMultiplier = 1 + (state.shards * 0.20);
+            return base * shardMultiplier;
+        }
+
+        function getUpgradeCost(upgradeId) {
+            const uDef = UPGRADE_DEFINITIONS.find(u => u.id === upgradeId);
+            const count = state.upgrades[upgradeId]?.count || 0;
+            const globalMult = getGlobalPriceMultiplier();
+            const cost = uDef.baseCost * Math.pow(1.15, count) * globalMult;
+            return Math.floor(cost);
+        }
+
+        function buyUpgrade(upgradeId) {
+            const cost = getUpgradeCost(upgradeId);
+            if (state.essence >= cost) {
+                state.essence -= cost;
+                if (!state.upgrades[upgradeId]) state.upgrades[upgradeId] = { count: 0 };
+                state.upgrades[upgradeId].count += 1;
+                state.totalPurchases += 1;
+                
+                playClickChime();
+                renderUpgradesList();
+                updateDisplays();
+                saveState();
+            }
+        }
+
+        function playClickChime() {
+            if (!state.soundMaster) return;
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25 + Math.random() * 200, ctx.currentTime);
+                gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.45);
+            } catch(e) {}
+        }
+
+        function renderUpgradesList() {
+            const container = document.getElementById('panel-cultivate');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const shardMult = 1 + (state.shards * 0.20);
+
+            UPGRADE_DEFINITIONS.forEach(u => {
+                const count = state.upgrades[u.id]?.count || 0;
+                const cost = getUpgradeCost(u.id);
+                const canAfford = state.essence >= cost;
+                const currentEpsContribution = (u.baseEps * shardMult).toFixed(1);
+
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                    canAfford ? 'bg-white/85 border-purple-200 hover:shadow-md' : 'bg-white/35 border-white/50 opacity-70'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl p-2 rounded-2xl bg-purple-50 shadow-inner">${u.icon}</span>
+                        <div>
+                            <div class="font-extrabold text-xs text-slate-800">${u.name} <span class="text-purple-600 ml-1 font-extrabold">x${count}</span></div>
+                            <div class="text-[10px] text-slate-500 max-w-[200px] leading-tight mt-0.5">${u.desc}</div>
+                            <div class="text-[10px] font-bold text-purple-700 mt-0.5">+${formatNum(currentEpsContribution)} /s</div>
+                        </div>
+                    </div>
+                    <button onclick="buyUpgrade('${u.id}')" ${!canAfford ? 'disabled' : ''} class="px-3 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                        canAfford 
+                        ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-sm active:scale-95' 
+                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    }">
+                        ✨ ${formatNum(cost)}
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderMusicTab() {
+            const container = document.getElementById('musicTracksContainer');
+            const nowPlayingDisplay = document.getElementById('nowPlayingTrack');
+            const playPauseBtn = document.getElementById('trackPlayPauseBtn');
+            const dict = I18N[state.lang] || I18N.en;
+
+            const activeTrack = MUSIC_TRACKS.find(t => t.id === state.activeTrackId) || MUSIC_TRACKS[0];
+            if (nowPlayingDisplay) {
+                nowPlayingDisplay.innerHTML = `<span>${activeTrack.icon}</span> ${activeTrack.title}`;
+            }
+
+            if (playPauseBtn) {
+                if (state.isPlayingTrack && state.soundMaster) {
+                    playPauseBtn.textContent = dict.pause;
+                    playPauseBtn.className = "px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow transition-all";
+                } else {
+                    playPauseBtn.textContent = dict.play;
+                    playPauseBtn.className = "px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow transition-all";
+                }
+            }
+
+            if (!container) return;
+            container.innerHTML = '';
+
+            MUSIC_TRACKS.forEach(track => {
+                const isActive = track.id === state.activeTrackId && state.isPlayingTrack && state.soundMaster;
+                const isSelected = track.id === state.activeTrackId;
+
+                const item = document.createElement('div');
+                item.className = `track-card p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                    isActive ? 'active border-purple-400 bg-purple-100/60 shadow-sm' : 'bg-white/60 border-white/70 hover:bg-white/90'
+                }`;
+
+                item.onclick = () => selectTrack(track.id);
+
+                item.innerHTML = `
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <span class="text-xl p-1.5 rounded-xl bg-purple-50">${track.icon}</span>
+                        <div class="truncate">
+                            <div class="font-bold text-xs text-slate-800 truncate">${track.title}</div>
+                            <div class="text-[10px] text-slate-500 truncate">${track.desc}</div>
+                        </div>
+                    </div>
+                    <button class="px-2.5 py-1 rounded-xl text-[11px] font-bold ${
+                        isActive ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
+                    }">
+                        ${isActive ? dict.playing : isSelected ? dict.play : '▶'}
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function handleOrbClick(e) {
+            const gain = 1 * (1 + state.shards * 0.20);
+            state.essence += gain;
+            playClickChime();
+            createFloatingText(e.clientX || window.innerWidth/2, e.clientY || window.innerHeight/2, `+${gain.toFixed(0)}`);
+            spawnRipple(e.clientX, e.clientY);
+            updateDisplays();
+        }
+
+        function createFloatingText(x, y, text) {
+            const el = document.createElement('div');
+            el.className = 'fixed font-extrabold text-purple-600 text-sm pointer-events-none z-50 transition-all duration-1000 ease-out';
+            el.style.left = `${x - 12}px`;
+            el.style.top = `${y - 24}px`;
+            el.textContent = text;
+            document.body.appendChild(el);
+
+            setTimeout(() => {
+                el.style.transform = 'translateY(-45px)';
+                el.style.opacity = '0';
+            }, 20);
+
+            setTimeout(() => el.remove(), 1050);
+        }
+
+        function getShardsToGain() {
+            if (state.essence < 100000) return 0;
+            return Math.floor(Math.pow(state.essence / 100000, 0.5));
+        }
+
+        function doPrestige() {
+            const gain = getShardsToGain();
+            if (gain <= 0) return;
+
+            state.shards += gain;
+            state.essence = 0;
+            state.totalPurchases = 0;
+            UPGRADE_DEFINITIONS.forEach(u => {
+                if (state.upgrades[u.id]) state.upgrades[u.id].count = 0;
+            });
+
+            playClickChime();
+            renderUpgradesList();
+            updateDisplays();
+            saveState();
+        }
+
+        function formatNum(num) {
+            if (num >= 1e18) return (num / 1e18).toFixed(2) + 'Qi';
+            if (num >= 1e15) return (num / 1e15).toFixed(2) + 'Qa';
+            if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
+            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(1) + 'k';
+            return Math.floor(num).toLocaleString();
+        }
+
+        function updateDisplays() {
+            document.getElementById('essenceDisplay').textContent = formatNum(state.essence);
+            document.getElementById('epsDisplay').textContent = `${formatNum(getEPS())} / sec`;
+            
+            const globalMult = getGlobalPriceMultiplier();
+            document.getElementById('globalMultDisplay').textContent = `x${globalMult.toFixed(2)} (+20%/buy)`;
+
+            const shardsGain = getShardsToGain();
+            document.getElementById('shardsToGain').textContent = shardsGain;
+            const pBtn = document.getElementById('prestigeBtn');
+            if (pBtn) {
+                if (shardsGain > 0) {
+                    pBtn.removeAttribute('disabled');
+                } else {
+                    pBtn.setAttribute('disabled', 'true');
+                }
+            }
+
+            UPGRADE_DEFINITIONS.forEach(u => {
+                const cost = getUpgradeCost(u.id);
+                const btn = document.querySelector(`button[onclick="buyUpgrade('${u.id}')"]`);
+                if (btn) {
+                    if (state.essence >= cost) {
+                        btn.removeAttribute('disabled');
+                        btn.className = "px-3 py-2 rounded-xl text-xs font-bold transition-all bg-purple-600 text-white hover:bg-purple-700 shadow-sm active:scale-95 whitespace-nowrap";
+                    } else {
+                        btn.setAttribute('disabled', 'true');
+                        btn.className = "px-3 py-2 rounded-xl text-xs font-bold transition-all bg-slate-200 text-slate-400 cursor-not-allowed whitespace-nowrap";
+                    }
+                }
+            });
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('bg-white', 'text-purple-700', 'shadow-sm');
+                b.classList.add('text-slate-500');
+            });
+
+            const panel = document.getElementById(`panel-${tabName}`);
+            if (panel) panel.classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-white', 'text-purple-700', 'shadow-sm');
+                activeBtn.classList.remove('text-slate-500');
+            }
+        }
+
+        function toggleAudioMaster() {
+            state.soundMaster = !state.soundMaster;
+            if (!state.soundMaster) {
+                stopCurrentTrackAudio();
+            } else {
+                startTrackAudio(state.activeTrackId);
+            }
+            updateAudioUI();
+        }
+
+        function updateAudioUI() {
+            const txt = document.getElementById('txt-soundState');
+            const icon = document.getElementById('audioIcon');
+            const lang = I18N[state.lang] || I18N.en;
+
+            if (state.soundMaster) {
+                if (txt) txt.textContent = lang.soundStateOn;
+                if (icon) {
+                    icon.className = "w-5 h-5 text-purple-600";
+                    icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>`;
+                }
+            } else {
+                if (txt) txt.textContent = lang.soundStateOff;
+                if (icon) {
+                    icon.className = "w-5 h-5 text-slate-400";
+                    icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>`;
+                }
+            }
+        }
+
+        function selectTrack(trackId) {
+            state.activeTrackId = trackId;
+            state.isPlayingTrack = true;
+            if (!state.soundMaster) {
+                state.soundMaster = true;
+                updateAudioUI();
+            }
+            startTrackAudio(trackId);
+            renderMusicTab();
+            saveState();
+        }
+
+        function toggleCurrentTrack() {
+            state.isPlayingTrack = !state.isPlayingTrack;
+            if (state.isPlayingTrack) {
+                if (!state.soundMaster) {
+                    state.soundMaster = true;
+                    updateAudioUI();
+                }
+                startTrackAudio(state.activeTrackId);
+            } else {
+                stopCurrentTrackAudio();
+            }
+            renderMusicTab();
+        }
+
+        function changeLanguage(langKey) {
+            state.lang = langKey;
+            document.getElementById('langSelect').value = langKey;
+            const dict = I18N[langKey] || I18N.en;
+
+            document.getElementById('txt-backHome').textContent = dict.backHome;
+            document.getElementById('txt-subtitle').textContent = dict.subtitle;
+            document.getElementById('txt-essenceLabel').textContent = dict.essenceLabel;
+            document.getElementById('txt-perSecLabel').textContent = dict.perSecLabel;
+            document.getElementById('txt-inflationLabel').textContent = dict.inflationLabel;
+            document.getElementById('txt-clickHint').textContent = dict.clickHint;
+            document.getElementById('txt-tabCultivate').textContent = dict.tabCultivate;
+            document.getElementById('txt-tabMusic').textContent = dict.tabMusic;
+            document.getElementById('txt-tabAtmosphere').textContent = dict.tabAtmosphere;
+            document.getElementById('txt-tabTranscend').textContent = dict.tabTranscend;
+            document.getElementById('txt-nowPlayingLabel').textContent = dict.nowPlayingLabel;
+            document.getElementById('txt-musicDesc').textContent = dict.musicDesc;
+            document.getElementById('txt-atmoDesc').textContent = dict.atmoDesc;
+            document.getElementById('txt-themeDawn').textContent = dict.themeDawn;
+            document.getElementById('txt-themeTwilight').textContent = dict.themeTwilight;
+            document.getElementById('txt-themeNight').textContent = dict.themeNight;
+            document.getElementById('txt-themeMeadow').textContent = dict.themeMeadow;
+            document.getElementById('txt-prestigeTitle').textContent = dict.prestigeTitle;
+            document.getElementById('txt-prestigeDesc').textContent = dict.prestigeDesc;
+            document.getElementById('txt-shardsEarned').textContent = dict.shardsEarned;
+            document.getElementById('txt-prestigeBtn').textContent = dict.prestigeBtn;
+            document.getElementById('txt-footerSave').textContent = dict.footerSave;
+
+            updateAudioUI();
+            renderUpgradesList();
+            renderMusicTab();
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem('aetheria_save_v2', JSON.stringify(state));
+            } catch(e) {}
+        }
+
+        function loadSavedState() {
+            try {
+                const saved = localStorage.getItem('aetheria_save_v2');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    state = { ...state, ...parsed };
+                }
+            } catch(e) {}
+
+            UPGRADE_DEFINITIONS.forEach(u => {
+                if (!state.upgrades[u.id]) {
+                    state.upgrades[u.id] = { count: 0 };
+                }
+            });
+        }
+
+        function exportSaveData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", `aetheria_zen_backup_${Date.now()}.json`);
+            dlAnchorElem.click();
+        }
+
+        function showResetModal() {
+            document.getElementById('resetModal').classList.remove('hidden');
+        }
+
+        function hideResetModal() {
+            document.getElementById('resetModal').classList.add('hidden');
+        }
+
+        function confirmResetLocalData() {
+            localStorage.removeItem('aetheria_save_v2');
+            location.reload();
+        }
+
+        const canvas = document.getElementById('zenCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let ripples = [];
+
+        const themes = {
+            dawn: { bg1: '#f0f4ff', bg2: '#faefff', bg3: '#fff5f0', particleColor: 'rgba(180, 153, 250, ' },
+            twilight: { bg1: '#e0e7ff', bg2: '#f3e8ff', bg3: '#fce7f3', particleColor: 'rgba(147, 105, 244, ' },
+            night: { bg1: '#1e1b4b', bg2: '#311b92', bg3: '#4a148c', particleColor: 'rgba(233, 213, 255, ' },
+            meadow: { bg1: '#ecfdf5', bg2: '#f0fdf4', bg3: '#fffbe8', particleColor: 'rgba(52, 211, 153, ' }
+        };
+
+        function setTheme(t) {
+            state.theme = t;
+            if (t === 'night') {
+                document.body.classList.add('text-purple-100');
+            } else {
+                document.body.classList.remove('text-purple-100');
+            }
+            saveState();
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 4 + 1;
+                this.speedY = -(Math.random() * 0.5 + 0.1);
+                this.speedX = (Math.random() - 0.5) * 0.3;
+                this.alpha = Math.random() * 0.6 + 0.2;
+            }
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX;
+                if (this.y < 0) this.reset();
+            }
+            draw() {
+                const colorBase = themes[state.theme]?.particleColor || 'rgba(180, 153, 250, ';
+                ctx.fillStyle = colorBase + this.alpha + ')';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < 50; i++) {
+            particles.push(new Particle());
+        }
+
+        function spawnRipple(x, y) {
+            if (!x || !y) return;
+            ripples.push({ x, y, radius: 5, alpha: 0.8 });
+        }
+
+        function drawBackground() {
+            const currentTheme = themes[state.theme] || themes.dawn;
+            const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            grad.addColorStop(0, currentTheme.bg1);
+            grad.addColorStop(0.5, currentTheme.bg2);
+            grad.addColorStop(1, currentTheme.bg3);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            ripples.forEach((r, idx) => {
+                r.radius += 2.2;
+                r.alpha -= 0.015;
+                if (r.alpha <= 0) {
+                    ripples.splice(idx, 1);
+                } else {
+                    ctx.strokeStyle = `rgba(180, 153, 250, ${r.alpha})`;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            });
+        }
+
+        function animate() {
+            drawBackground();
+            requestAnimationFrame(animate);
+        }
+
+        let lastTime = Date.now();
+        setInterval(() => {
+            const now = Date.now();
+            const delta = (now - lastTime) / 1000;
+            lastTime = now;
+
+            const eps = getEPS();
+            if (eps > 0) {
+                state.essence += eps * delta;
+                updateDisplays();
+            }
+        }, 100);
+
+        setInterval(saveState, 5000);
+
+        window.onload = function() {
+            loadSavedState();
+            changeLanguage(state.lang || 'en');
+            updateDisplays();
+            animate();
+        };
+    </script>
+</body>
+</html>
