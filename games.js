@@ -53,7 +53,7 @@ const games = [
   },
 {
     title: " Language Garden",
-    folder: "lumina.html",
+    folder: "languagegarden.html",
     description: "A peaceful, endlessly growing idle game where you collect Essence by clicking the sun and unlock over 200 world languages. Each unlocked language automatically generates Essence per second, and you can upgrade their levels to increase production. Every time you unlock a new language, the price of all remaining languages increases by 1%, making the game progressively more challenging. Your progress is automatically saved on your device, so you can continue anytime. A beautiful, calming garden with soft animations, clouds, and sparkles awaits you — grow your language garden forever!",
     developer: "AWEGames",
     icon: "🌸"
