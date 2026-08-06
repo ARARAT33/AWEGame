@@ -36,5 +36,27 @@ const games = [
     developer: "AWEGames",
     icon: "🌱🌼🌻"
   },
-  
+  {
+    title: "Aetheria ",
+    folder: "aetheria.html",
+    description: "Aetheria: Endless Zen Sanctuary is a soothing interactive game designed for infinite progression and deep relaxation. It features 50 unique procedural ambient soundscapes, 18 sanctuary upgrades with dynamic inflation economics, and full support for 10 languages. Your complete progress automatically saves directly to your local device, offering a seamless and peaceful sanctuary whenever you need it",
+    developer: "AWEGames",
+    icon: "🔊👆"
+  },
+ 
+{
+    title: "Lumina",
+    folder: "lumina.html",
+    description: "Lumina is a serene, endless idle game where you tap a glowing orb to gather light and grow a peaceful garden of companions. Unlock blessings, catch shooting stars for frenzy buffs, earn achievements, and rebirth into stardust for permanent multipliers across eleven languages",
+    developer: "AWEGames",
+    icon: "👆⚫"
+  },
+{
+    title: " Language Garden",
+    folder: "lumina.html",
+    description: "A peaceful, endlessly growing idle game where you collect Essence by clicking the sun and unlock over 200 world languages. Each unlocked language automatically generates Essence per second, and you can upgrade their levels to increase production. Every time you unlock a new language, the price of all remaining languages increases by 1%, making the game progressively more challenging. Your progress is automatically saved on your device, so you can continue anytime. A beautiful, calming garden with soft animations, clouds, and sparkles awaits you — grow your language garden forever!",
+    developer: "AWEGames",
+    icon: "🌸"
+  },
+
 ];
