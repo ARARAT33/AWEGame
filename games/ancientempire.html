@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ancient Empire - Civilization Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #4a3728 0%, #2d1f14 100%);
+            color: #d4af37;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(74, 55, 40, 0.9);
+            padding: 12px 20px;
+            border-bottom: 2px solid #d4af37;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            color: #d4af37;
+            text-shadow: 0 0 10px #d4af37;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #d4af37, #aa8c2c);
+            border: none;
+            color: #2d1f14;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #d4af37;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: rgba(212, 175, 55, 0.1);
+            padding: 8px 12px;
+            border-radius: 4px;
+            border-left: 3px solid #d4af37;
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .game-area {
+            flex: 1;
+            background: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.1), rgba(45, 31, 20, 0.9));
+            border: 2px solid #d4af37;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: rgba(74, 55, 40, 0.9);
+            border: 2px solid #d4af37;
+            border-radius: 10px;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .sidebar h3 {
+            color: #d4af37;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #d4af37;
+            padding-bottom: 8px;
+        }
+        
+        .upgrade {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid #d4af37;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+        
+        .upgrade:hover {
+            background: rgba(212, 175, 55, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .upgrade.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .upgrade-name {
+            color: #d4af37;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .upgrade-cost {
+            color: #ffaa00;
+            font-size: 11px;
+        }
+        
+        .upgrade-desc {
+            color: #ffddaa;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+        
+        .lang-select {
+            background: rgba(212, 175, 55, 0.2);
+            border: 1px solid #d4af37;
+            color: #d4af37;
+            padding: 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #d4af37;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏛️ Ancient Empire</h1>
+        <button class="back-btn" onclick="goHome()">← Back</button>
+        <div class="stats">
+            <div class="stat-item">👑 Power: <span id="power">0</span></div>
+            <div class="stat-item">🏰 Buildings: <span id="buildings">1</span></div>
+            <div class="stat-item">👥 Citizens: <span id="citizens">10</span></div>
+        </div>
+        <select class="lang-select" id="langSelect" onchange="changeLanguage()">
+            <option value="en">English</option>
+            <option value="hy">Հայերեն</option>
+            <option value="ru">Русский</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+            <option value="ja">日本語</option>
+            <option value="zh">中文</option>
+            <option value="ar">العربية</option>
+            <option value="pt">Português</option>
+        </select>
+    </div>
+    
+    <div class="container">
+        <div class="game-area">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+        
+        <div class="sidebar">
+            <h3 id="upgradesTitle">Upgrades</h3>
+            <div id="upgradesList"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameState = {
+            power: 0,
+            buildings: 1,
+            citizens: 10,
+            buildingSpeed: 1,
+            powerPerBuilding: 1,
+            language: 'en'
+        };
+        
+        const languages = {
+            en: {
+                upgradesTitle: 'Upgrades',
+                building: 'New Building',
+                buildingDesc: '+1 building',
+                citizen: 'Recruit Citizen',
+                citizenDesc: '+10 citizens',
+                power: 'Power Boost',
+                powerDesc: '+1 power/building',
+                backBtn: 'Back'
+            },
+            hy: {
+                upgradesTitle: 'Հարմարեցումներ',
+                building: 'Նոր Շինարար',
+                buildingDesc: '+1 շինարար',
+                citizen: 'Վարձել Քաղաքացի',
+                citizenDesc: '+10 քաղաքացի',
+                power: 'Ուժի Բուստ',
+                powerDesc: '+1 ուժ/շինարար',
+                backBtn: 'Վերադառնալ'
+            },
+            ru: {
+                upgradesTitle: 'Улучшения',
+                building: 'Новое здание',
+                buildingDesc: '+1 здание',
+                citizen: 'Нанять гражданина',
+                citizenDesc: '+10 граждан',
+                power: 'Усиление мощности',
+                powerDesc: '+1 мощность/здание',
+                backBtn: 'Назад'
+            },
+            fr: {
+                upgradesTitle: 'Améliorations',
+                building: 'Nouveau bâtiment',
+                buildingDesc: '+1 bâtiment',
+                citizen: 'Recruter citoyen',
+                citizenDesc: '+10 citoyens',
+                power: 'Renforcement de puissance',
+                powerDesc: '+1 puissance/bâtiment',
+                backBtn: 'Retour'
+            },
+            de: {
+                upgradesTitle: 'Verbesserungen',
+                building: 'Neues Gebäude',
+                buildingDesc: '+1 Gebäude',
+                citizen: 'Bürger einstellen',
+                citizenDesc: '+10 Bürger',
+                power: 'Leistungssteigerung',
+                powerDesc: '+1 Leistung/Gebäude',
+                backBtn: 'Zurück'
+            },
+            es: {
+                upgradesTitle: 'Mejoras',
+                building: 'Nuevo edificio',
+                buildingDesc: '+1 edificio',
+                citizen: 'Reclutar ciudadano',
+                citizenDesc: '+10 ciudadanos',
+                power: 'Impulso de poder',
+                powerDesc: '+1 poder/edificio',
+                backBtn: 'Atrás'
+            },
+            ja: {
+                upgradesTitle: 'アップグレード',
+                building: '新しい建物',
+                buildingDesc: '+1建物',
+                citizen: '市民を採用',
+                citizenDesc: '+10市民',
+                power: 'パワーブースト',
+                powerDesc: '+1パワー/建物',
+                backBtn: '戻る'
+            },
+            zh: {
+                upgradesTitle: '升级',
+                building: '新建筑',
+                buildingDesc: '+1建筑',
+                citizen: '招募市民',
+                citizenDesc: '+10市民',
+                power: '力量增强',
+                powerDesc: '+1力量/建筑',
+                backBtn: '返回'
+            },
+            ar: {
+                upgradesTitle: 'الترقيات',
+                building: 'مبنى جديد',
+                buildingDesc: '+1 مبنى',
+                citizen: 'توظيف مواطن',
+                citizenDesc: '+10 مواطنين',
+                power: 'تعزيز الطاقة',
+                powerDesc: '+1 طاقة/مبنى',
+                backBtn: 'عودة'
+            },
+            pt: {
+                upgradesTitle: 'Melhorias',
+                building: 'Novo edifício',
+                buildingDesc: '+1 edifício',
+                citizen: 'Recrutar cidadão',
+                citizenDesc: '+10 cidadãos',
+                power: 'Impulso de poder',
+                powerDesc: '+1 poder/edifício',
+                backBtn: 'Voltar'
+            }
+        };
+        
+        const upgrades = [
+            { id: 'building', baseCost: 100, langKey: 'building', descKey: 'buildingDesc', effect: () => gameState.buildings++ },
+            { id: 'citizen', baseCost: 75, langKey: 'citizen', descKey: 'citizenDesc', effect: () => gameState.citizens += 10 },
+            { id: 'power', baseCost: 50, langKey: 'power', descKey: 'powerDesc', effect: () => gameState.powerPerBuilding++ }
+        ];
+        
+        let buildings = [];
+        
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        
+        function initBuildings() {
+            buildings = [];
+            for (let i = 0; i < gameState.buildings; i++) {
+                buildings.push({
+                    x: (i % 4) * 150 + 50,
+                    y: Math.floor(i / 4) * 150 + 50,
+                    width: 100,
+                    height: 120,
+                    type: i % 3
+                });
+            }
+        }
+        
+        function gameLoop() {
+            resizeCanvas();
+            
+            if (buildings.length < gameState.buildings) {
+                initBuildings();
+            }
+            
+            // Draw background
+            ctx.fillStyle = '#3d2817';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid
+            ctx.strokeStyle = 'rgba(212, 175, 55, 0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < canvas.width; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i < canvas.height; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+            
+            // Draw buildings
+            buildings.forEach((b, idx) => {
+                const colors = ['#8b4513', '#a0522d', '#cd853f'];
+                ctx.fillStyle = colors[b.type];
+                ctx.fillRect(b.x, b.y, b.width, b.height);
+                
+                // Building outline
+                ctx.strokeStyle = '#d4af37';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(b.x, b.y, b.width, b.height);
+                
+                // Roof
+                ctx.fillStyle = '#654321';
+                ctx.beginPath();
+                ctx.moveTo(b.x, b.y);
+                ctx.lineTo(b.x + b.width / 2, b.y - 30);
+                ctx.lineTo(b.x + b.width, b.y);
+                ctx.fill();
+            });
+            
+            // Update game state
+            gameState.power += gameState.buildings * gameState.powerPerBuilding * 0.016;
+            
+            // Update UI
+            document.getElementById('power').textContent = Math.floor(gameState.power);
+            document.getElementById('buildings').textContent = gameState.buildings;
+            document.getElementById('citizens').textContent = gameState.citizens;
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function renderUpgrades() {
+            const list = document.getElementById('upgradesList');
+            list.innerHTML = '';
+            
+            upgrades.forEach(upgrade => {
+                const cost = Math.ceil(upgrade.baseCost * Math.pow(1.15, upgrade.count || 0));
+                const canAfford = gameState.power >= cost;
+                
+                const div = document.createElement('div');
+                div.className = `upgrade ${!canAfford ? 'disabled' : ''}`;
+                div.innerHTML = `
+                    <div class="upgrade-name">${languages[gameState.language][upgrade.langKey]}</div>
+                    <div class="upgrade-desc">${languages[gameState.language][upgrade.descKey]}</div>
+                    <div class="upgrade-cost">Cost: ${cost} 👑</div>
+                `;
+                
+                if (canAfford) {
+                    div.onclick = () => buyUpgrade(upgrade);
+                }
+                
+                list.appendChild(div);
+            });
+        }
+        
+        function buyUpgrade(upgrade) {
+            const cost = Math.ceil(upgrade.baseCost * Math.pow(1.15, upgrade.count || 0));
+            if (gameState.power >= cost) {
+                gameState.power -= cost;
+                upgrade.count = (upgrade.count || 0) + 1;
+                upgrade.effect();
+                renderUpgrades();
+            }
+        }
+        
+        function changeLanguage() {
+            gameState.language = document.getElementById('langSelect').value;
+            document.getElementById('upgradesTitle').textContent = languages[gameState.language].upgradesTitle;
+            renderUpgrades();
+        }
+        
+        function goHome() {
+            window.location.href = '../index.html';
+        }
+        
+        // Save state
+        setInterval(() => {
+            localStorage.setItem('ancientEmpireState', JSON.stringify(gameState));
+        }, 5000);
+        
+        // Load state
+        const saved = localStorage.getItem('ancientEmpireState');
+        if (saved) {
+            Object.assign(gameState, JSON.parse(saved));
+            document.getElementById('langSelect').value = gameState.language;
+        }
+        
+        document.getElementById('upgradesTitle').textContent = languages[gameState.language].upgradesTitle;
+        renderUpgrades();
+        gameLoop();
+    </script>
+</body>
+</html>

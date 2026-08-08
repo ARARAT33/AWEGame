@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Void Traveler - Space Exploration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #0f0;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 12px 20px;
+            border-bottom: 2px solid #0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            color: #0f0;
+            text-shadow: 0 0 10px #0f0;
+        }
+        
+        .back-btn {
+            background: #0f0;
+            border: none;
+            color: #000;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #0f0;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: rgba(0, 255, 0, 0.1);
+            padding: 8px 12px;
+            border-radius: 4px;
+            border-left: 3px solid #0f0;
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .game-area {
+            flex: 1;
+            background: #000;
+            border: 2px solid #0f0;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #0f0;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .sidebar h3 {
+            color: #0f0;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #0f0;
+            padding-bottom: 8px;
+        }
+        
+        .upgrade {
+            background: rgba(0, 255, 0, 0.05);
+            border: 1px solid #0f0;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+        
+        .upgrade:hover {
+            background: rgba(0, 255, 0, 0.15);
+            transform: translateX(5px);
+        }
+        
+        .upgrade.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .upgrade-name {
+            color: #0f0;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .upgrade-cost {
+            color: #ff0;
+            font-size: 11px;
+        }
+        
+        .upgrade-desc {
+            color: #0f0;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+        
+        .lang-select {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #0f0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Void Traveler</h1>
+        <button class="back-btn" onclick="goHome()">← Back</button>
+        <div class="stats">
+            <div class="stat-item">⚡ Energy: <span id="energy">100</span></div>
+            <div class="stat-item">📍 Distance: <span id="distance">0</span> ly</div>
+            <div class="stat-item">🛸 Ships: <span id="ships">1</span></div>
+        </div>
+        <select class="lang-select" id="langSelect" onchange="changeLanguage()">
+            <option value="en">English</option>
+            <option value="hy">Հայերեն</option>
+            <option value="ru">Русский</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+            <option value="ja">日本語</option>
+            <option value="zh">中文</option>
+            <option value="ar">العربية</option>
+            <option value="pt">Português</option>
+        </select>
+    </div>
+    
+    <div class="container">
+        <div class="game-area">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+        
+        <div class="sidebar">
+            <h3 id="upgradesTitle">Upgrades</h3>
+            <div id="upgradesList"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameState = {
+            energy: 100,
+            maxEnergy: 100,
+            distance: 0,
+            ships: 1,
+            speed: 0.5,
+            energyRegen: 0.1,
+            language: 'en'
+        };
+        
+        const languages = {
+            en: {
+                upgradesTitle: 'Upgrades',
+                ship: 'Scout Ship',
+                shipDesc: '+1 ship',
+                speed: 'Hyperdrive',
+                speedDesc: '+0.5 speed',
+                regen: 'Energy Core',
+                regenDesc: '+0.1 regen/sec',
+                backBtn: 'Back'
+            },
+            hy: {
+                upgradesTitle: 'Հարմարեցումներ',
+                ship: 'Հետախուզ Նավ',
+                shipDesc: '+1 նավ',
+                speed: 'Հիպերգնացք',
+                speedDesc: '+0.5 արագություն',
+                regen: 'Էներգիայի Միջուկ',
+                regenDesc: '+0.1 վերականգ/վ',
+                backBtn: 'Վերադառնալ'
+            },
+            ru: {
+                upgradesTitle: 'Улучшения',
+                ship: 'Разведывательный корабль',
+                shipDesc: '+1 корабль',
+                speed: 'Гиперпривод',
+                speedDesc: '+0.5 скорость',
+                regen: 'Энергетическое ядро',
+                regenDesc: '+0.1 регенерация/сек',
+                backBtn: 'Назад'
+            },
+            fr: {
+                upgradesTitle: 'Améliorations',
+                ship: 'Vaisseau éclaireur',
+                shipDesc: '+1 vaisseau',
+                speed: 'Hyperpropulsion',
+                speedDesc: '+0.5 vitesse',
+                regen: 'Noyau énergétique',
+                regenDesc: '+0.1 régénération/sec',
+                backBtn: 'Retour'
+            },
+            de: {
+                upgradesTitle: 'Verbesserungen',
+                ship: 'Spähschiff',
+                shipDesc: '+1 Schiff',
+                speed: 'Hyperantrieb',
+                speedDesc: '+0.5 Geschwindigkeit',
+                regen: 'Energiekern',
+                regenDesc: '+0.1 Regeneration/Sek',
+                backBtn: 'Zurück'
+            },
+            es: {
+                upgradesTitle: 'Mejoras',
+                ship: 'Nave exploradora',
+                shipDesc: '+1 nave',
+                speed: 'Hiperpropulsión',
+                speedDesc: '+0.5 velocidad',
+                regen: 'Núcleo energético',
+                regenDesc: '+0.1 regeneración/seg',
+                backBtn: 'Atrás'
+            },
+            ja: {
+                upgradesTitle: 'アップグレード',
+                ship: 'スカウト船',
+                shipDesc: '+1船',
+                speed: 'ハイパードライブ',
+                speedDesc: '+0.5速度',
+                regen: 'エネルギーコア',
+                regenDesc: '+0.1再生/秒',
+                backBtn: '戻る'
+            },
+            zh: {
+                upgradesTitle: '升级',
+                ship: '侦察船',
+                shipDesc: '+1艘船',
+                speed: '超光速驱动',
+                speedDesc: '+0.5速度',
+                regen: '能量核心',
+                regenDesc: '+0.1再生/秒',
+                backBtn: '返回'
+            },
+            ar: {
+                upgradesTitle: 'الترقيات',
+                ship: 'سفينة الاستطلاع',
+                shipDesc: '+1 سفينة',
+                speed: 'محرك فائق',
+                speedDesc: '+0.5 سرعة',
+                regen: 'نواة الطاقة',
+                regenDesc: '+0.1 تجديد/ثانية',
+                backBtn: 'عودة'
+            },
+            pt: {
+                upgradesTitle: 'Melhorias',
+                ship: 'Nave de reconhecimento',
+                shipDesc: '+1 nave',
+                speed: 'Hiperpropulsão',
+                speedDesc: '+0.5 velocidade',
+                regen: 'Núcleo de energia',
+                regenDesc: '+0.1 regeneração/seg',
+                backBtn: 'Voltar'
+            }
+        };
+        
+        const upgrades = [
+            { id: 'ship', baseCost: 50, langKey: 'ship', descKey: 'shipDesc', effect: () => gameState.ships++ },
+            { id: 'speed', baseCost: 75, langKey: 'speed', descKey: 'speedDesc', effect: () => gameState.speed += 0.5 },
+            { id: 'regen', baseCost: 60, langKey: 'regen', descKey: 'regenDesc', effect: () => gameState.energyRegen += 0.1 }
+        ];
+        
+        let stars = [];
+        let particles = [];
+        
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < 100; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2,
+                    brightness: Math.random()
+                });
+            }
+        }
+        
+        function gameLoop() {
+            resizeCanvas();
+            
+            if (stars.length === 0) initStars();
+            
+            // Draw background
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw stars
+            stars.forEach(star => {
+                star.brightness += (Math.random() - 0.5) * 0.1;
+                star.brightness = Math.max(0, Math.min(1, star.brightness));
+                
+                ctx.fillStyle = `rgba(0, 255, 0, ${star.brightness})`;
+                ctx.fillRect(star.x, star.y, star.size, star.size);
+                
+                star.y += gameState.speed;
+                if (star.y > canvas.height) {
+                    star.y = 0;
+                    star.x = Math.random() * canvas.width;
+                }
+            });
+            
+            // Draw player ship
+            drawShip(canvas.width / 2, canvas.height / 2);
+            
+            // Draw particles
+            particles = particles.filter(p => p.life > 0);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                
+                ctx.fillStyle = `rgba(0, 255, 0, ${p.life / 100})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Update game state
+            gameState.energy = Math.min(gameState.maxEnergy, gameState.energy + gameState.energyRegen * 0.016);
+            gameState.distance += gameState.ships * gameState.speed * 0.016;
+            
+            // Update UI
+            document.getElementById('energy').textContent = Math.floor(gameState.energy);
+            document.getElementById('distance').textContent = Math.floor(gameState.distance);
+            document.getElementById('ships').textContent = gameState.ships;
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function drawShip(x, y) {
+            ctx.strokeStyle = '#0f0';
+            ctx.lineWidth = 2;
+            
+            // Triangle ship
+            ctx.beginPath();
+            ctx.moveTo(x, y - 20);
+            ctx.lineTo(x - 15, y + 20);
+            ctx.lineTo(x + 15, y + 20);
+            ctx.closePath();
+            ctx.stroke();
+            
+            // Glow effect
+            ctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(x, y, 25, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        
+        function renderUpgrades() {
+            const list = document.getElementById('upgradesList');
+            list.innerHTML = '';
+            
+            upgrades.forEach(upgrade => {
+                const cost = Math.ceil(upgrade.baseCost * Math.pow(1.15, upgrade.count || 0));
+                const canAfford = gameState.distance >= cost;
+                
+                const div = document.createElement('div');
+                div.className = `upgrade ${!canAfford ? 'disabled' : ''}`;
+                div.innerHTML = `
+                    <div class="upgrade-name">${languages[gameState.language][upgrade.langKey]}</div>
+                    <div class="upgrade-desc">${languages[gameState.language][upgrade.descKey]}</div>
+                    <div class="upgrade-cost">Cost: ${cost} ly</div>
+                `;
+                
+                if (canAfford) {
+                    div.onclick = () => buyUpgrade(upgrade);
+                }
+                
+                list.appendChild(div);
+            });
+        }
+        
+        function buyUpgrade(upgrade) {
+            const cost = Math.ceil(upgrade.baseCost * Math.pow(1.15, upgrade.count || 0));
+            if (gameState.distance >= cost) {
+                gameState.distance -= cost;
+                upgrade.count = (upgrade.count || 0) + 1;
+                upgrade.effect();
+                renderUpgrades();
+            }
+        }
+        
+        function changeLanguage() {
+            gameState.language = document.getElementById('langSelect').value;
+            document.getElementById('upgradesTitle').textContent = languages[gameState.language].upgradesTitle;
+            renderUpgrades();
+        }
+        
+        function goHome() {
+            window.location.href = '../index.html';
+        }
+        
+        // Save state
+        setInterval(() => {
+            localStorage.setItem('voidTravelerState', JSON.stringify(gameState));
+        }, 5000);
+        
+        // Load state
+        const saved = localStorage.getItem('voidTravelerState');
+        if (saved) {
+            Object.assign(gameState, JSON.parse(saved));
+            document.getElementById('langSelect').value = gameState.language;
+        }
+        
+        document.getElementById('upgradesTitle').textContent = languages[gameState.language].upgradesTitle;
+        renderUpgrades();
+        gameLoop();
+    </script>
+</body>
+</html>

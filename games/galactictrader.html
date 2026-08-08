@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Galactic Trader - Space Commerce</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a0033 0%, #330066 100%);
+            color: #ffaa00;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(26, 0, 51, 0.9);
+            padding: 12px 20px;
+            border-bottom: 2px solid #ffaa00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            color: #ffaa00;
+            text-shadow: 0 0 10px #ffaa00;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #ffaa00, #ff8800);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #ffaa00;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: rgba(255, 170, 0, 0.1);
+            padding: 8px 12px;
+            border-radius: 4px;
+            border-left: 3px solid #ffaa00;
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .game-area {
+            flex: 1;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 170, 0, 0.1), rgba(26, 0, 51, 0.9));
+            border: 2px solid #ffaa00;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: rgba(26, 0, 51, 0.9);
+            border: 2px solid #ffaa00;
+            border-radius: 10px;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .sidebar h3 {
+            color: #ffaa00;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ffaa00;
+            padding-bottom: 8px;
+        }
+        
+        .upgrade {
+            background: rgba(255, 170, 0, 0.1);
+            border: 1px solid #ffaa00;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+        
+        .upgrade:hover {
+            background: rgba(255, 170, 0, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .upgrade.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .upgrade-name {
+            color: #ffaa00;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .upgrade-cost {
+            color: #00ff88;
+            font-size: 11px;
+        }
+        
+        .upgrade-desc {
+            color: #ffddaa;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+        
+        .lang-select {
+            background: rgba(255, 170, 0, 0.2);
+            border: 1px solid #ffaa00;
+            color: #ffaa00;
+            padding: 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #ffaa00;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Galactic Trader</h1>
+        <button class="back-btn" onclick="goHome()">← Back</button>
+        <div class="stats">
+            <div class="stat-item">💰 Credits: <span id="credits">0</span></div>
+            <div class="stat-item">📦 Cargo: <span id="cargo">0</span></div>
+            <div class="stat-item">🛸 Ships: <span id="ships">1</span></div>
+        </div>
+        <select class="lang-select" id="langSelect" onchange="changeLanguage()">
+            <option value="en">English</option>
+            <option value="hy">Հայերեն</option>
+            <option value="ru">Русский</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+            <option value="ja">日本語</option>
+            <option value="zh">中文</option>
+            <option value="ar">العربية</option>
+            <option value="pt">Português</option>
+        </select>
+    </div>
+    
+    <div class="container">
+        <div class="game-area">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+        
+        <div class="sidebar">
+            <h3 id="upgradesTitle">Upgrades</h3>
+            <div id="upgradesList"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameState = {
+            credits: 0,
+            cargo: 0,
+            ships: 1,
+            tradeSpeed: 1,
+            cargoCapacity: 10,
+            language: 'en'
+        };
+        
+        const languages = {
+            en: {
+                upgradesTitle: 'Upgrades',
+                ship: 'Trading Ship',
+                shipDesc: '+1 ship',
+                cargo: 'Cargo Hold',
+                cargoDesc: '+10 capacity',
+                speed: 'Trade Speed',
+                speedDesc: '+0.5 speed',
+                backBtn: 'Back'
+            },
+            hy: {
+                upgradesTitle: 'Հարմարեցումներ',
+                ship: 'Առևտրական Նավ',
+                shipDesc: '+1 նավ',
+                cargo: 'Բեռնատար Պահեստ',
+                cargoDesc: '+10 տարողունակություն',
+                speed: 'Առևտրի Արագություն',
+                speedDesc: '+0.5 արագություն',
+                backBtn: 'Վերադառնալ'
+            },
+            ru: {
+                upgradesTitle: 'Улучшения',
+                ship: 'Торговый корабль',
+                shipDesc: '+1 корабль',
+                cargo: 'Грузовой отсек',
+                cargoDesc: '+10 вместимость',
+                speed: 'Скорость торговли',
+                speedDesc: '+0.5 скорость',
+                backBtn: 'Назад'
+            },
+            fr: {
+                upgradesTitle: 'Améliorations',
+                ship: 'Navire marchande',
+                shipDesc: '+1 navire',
+                cargo: 'Soute à cargaison',
+                cargoDesc: '+10 capacité',
+                speed: 'Vitesse de commerce',
+                speedDesc: '+0.5 vitesse',
+                backBtn: 'Retour'
+            },
+            de: {
+                upgradesTitle: 'Verbesserungen',
+                ship: 'Handelsschiff',
+                shipDesc: '+1 Schiff',
+                cargo: 'Laderaum',
+                cargoDesc: '+10 Kapazität',
+                speed: 'Handelsgeschwindigkeit',
+                speedDesc: '+0.5 Geschwindigkeit',
+                backBtn: 'Zurück'
+            },
+            es: {
+                upgradesTitle: 'Mejoras',
+                ship: 'Nave comercial',
+                shipDesc: '+1 nave',
+                cargo: 'Bodega de carga',
+                cargoDesc: '+10 capacidad',
+                speed: 'Velocidad comercial',
+                speedDesc: '+0.5 velocidad',
+                backBtn: 'Atrás'
+            },
+            ja: {
+                upgradesTitle: 'アップグレード',
+                ship: '商船',
+                shipDesc: '+1船',
+                cargo: 'カーゴホールド',
+                cargoDesc: '+10容量',
+                speed: '取引速度',
+                speedDesc: '+0.5速度',
+                backBtn: '戻る'
+            },
+            zh: {
+                upgradesTitle: '升级',
+                ship: '商船',
+                shipDesc: '+1艘船',
+                cargo: '货舱',
+                cargoDesc: '+10容量',
+                speed: '交易速度',
+                speedDesc: '+0.5速度',
+                backBtn: '返回'
+            },
+            ar: {
+                upgradesTitle: 'الترقيات',
+                ship: 'سفينة تجارية',
+                shipDesc: '+1 سفينة',
+                cargo: 'حجرة الشحن',
+                cargoDesc: '+10 سعة',
+                speed: 'سرعة التجارة',
+                speedDesc: '+0.5 سرعة',
+                backBtn: 'عودة'
+            },
+            pt: {
+                upgradesTitle: 'Melhorias',
+                ship: 'Navio mercante',
+                shipDesc: '+1 navio',
+                cargo: 'Porão de carga',
+                cargoDesc: '+10 capacidade',
+                speed: 'Velocidade comercial',
+                speedDesc: '+0.5 velocidade',
+                backBtn: 'Voltar'
+            }
+        };
+        
+        const upgrades = [
+            { id: 'ship', baseCost: 100, langKey: 'ship', descKey: 'shipDesc', effect: () => gameState.ships++ },
+            { id: 'cargo', baseCost: 75, langKey: 'cargo', descKey: 'cargoDesc', effect: () => gameState.cargoCapacity += 10 },
+            { id: 'speed', baseCost: 50, langKey: 'speed', descKey: 'speedDesc', effect: () => gameState.tradeSpeed += 0.5 }
+        ];
+        
+        let planets = [];
+        let particles = [];
+        
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        
+        function initPlanets() {
+            planets = [];
+            for (let i = 0; i < 6; i++) {
+                planets.push({
+                    x: (i * canvas.width / 6) + 50,
+                    y: Math.random() * (canvas.height - 100) + 50,
+                    size: Math.random() * 20 + 15,
+                    color: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6c5ce7', '#a29bfe'][i],
+                    rotation: 0
+                });
+            }
+        }
+        
+        function gameLoop() {
+            resizeCanvas();
+            
+            if (planets.length === 0) initPlanets();
+            
+            // Draw space background
+            ctx.fillStyle = '#0a0a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw stars
+            ctx.fillStyle = '#ffffff';
+            for (let i = 0; i < 50; i++) {
+                const x = (i * 73) % canvas.width;
+                const y = (i * 47) % canvas.height;
+                const size = Math.sin(Date.now() * 0.001 + i) * 0.5 + 1;
+                ctx.fillRect(x, y, size, size);
+            }
+            
+            // Draw planets
+            planets.forEach(p => {
+                p.rotation += 0.01;
+                
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Orbit ring
+                ctx.strokeStyle = `${p.color}40`;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size + 15, 0, Math.PI * 2);
+                ctx.stroke();
+            });
+            
+            // Draw particles
+            particles = particles.filter(p => p.life > 0);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                
+                ctx.fillStyle = `rgba(255, 170, 0, ${p.life / 60})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Draw trading ship
+            const shipX = (Date.now() * 0.05) % canvas.width;
+            const shipY = canvas.height / 2;
+            
+            ctx.fillStyle = '#ffaa00';
+            ctx.beginPath();
+            ctx.moveTo(shipX, shipY - 10);
+            ctx.lineTo(shipX - 15, shipY + 10);
+            ctx.lineTo(shipX + 15, shipY + 10);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Update game state
+            gameState.cargo += gameState.ships * gameState.tradeSpeed * 0.016;
+            if (gameState.cargo > gameState.cargoCapacity) {
+                gameState.cargo = gameState.cargoCapacity;
+                gameState.credits += gameState.ships * gameState.tradeSpeed * 0.016;
+            }
+            
+            // Update UI
+            document.getElementById('credits').textContent = Math.floor(gameState.credits);
+            document.getElementById('cargo').textContent = Math.floor(gameState.cargo);
+            document.getElementById('ships').textContent = gameState.ships;
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function renderUpgrades() {
+            const list = document.getElementById('upgradesList');
+            list.innerHTML = '';
+            
+            upgrades.forEach(upgrade => {
+                const cost = Math.ceil(upgrade.baseCost * Math.pow(1.15, upgrade.count || 0));
+                const canAfford = gameState.credits >= cost;
+                
+                const div = document.createElement('div');
+                div.className = `upgrade ${!canAfford ? 'disabled' : ''}`;
+                div.innerHTML = `
+                    <div class="upgrade-name">${languages[gameState.language][upgrade.langKey]}</div>
+                    <div class="upgrade-desc">${languages[gameState.language][upgrade.descKey]}</div>
+                    <div class="upgrade-cost">Cost: ${cost} 💰</div>
+                `;
+                
+                if (canAfford) {
+                    div.onclick = () => buyUpgrade(upgrade);
+                }
+                
+                list.appendChild(div);
+            });
+        }
+        
+        function buyUpgrade(upgrade) {
+            const cost = Math.ceil(upgrade.baseCost * Math.pow(1.15, upgrade.count || 0));
+            if (gameState.credits >= cost) {
+                gameState.credits -= cost;
+                upgrade.count = (upgrade.count || 0) + 1;
+                upgrade.effect();
+                renderUpgrades();
+            }
+        }
+        
+        function changeLanguage() {
+            gameState.language = document.getElementById('langSelect').value;
+            document.getElementById('upgradesTitle').textContent = languages[gameState.language].upgradesTitle;
+            renderUpgrades();
+        }
+        
+        function goHome() {
+            window.location.href = '../index.html';
+        }
+        
+        // Save state
+        setInterval(() => {
+            localStorage.setItem('galacticTraderState', JSON.stringify(gameState));
+        }, 5000);
+        
+        // Load state
+        const saved = localStorage.getItem('galacticTraderState');
+        if (saved) {
+            Object.assign(gameState, JSON.parse(saved));
+            document.getElementById('langSelect').value = gameState.language;
+        }
+        
+        document.getElementById('upgradesTitle').textContent = languages[gameState.language].upgradesTitle;
+        renderUpgrades();
+        gameLoop();
+    </script>
+</body>
+</html>

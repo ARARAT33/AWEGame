@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cyber Hacker - Hacking Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(10, 10, 10, 0.9);
+            padding: 12px 20px;
+            border-bottom: 2px solid #00ff00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        
+        .back-btn {
+            background: #00ff00;
+            border: none;
+            color: #0a0a0a;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #00ff00;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: rgba(0, 255, 0, 0.1);
+            padding: 8px 12px;
+            border-radius: 4px;
+            border-left: 3px solid #00ff00;
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .game-area {
+            flex: 1;
+            background: #000;
+            border: 2px solid #00ff00;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .hack-button {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #00ff00, #00aa00);
+            border: 3px solid #00ff00;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            box-shadow: 0 0 20px #00ff00;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .hack-button:active {
+            transform: scale(0.9);
+            box-shadow: 0 0 40px #00ff00;
+        }
+        
+        .hack-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: rgba(10, 10, 10, 0.9);
+            border: 2px solid #00ff00;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .sidebar h3 {
+            color: #00ff00;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #00ff00;
+            padding-bottom: 8px;
+        }
+        
+        .upgrade {
+            background: rgba(0, 255, 0, 0.05);
+            border: 1px solid #00ff00;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+        
+        .upgrade:hover {
+            background: rgba(0, 255, 0, 0.15);
+            transform: translateX(5px);
+        }
+        
+        .upgrade.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .upgrade-name {
+            color: #00ff00;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .upgrade-cost {
+            color: #ffff00;
+            font-size: 11px;
+        }
+        
+        .upgrade-desc {
+            color: #00ff00;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+        
+        .lang-select {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #00ff00;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>💻 Cyber Hacker</h1>
+        <button class="back-btn" onclick="goHome()">← Back</button>
+        <div class="stats">
+            <div class="stat-item">💾 Data: <span id="data">0</span></div>
+            <div class="stat-item">🔐 Systems: <span id="systems">0</span></div>
+            <div class="stat-item">⚙️ Bots: <span id="bots">1</span></div>
+        </div>
+        <select class="lang-select" id="langSelect" onchange="changeLanguage()">
+            <option value="en">English</option>
+            <option value="hy">Հայերեն</option>
+            <option value="ru">Русский</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+            <option value="ja">日本語</option>
+            <option value="zh">中文</option>
+            <option value="ar">العربية</option>
+            <option value="pt">Português</option>
+        </select>
+    </div>
+    
+    <div class="container">
+        <div class="game-area">
+            <canvas id="effectCanvas"></canvas>
+            <button class="hack-button" id="hackBtn" onclick="hack()">🔓</button>
+        </div>
+        
+        <div class="sidebar">
+            <h3 id="upgradesTitle">Upgrades</h3>
+            <div id="upgradesList"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('effectCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameState = {
+            data: 0,
+            systems: 0,
+            bots: 1,
+            hackPower: 1,
+            dataPerHack: 1,
+            language: 'en'
+        };
+        
+        let particles = [];
+        
+        const languages = {
+            en: {
+                upgradesTitle: 'Upgrades',
+                bot: 'Bot Network',
+                botDesc: '+1 bot',
+                hack: 'Hack Power',
+                hackDesc: '+1 data/hack',
+                system: 'System Crack',
+                systemDesc: '+1 system',
+                backBtn: 'Back'
+            },
+            hy: {
+                upgradesTitle: 'Հարմարեցումներ',
+                bot: 'Բոտ Ցանց',
+                botDesc: '+1 բոտ',
+                hack: 'Հաքի Ուժ',
+                hackDesc: '+1 տվյալ/հաք',
+                system: 'Համակարգ Ճեղ',
+                systemDesc: '+1 համակարգ',
+                backBtn: 'Վերադառնալ'
+            },
+            ru: {
+                upgradesTitle: 'Улучшения',
+                bot: 'Сеть ботов',
+                botDesc: '+1 бот',
+                hack: 'Сила хака',
+                hackDesc: '+1 данные/хак',
+                system: 'Взлом системы',
+                systemDesc: '+1 система',
+                backBtn: 'Назад'
+            },
+            fr: {
+                upgradesTitle: 'Améliorations',
+                bot: 'Réseau de bots',
+                botDesc: '+1 bot',
+                hack: 'Puissance de hack',
+                hackDesc: '+1 données/hack',
+                system: 'Fissure système',
+                systemDesc: '+1 système',
+                backBtn: 'Retour'
+            },
+            de: {
+                upgradesTitle: 'Verbesserungen',
+                bot: 'Bot-Netzwerk',
+                botDesc: '+1 Bot',
+                hack: 'Hack-Kraft',
+                hackDesc: '+1 Daten/Hack',
+                system: 'Systemriss',
+                systemDesc: '+1 System',
+                backBtn: 'Zurück'
+            },
+            es: {
+                upgradesTitle: 'Mejoras',
+                bot: 'Red de bots',
+                botDesc: '+1 bot',
+                hack: 'Poder de hack',
+                hackDesc: '+1 datos/hack',
+                system: 'Grieta del sistema',
+                systemDesc: '+1 sistema',
+                backBtn: 'Atrás'
+            },
+            ja: {
+                upgradesTitle: 'アップグレード',
+                bot: 'ボットネットワーク',
+                botDesc: '+1ボット',
+                hack: 'ハック力',
+                hackDesc: '+1データ/ハック',
+                system: 'システムクラック',
+                systemDesc: '+1システム',
+                backBtn: '戻る'
+            },
+            zh: {
+                upgradesTitle: '升级',
+                bot: '机器人网络',
+                botDesc: '+1机器人',
+                hack: '黑客力',
+                hackDesc: '+1数据/黑客',
+                system: '系统裂纹',
+                systemDesc: '+1系统',
+                backBtn: '返回'
+            },
+            ar: {
+                upgradesTitle: 'الترقيات',
+                bot: 'شبكة البوتات',
+                botDesc: '+1 بوت',
+                hack: 'قوة الاختراق',
+                hackDesc: '+1 بيانات/اختراق',
+                system: 'تصدع النظام',
+                systemDesc: '+1 نظام',
+                backBtn: 'عودة'
+            },
+            pt: {
+                upgradesTitle: 'Melhorias',
+                bot: 'Rede de bots',
+                botDesc: '+1 bot',
+                hack: 'Poder de hack',
+                hackDesc: '+1 dados/hack',
+                system: 'Rachadura do sistema',
+                systemDesc: '+1 sistema',
+                backBtn: 'Voltar'
+            }
+        };
+        
+        const upgrades = [
+            { id: 'bot', baseCost: 100, langKey: 'bot', descKey: 'botDesc', effect: () => gameState.bots++ },
+            { id: 'hack', baseCost: 75, langKey: 'hack', descKey: 'hackDesc', effect: () => gameState.dataPerHack++ },
+            { id: 'system', baseCost: 50, langKey: 'system', descKey: 'systemDesc', effect: () => gameState.systems++ }
+        ];
+        
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        
+        function createParticles(x, y) {
+            for (let i = 0; i < 25; i++) {
+                const angle = (Math.PI * 2 * i) / 25;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * 3,
+                    vy: Math.sin(angle) * 3,
+                    life: 60,
+                    size: Math.random() * 2 + 1
+                });
+            }
+        }
+        
+        function gameLoop() {
+            resizeCanvas();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw matrix effect
+            ctx.fillStyle = 'rgba(0, 255, 0, 0.02)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid
+            ctx.strokeStyle = 'rgba(0, 255, 0, 0.05)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < canvas.width; i += 30) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i < canvas.height; i += 30) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+            
+            // Draw particles
+            particles = particles.filter(p => p.life > 0);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                
+                ctx.fillStyle = `rgba(0, 255, 0, ${p.life / 60})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Update UI
+            document.getElementById('data').textContent = Math.floor(gameState.data);
+            document.getElementById('systems').textContent = Math.floor(gameState.systems);
+            document.getElementById('bots').textContent = gameState.bots;
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function hack() {
+            gameState.data += gameState.dataPerHack * gameState.bots;
+            
+            const btn = document.getElementById('hackBtn');
+            const rect = btn.getBoundingClientRect();
+            createParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        }
+        
+        function renderUpgrades() {
+            const list = document.getElementById('upgradesList');
+            list.innerHTML = '';
+            
+            upgrades.forEach(upgrade => {
+                const cost = Math.ceil(upgrade.baseCost * Math.pow(1.15, upgrade.count || 0));
+                const canAfford = gameState.data >= cost;
+                
+                const div = document.createElement('div');
+                div.className = `upgrade ${!canAfford ? 'disabled' : ''}`;
+                div.innerHTML = `
+                    <div class="upgrade-name">${languages[gameState.language][upgrade.langKey]}</div>
+                    <div class="upgrade-desc">${languages[gameState.language][upgrade.descKey]}</div>
+                    <div class="upgrade-cost">Cost: ${cost} 💾</div>
+                `;
+                
+                if (canAfford) {
+                    div.onclick = () => buyUpgrade(upgrade);
+                }
+                
+                list.appendChild(div);
+            });
+        }
+        
+        function buyUpgrade(upgrade) {
+            const cost = Math.ceil(upgrade.baseCost * Math.pow(1.15, upgrade.count || 0));
+            if (gameState.data >= cost) {
+                gameState.data -= cost;
+                upgrade.count = (upgrade.count || 0) + 1;
+                upgrade.effect();
+                renderUpgrades();
+            }
+        }
+        
+        function changeLanguage() {
+            gameState.language = document.getElementById('langSelect').value;
+            document.getElementById('upgradesTitle').textContent = languages[gameState.language].upgradesTitle;
+            renderUpgrades();
+        }
+        
+        function goHome() {
+            window.location.href = '../index.html';
+        }
+        
+        // Save state
+        setInterval(() => {
+            localStorage.setItem('cyberHackerState', JSON.stringify(gameState));
+        }, 5000);
+        
+        // Load state
+        const saved = localStorage.getItem('cyberHackerState');
+        if (saved) {
+            Object.assign(gameState, JSON.parse(saved));
+            document.getElementById('langSelect').value = gameState.language;
+        }
+        
+        document.getElementById('upgradesTitle').textContent = languages[gameState.language].upgradesTitle;
+        renderUpgrades();
+        gameLoop();
+    </script>
+</body>
+</html>

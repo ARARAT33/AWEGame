@@ -58,5 +58,75 @@ const games = [
     developer: "AWEGames",
     icon: "🌸"
   },
+  {
+    title: "⛏️ Cosmic Miner",
+    folder: "cosmicminer.html",
+    description: "Mine asteroids across the cosmos and extract valuable ore! Hire miners, upgrade your equipment, and expand your mining operation. Supports 10 languages including Armenian and English. Your progress is automatically saved!",
+    developer: "AWEGames",
+    icon: "⛏️"
+  },
+  {
+    title: "⚡ Neon Clicker",
+    folder: "neonclicker.html",
+    description: "Fast-paced clicking action with neon visuals! Build your click empire with auto-clickers and multipliers. Maintain combos and unlock powerful upgrades. 10 languages supported with full progress saving.",
+    developer: "AWEGames",
+    icon: "⚡"
+  },
+  {
+    title: "🚀 Void Traveler",
+    folder: "voidtraveler.html",
+    description: "Explore the infinite void of space! Pilot scout ships, generate energy, and travel light-years across the galaxy. Multilingual support (10 languages) with persistent save system.",
+    developer: "AWEGames",
+    icon: "🚀"
+  },
+  {
+    title: "🧪 Alchemist's Lab",
+    folder: "alchemistlab.html",
+    description: "Brew magical potions and unlock alchemical secrets! Manage multiple cauldrons, gather essence, and craft powerful elixirs. Features 10-language support and automatic progress saving.",
+    developer: "AWEGames",
+    icon: "🧪"
+  },
+  {
+    title: "⏰ Time Weaver",
+    folder: "timeweaver.html",
+    description: "Manipulate time itself! Weave temporal threads, create time loops, and harness chronological energy. Includes 10 languages and seamless save functionality.",
+    developer: "AWEGames",
+    icon: "⏰"
+  },
+  {
+    title: "🌾 Pixel Farmer",
+    folder: "pixelfarmer.html",
+    description: "Build your pixel farm from scratch! Plant crops, harvest resources, and expand your agricultural empire. Multilingual gameplay with 10 languages including Armenian.",
+    developer: "AWEGames",
+    icon: "🌾"
+  },
+  {
+    title: "🐠 Deep Sea Explorer",
+    folder: "deepseaexplorer.html",
+    description: "Dive into the ocean depths and discover treasures! Pilot submarines, find pearls, and explore mysterious underwater worlds. 10-language support with auto-save.",
+    developer: "AWEGames",
+    icon: "🐠"
+  },
+  {
+    title: "💻 Cyber Hacker",
+    folder: "cyberhacker.html",
+    description: "Hack into systems and steal data! Build a bot network, crack security systems, and become the ultimate digital outlaw. Supports 10 languages with full progress persistence.",
+    developer: "AWEGames",
+    icon: "💻"
+  },
+  {
+    title: "🚀 Galactic Trader",
+    folder: "galactictrader.html",
+    description: "Trade across the galaxy and build your space commerce empire! Manage cargo, upgrade ships, and profit from interplanetary commerce. 10 languages supported with seamless saving.",
+    developer: "AWEGames",
+    icon: "🚀"
+  },
+  {
+    title: "🏛️ Ancient Empire",
+    folder: "ancientempire.html",
+    description: "Build a civilization from the ground up! Construct buildings, recruit citizens, and grow your empire's power. Features 10-language support including Armenian and English with automatic progress saving.",
+    developer: "AWEGames",
+    icon: "🏛️"
+  }
 
 ];

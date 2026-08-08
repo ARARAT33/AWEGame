@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Time Weaver - Temporal Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        
+        body {
+            font-family: 'Trebuchet MS', sans-serif;
+            background: linear-gradient(135deg, #0a0a2e 0%, #16213e 100%);
+            color: #00d4ff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(10, 10, 46, 0.9);
+            padding: 12px 20px;
+            border-bottom: 2px solid #00d4ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            color: #00d4ff;
+            text-shadow: 0 0 10px #00d4ff;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #00d4ff;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: rgba(0, 212, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 4px;
+            border-left: 3px solid #00d4ff;
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .game-area {
+            flex: 1;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 212, 255, 0.1), rgba(10, 10, 46, 0.9));
+            border: 2px solid #00d4ff;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .time-orb {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #00ffff, #0066ff);
+            border: 3px solid #00d4ff;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+            box-shadow: 0 0 30px #00d4ff, inset 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+        
+        .time-orb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 50px #00d4ff, inset 0 0 30px rgba(0, 255, 255, 0.5);
+        }
+        
+        .time-orb:active {
+            transform: scale(0.95);
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: rgba(10, 10, 46, 0.9);
+            border: 2px solid #00d4ff;
+            border-radius: 10px;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .sidebar h3 {
+            color: #00d4ff;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #00d4ff;
+            padding-bottom: 8px;
+        }
+        
+        .upgrade {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid #00d4ff;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+        
+        .upgrade:hover {
+            background: rgba(0, 212, 255, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .upgrade.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .upgrade-name {
+            color: #00ff88;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .upgrade-cost {
+            color: #ffaa00;
+            font-size: 11px;
+        }
+        
+        .upgrade-desc {
+            color: #aabbff;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+        
+        .lang-select {
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid #00d4ff;
+            color: #e0e6ff;
+            padding: 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #00d4ff;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⏰ Time Weaver</h1>
+        <button class="back-btn" onclick="goHome()">← Back</button>
+        <div class="stats">
+            <div class="stat-item">⏱️ Chronos: <span id="chronos">0</span></div>
+            <div class="stat-item">🔄 Loops: <span id="loops">0</span></div>
+            <div class="stat-item">⚡ Threads: <span id="threads">1</span></div>
+        </div>
+        <select class="lang-select" id="langSelect" onchange="changeLanguage()">
+            <option value="en">English</option>
+            <option value="hy">Հայերեն</option>
+            <option value="ru">Русский</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+            <option value="ja">日本語</option>
+            <option value="zh">中文</option>
+            <option value="ar">العربية</option>
+            <option value="pt">Português</option>
+        </select>
+    </div>
+    
+    <div class="container">
+        <div class="game-area">
+            <canvas id="effectCanvas"></canvas>
+            <div class="time-orb" id="timeOrb" onclick="weavTime()"></div>
+        </div>
+        
+        <div class="sidebar">
+            <h3 id="upgradesTitle">Upgrades</h3>
+            <div id="upgradesList"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('effectCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameState = {
+            chronos: 0,
+            loops: 0,
+            threads: 1,
+            weavePower: 1,
+            loopBonus: 0.1,
+            language: 'en'
+        };
+        
+        let particles = [];
+        
+        const languages = {
+            en: {
+                upgradesTitle: 'Upgrades',
+                thread: 'Time Thread',
+                threadDesc: '+1 thread',
+                weave: 'Weave Power',
+                weaveDesc: '+1 chronos/click',
+                loop: 'Loop Bonus',
+                loopDesc: '+0.1 bonus/loop',
+                backBtn: 'Back'
+            },
+            hy: {
+                upgradesTitle: 'Հարմարեցումներ',
+                thread: 'Ժամանակի Թել',
+                threadDesc: '+1 թել',
+                weave: 'Հյուսման Ուժ',
+                weaveDesc: '+1 ժամանակ/քլիք',
+                loop: 'Հանգույց Բոնուս',
+                loopDesc: '+0.1 բոնուս/հանգույց',
+                backBtn: 'Վերադառնալ'
+            },
+            ru: {
+                upgradesTitle: 'Улучшения',
+                thread: 'Временная нить',
+                threadDesc: '+1 нить',
+                weave: 'Сила плетения',
+                weaveDesc: '+1 хронос/клик',
+                loop: 'Бонус цикла',
+                loopDesc: '+0.1 бонус/цикл',
+                backBtn: 'Назад'
+            },
+            fr: {
+                upgradesTitle: 'Améliorations',
+                thread: 'Fil temporel',
+                threadDesc: '+1 fil',
+                weave: 'Puissance de tissage',
+                weaveDesc: '+1 chronos/clic',
+                loop: 'Bonus de boucle',
+                loopDesc: '+0.1 bonus/boucle',
+                backBtn: 'Retour'
+            },
+            de: {
+                upgradesTitle: 'Verbesserungen',
+                thread: 'Zeitfaden',
+                threadDesc: '+1 Faden',
+                weave: 'Webkraft',
+                weaveDesc: '+1 Chronos/Klick',
+                loop: 'Schleifenbonus',
+                loopDesc: '+0.1 Bonus/Schleife',
+                backBtn: 'Zurück'
+            },
+            es: {
+                upgradesTitle: 'Mejoras',
+                thread: 'Hilo temporal',
+                threadDesc: '+1 hilo',
+                weave: 'Poder de tejido',
+                weaveDesc: '+1 cronos/clic',
+                loop: 'Bonificación de bucle',
+                loopDesc: '+0.1 bonificación/bucle',
+                backBtn: 'Atrás'
+            },
+            ja: {
+                upgradesTitle: 'アップグレード',
+                thread: '時間の糸',
+                threadDesc: '+1糸',
+                weave: '織る力',
+                weaveDesc: '+1クロノス/クリック',
+                loop: 'ループボーナス',
+                loopDesc: '+0.1ボーナス/ループ',
+                backBtn: '戻る'
+            },
+            zh: {
+                upgradesTitle: '升级',
+                thread: '时间线',
+                threadDesc: '+1线',
+                weave: '编织力',
+                weaveDesc: '+1时间/点击',
+                loop: '循环奖励',
+                loopDesc: '+0.1奖励/循环',
+                backBtn: '返回'
+            },
+            ar: {
+                upgradesTitle: 'الترقيات',
+                thread: 'خيط زمني',
+                threadDesc: '+1 خيط',
+                weave: 'قوة النسج',
+                weaveDesc: '+1 كرونوس/نقرة',
+                loop: 'مكافأة الحلقة',
+                loopDesc: '+0.1 مكافأة/حلقة',
+                backBtn: 'عودة'
+            },
+            pt: {
+                upgradesTitle: 'Melhorias',
+                thread: 'Fio temporal',
+                threadDesc: '+1 fio',
+                weave: 'Poder de tecelagem',
+                weaveDesc: '+1 cronos/clique',
+                loop: 'Bônus de loop',
+                loopDesc: '+0.1 bônus/loop',
+                backBtn: 'Voltar'
+            }
+        };
+        
+        const upgrades = [
+            { id: 'thread', baseCost: 50, langKey: 'thread', descKey: 'threadDesc', effect: () => gameState.threads++ },
+            { id: 'weave', baseCost: 75, langKey: 'weave', descKey: 'weaveDesc', effect: () => gameState.weavePower++ },
+            { id: 'loop', baseCost: 100, langKey: 'loop', descKey: 'loopDesc', effect: () => gameState.loopBonus += 0.1 }
+        ];
+        
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        
+        function createParticles(x, y) {
+            for (let i = 0; i < 15; i++) {
+                const angle = (Math.PI * 2 * i) / 15;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * 2,
+                    vy: Math.sin(angle) * 2,
+                    life: 80,
+                    size: Math.random() * 3 + 1
+                });
+            }
+        }
+        
+        function gameLoop() {
+            resizeCanvas();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background grid
+            ctx.strokeStyle = 'rgba(0, 212, 255, 0.05)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < canvas.width; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i < canvas.height; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+            
+            // Draw particles
+            particles = particles.filter(p => p.life > 0);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                
+                ctx.fillStyle = `rgba(0, 212, 255, ${p.life / 80})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Update UI
+            document.getElementById('chronos').textContent = Math.floor(gameState.chronos);
+            document.getElementById('loops').textContent = Math.floor(gameState.loops);
+            document.getElementById('threads').textContent = gameState.threads;
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function weavTime() {
+            gameState.chronos += gameState.weavePower * gameState.threads;
+            gameState.loops += gameState.loopBonus;
+            
+            const orb = document.getElementById('timeOrb');
+            const rect = orb.getBoundingClientRect();
+            createParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        }
+        
+        function renderUpgrades() {
+            const list = document.getElementById('upgradesList');
+            list.innerHTML = '';
+            
+            upgrades.forEach(upgrade => {
+                const cost = Math.ceil(upgrade.baseCost * Math.pow(1.15, upgrade.count || 0));
+                const canAfford = gameState.chronos >= cost;
+                
+                const div = document.createElement('div');
+                div.className = `upgrade ${!canAfford ? 'disabled' : ''}`;
+                div.innerHTML = `
+                    <div class="upgrade-name">${languages[gameState.language][upgrade.langKey]}</div>
+                    <div class="upgrade-desc">${languages[gameState.language][upgrade.descKey]}</div>
+                    <div class="upgrade-cost">Cost: ${cost}</div>
+                `;
+                
+                if (canAfford) {
+                    div.onclick = () => buyUpgrade(upgrade);
+                }
+                
+                list.appendChild(div);
+            });
+        }
+        
+        function buyUpgrade(upgrade) {
+            const cost = Math.ceil(upgrade.baseCost * Math.pow(1.15, upgrade.count || 0));
+            if (gameState.chronos >= cost) {
+                gameState.chronos -= cost;
+                upgrade.count = (upgrade.count || 0) + 1;
+                upgrade.effect();
+                renderUpgrades();
+            }
+        }
+        
+        function changeLanguage() {
+            gameState.language = document.getElementById('langSelect').value;
+            document.getElementById('upgradesTitle').textContent = languages[gameState.language].upgradesTitle;
+            renderUpgrades();
+        }
+        
+        function goHome() {
+            window.location.href = '../index.html';
+        }
+        
+        // Save state
+        setInterval(() => {
+            localStorage.setItem('timeWeaverState', JSON.stringify(gameState));
+        }, 5000);
+        
+        // Load state
+        const saved = localStorage.getItem('timeWeaverState');
+        if (saved) {
+            Object.assign(gameState, JSON.parse(saved));
+            document.getElementById('langSelect').value = gameState.language;
+        }
+        
+        document.getElementById('upgradesTitle').textContent = languages[gameState.language].upgradesTitle;
+        renderUpgrades();
+        gameLoop();
+    </script>
+</body>
+</html>

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Deep Sea Explorer - Ocean Adventure</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #001a4d 0%, #000033 100%);
+            color: #00ccff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(0, 26, 77, 0.9);
+            padding: 12px 20px;
+            border-bottom: 2px solid #00ccff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            color: #00ccff;
+            text-shadow: 0 0 10px #00ccff;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #00ccff, #0099ff);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #00ccff;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: rgba(0, 204, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 4px;
+            border-left: 3px solid #00ccff;
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .game-area {
+            flex: 1;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 204, 255, 0.1), rgba(0, 26, 77, 0.9));
+            border: 2px solid #00ccff;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: rgba(0, 26, 77, 0.9);
+            border: 2px solid #00ccff;
+            border-radius: 10px;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .sidebar h3 {
+            color: #00ccff;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #00ccff;
+            padding-bottom: 8px;
+        }
+        
+        .upgrade {
+            background: rgba(0, 204, 255, 0.1);
+            border: 1px solid #00ccff;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+        
+        .upgrade:hover {
+            background: rgba(0, 204, 255, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .upgrade.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .upgrade-name {
+            color: #00ff88;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .upgrade-cost {
+            color: #ffaa00;
+            font-size: 11px;
+        }
+        
+        .upgrade-desc {
+            color: #aabbff;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+        
+        .lang-select {
+            background: rgba(0, 204, 255, 0.2);
+            border: 1px solid #00ccff;
+            color: #00ccff;
+            padding: 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #00ccff;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🐠 Deep Sea Explorer</h1>
+        <button class="back-btn" onclick="goHome()">← Back</button>
+        <div class="stats">
+            <div class="stat-item">🐚 Pearls: <span id="pearls">0</span></div>
+            <div class="stat-item">🌊 Depth: <span id="depth">0</span>m</div>
+            <div class="stat-item">🚢 Subs: <span id="subs">1</span></div>
+        </div>
+        <select class="lang-select" id="langSelect" onchange="changeLanguage()">
+            <option value="en">English</option>
+            <option value="hy">Հայերեն</option>
+            <option value="ru">Русский</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+            <option value="ja">日本語</option>
+            <option value="zh">中文</option>
+            <option value="ar">العربية</option>
+            <option value="pt">Português</option>
+        </select>
+    </div>
+    
+    <div class="container">
+        <div class="game-area">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+        
+        <div class="sidebar">
+            <h3 id="upgradesTitle">Upgrades</h3>
+            <div id="upgradesList"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameState = {
+            pearls: 0,
+            depth: 0,
+            subs: 1,
+            diveSpeed: 1,
+            pearlChance: 0.1,
+            language: 'en'
+        };
+        
+        const languages = {
+            en: {
+                upgradesTitle: 'Upgrades',
+                sub: 'Submarine',
+                subDesc: '+1 submarine',
+                speed: 'Dive Speed',
+                speedDesc: '+0.5 speed',
+                treasure: 'Treasure Finder',
+                treasureDesc: '+10% pearl chance',
+                backBtn: 'Back'
+            },
+            hy: {
+                upgradesTitle: 'Հարմարեցումներ',
+                sub: 'Սուզանավ',
+                subDesc: '+1 սուզանավ',
+                speed: 'Ընկնելու Արագություն',
+                speedDesc: '+0.5 արագություն',
+                treasure: 'Գանձ Որոնիչ',
+                treasureDesc: '+10% մարգարիտ հավանականություն',
+                backBtn: 'Վերադառնալ'
+            },
+            ru: {
+                upgradesTitle: 'Улучшения',
+                sub: 'Подводная лодка',
+                subDesc: '+1 подводная лодка',
+                speed: 'Скорость погружения',
+                speedDesc: '+0.5 скорость',
+                treasure: 'Искатель сокровищ',
+                treasureDesc: '+10% шанс жемчуга',
+                backBtn: 'Назад'
+            },
+            fr: {
+                upgradesTitle: 'Améliorations',
+                sub: 'Sous-marin',
+                subDesc: '+1 sous-marin',
+                speed: 'Vitesse de plongée',
+                speedDesc: '+0.5 vitesse',
+                treasure: 'Chercheur de trésor',
+                treasureDesc: '+10% chance perle',
+                backBtn: 'Retour'
+            },
+            de: {
+                upgradesTitle: 'Verbesserungen',
+                sub: 'U-Boot',
+                subDesc: '+1 U-Boot',
+                speed: 'Tauchgeschwindigkeit',
+                speedDesc: '+0.5 Geschwindigkeit',
+                treasure: 'Schatzsucher',
+                treasureDesc: '+10% Perlenchance',
+                backBtn: 'Zurück'
+            },
+            es: {
+                upgradesTitle: 'Mejoras',
+                sub: 'Submarino',
+                subDesc: '+1 submarino',
+                speed: 'Velocidad de buceo',
+                speedDesc: '+0.5 velocidad',
+                treasure: 'Buscador de tesoros',
+                treasureDesc: '+10% probabilidad de perla',
+                backBtn: 'Atrás'
+            },
+            ja: {
+                upgradesTitle: 'アップグレード',
+                sub: '潜水艦',
+                subDesc: '+1潜水艦',
+                speed: 'ダイブ速度',
+                speedDesc: '+0.5速度',
+                treasure: '宝探し',
+                treasureDesc: '+10%真珠チャンス',
+                backBtn: '戻る'
+            },
+            zh: {
+                upgradesTitle: '升级',
+                sub: '潜艇',
+                subDesc: '+1潜艇',
+                speed: '潜水速度',
+                speedDesc: '+0.5速度',
+                treasure: '宝藏猎人',
+                treasureDesc: '+10%珍珠机会',
+                backBtn: '返回'
+            },
+            ar: {
+                upgradesTitle: 'الترقيات',
+                sub: 'غواصة',
+                subDesc: '+1 غواصة',
+                speed: 'سرعة الغوص',
+                speedDesc: '+0.5 سرعة',
+                treasure: 'باحث الكنز',
+                treasureDesc: '+10% فرصة اللؤلؤ',
+                backBtn: 'عودة'
+            },
+            pt: {
+                upgradesTitle: 'Melhorias',
+                sub: 'Submarino',
+                subDesc: '+1 submarino',
+                speed: 'Velocidade de mergulho',
+                speedDesc: '+0.5 velocidade',
+                treasure: 'Caçador de tesouro',
+                treasureDesc: '+10% chance de pérola',
+                backBtn: 'Voltar'
+            }
+        };
+        
+        const upgrades = [
+            { id: 'sub', baseCost: 100, langKey: 'sub', descKey: 'subDesc', effect: () => gameState.subs++ },
+            { id: 'speed', baseCost: 75, langKey: 'speed', descKey: 'speedDesc', effect: () => gameState.diveSpeed += 0.5 },
+            { id: 'treasure', baseCost: 50, langKey: 'treasure', descKey: 'treasureDesc', effect: () => gameState.pearlChance += 0.1 }
+        ];
+        
+        let bubbles = [];
+        let fish = [];
+        
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        
+        function gameLoop() {
+            resizeCanvas();
+            
+            // Draw ocean gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, 'rgba(0, 100, 150, 0.3)');
+            gradient.addColorStop(1, 'rgba(0, 20, 60, 0.8)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw bubbles
+            bubbles = bubbles.filter(b => b.y > -10);
+            bubbles.forEach(b => {
+                b.y -= b.speed;
+                b.x += Math.sin(b.y * 0.05) * 0.5;
+                
+                ctx.fillStyle = `rgba(0, 204, 255, ${0.3 - b.y / canvas.height * 0.3})`;
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Add new bubbles
+            if (Math.random() < 0.1) {
+                bubbles.push({
+                    x: Math.random() * canvas.width,
+                    y: canvas.height,
+                    size: Math.random() * 3 + 1,
+                    speed: Math.random() * 1 + 0.5
+                });
+            }
+            
+            // Draw fish
+            fish = fish.filter(f => f.x > -50 && f.x < canvas.width + 50);
+            fish.forEach(f => {
+                f.x += f.vx;
+                f.y += Math.sin(f.x * 0.02) * 0.5;
+                
+                ctx.fillStyle = `rgba(0, 255, 150, ${0.5 - f.y / canvas.height * 0.3})`;
+                ctx.beginPath();
+                ctx.arc(f.x, f.y, 8, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Add new fish
+            if (Math.random() < 0.05) {
+                fish.push({
+                    x: Math.random() < 0.5 ? -50 : canvas.width + 50,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 2 + 1
+                });
+            }
+            
+            // Draw submarine
+            ctx.fillStyle = '#00ccff';
+            ctx.fillRect(canvas.width / 2 - 30, canvas.height / 2 - 15, 60, 30);
+            ctx.fillStyle = 'rgba(0, 204, 255, 0.5)';
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2 - 10, canvas.height / 2 - 8, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Update depth
+            gameState.depth += gameState.subs * gameState.diveSpeed * 0.016;
+            
+            // Random pearl chance
+            if (Math.random() < gameState.pearlChance * 0.0001) {
+                gameState.pearls += gameState.subs;
+            }
+            
+            // Update UI
+            document.getElementById('pearls').textContent = Math.floor(gameState.pearls);
+            document.getElementById('depth').textContent = Math.floor(gameState.depth);
+            document.getElementById('subs').textContent = gameState.subs;
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function renderUpgrades() {
+            const list = document.getElementById('upgradesList');
+            list.innerHTML = '';
+            
+            upgrades.forEach(upgrade => {
+                const cost = Math.ceil(upgrade.baseCost * Math.pow(1.15, upgrade.count || 0));
+                const canAfford = gameState.pearls >= cost;
+                
+                const div = document.createElement('div');
+                div.className = `upgrade ${!canAfford ? 'disabled' : ''}`;
+                div.innerHTML = `
+                    <div class="upgrade-name">${languages[gameState.language][upgrade.langKey]}</div>
+                    <div class="upgrade-desc">${languages[gameState.language][upgrade.descKey]}</div>
+                    <div class="upgrade-cost">Cost: ${cost} 🐚</div>
+                `;
+                
+                if (canAfford) {
+                    div.onclick = () => buyUpgrade(upgrade);
+                }
+                
+                list.appendChild(div);
+            });
+        }
+        
+        function buyUpgrade(upgrade) {
+            const cost = Math.ceil(upgrade.baseCost * Math.pow(1.15, upgrade.count || 0));
+            if (gameState.pearls >= cost) {
+                gameState.pearls -= cost;
+                upgrade.count = (upgrade.count || 0) + 1;
+                upgrade.effect();
+                renderUpgrades();
+            }
+        }
+        
+        function changeLanguage() {
+            gameState.language = document.getElementById('langSelect').value;
+            document.getElementById('upgradesTitle').textContent = languages[gameState.language].upgradesTitle;
+            renderUpgrades();
+        }
+        
+        function goHome() {
+            window.location.href = '../index.html';
+        }
+        
+        // Save state
+        setInterval(() => {
+            localStorage.setItem('deepSeaExplorerState', JSON.stringify(gameState));
+        }, 5000);
+        
+        // Load state
+        const saved = localStorage.getItem('deepSeaExplorerState');
+        if (saved) {
+            Object.assign(gameState, JSON.parse(saved));
+            document.getElementById('langSelect').value = gameState.language;
+        }
+        
+        document.getElementById('upgradesTitle').textContent = languages[gameState.language].upgradesTitle;
+        renderUpgrades();
+        gameLoop();
+    </script>
+</body>
+</html>

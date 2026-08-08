@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alchemist's Lab - Potion Brewing</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #2d1b4e 0%, #1a0f2e 100%);
+            color: #d4af37;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(45, 27, 78, 0.9);
+            padding: 15px 20px;
+            border-bottom: 3px solid #d4af37;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .header h1 {
+            font-size: 26px;
+            color: #d4af37;
+            text-shadow: 0 0 10px #d4af37;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #d4af37, #aa8c2c);
+            border: none;
+            color: #1a0f2e;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #d4af37;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: rgba(212, 175, 55, 0.1);
+            padding: 8px 12px;
+            border-radius: 4px;
+            border-left: 3px solid #d4af37;
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .game-area {
+            flex: 1;
+            background: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.1), rgba(26, 15, 46, 0.9));
+            border: 3px solid #d4af37;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .cauldron {
+            width: 120px;
+            height: 120px;
+            border: 3px solid #d4af37;
+            border-radius: 0 0 50px 50px;
+            background: radial-gradient(circle, #4a3f35, #2a2520);
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5), 0 0 20px rgba(212, 175, 55, 0.3);
+        }
+        
+        .cauldron:hover {
+            transform: scale(1.05);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5), 0 0 30px rgba(212, 175, 55, 0.6);
+        }
+        
+        .cauldron:active {
+            transform: scale(0.95);
+        }
+        
+        .potion-liquid {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            height: 60%;
+            background: linear-gradient(180deg, #00ff00, #00aa00);
+            border-radius: 0 0 40px 40px;
+            opacity: 0.7;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: rgba(45, 27, 78, 0.9);
+            border: 3px solid #d4af37;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .sidebar h3 {
+            color: #d4af37;
+            font-size: 18px;
+            border-bottom: 2px solid #d4af37;
+            padding-bottom: 10px;
+        }
+        
+        .recipe {
+            background: rgba(212, 175, 55, 0.1);
+            border: 2px solid #d4af37;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+        }
+        
+        .recipe:hover {
+            background: rgba(212, 175, 55, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .recipe.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        
+        .recipe-name {
+            color: #d4af37;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .recipe-cost {
+            color: #ffaa00;
+            font-size: 12px;
+        }
+        
+        .recipe-effect {
+            color: #aaffaa;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .lang-select {
+            background: rgba(212, 175, 55, 0.1);
+            border: 2px solid #d4af37;
+            color: #d4af37;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(212, 175, 55, 0.1);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #d4af37;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧪 Alchemist's Lab</h1>
+        <button class="back-btn" onclick="goHome()">← Back</button>
+        <div class="stats">
+            <div class="stat-item">✨ Essence: <span id="essence">0</span></div>
+            <div class="stat-item">🧬 Potions: <span id="potions">0</span></div>
+            <div class="stat-item">⚗️ Cauldrons: <span id="cauldrons">1</span></div>
+        </div>
+        <select class="lang-select" id="langSelect" onchange="changeLanguage()">
+            <option value="en">English</option>
+            <option value="hy">Հայերեն</option>
+            <option value="ru">Русский</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+            <option value="ja">日本語</option>
+            <option value="zh">中文</option>
+            <option value="ar">العربية</option>
+            <option value="pt">Português</option>
+        </select>
+    </div>
+    
+    <div class="container">
+        <div class="game-area">
+            <canvas id="effectCanvas"></canvas>
+            <div class="cauldron" id="cauldron" onclick="brewPotion()">
+                <div class="potion-liquid" id="potionLiquid"></div>
+            </div>
+        </div>
+        
+        <div class="sidebar">
+            <h3 id="recipesTitle">Recipes</h3>
+            <div id="recipesList"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('effectCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameState = {
+            essence: 0,
+            potions: 0,
+            cauldrons: 1,
+            brewSpeed: 1,
+            essencePerBrew: 1,
+            language: 'en'
+        };
+        
+        let particles = [];
+        let brewProgress = 0;
+        
+        const languages = {
+            en: {
+                recipesTitle: 'Recipes',
+                cauldron: 'Extra Cauldron',
+                cauldronDesc: '+1 cauldron',
+                speed: 'Faster Brewing',
+                speedDesc: '+0.5 speed',
+                essence: 'Essence Boost',
+                essenceDesc: '+1 essence/brew',
+                backBtn: 'Back'
+            },
+            hy: {
+                recipesTitle: 'Բաղադրատոմեր',
+                cauldron: 'Լրացուցիչ Կաղան',
+                cauldronDesc: '+1 կաղան',
+                speed: 'Ավելի Արագ Պատրաստում',
+                speedDesc: '+0.5 արագություն',
+                essence: 'Էսենցիայի Բուստ',
+                essenceDesc: '+1 էսենցիա/պատրաստում',
+                backBtn: 'Վերադառնալ'
+            },
+            ru: {
+                recipesTitle: 'Рецепты',
+                cauldron: 'Дополнительный котел',
+                cauldronDesc: '+1 котел',
+                speed: 'Более быстрое варение',
+                speedDesc: '+0.5 скорость',
+                essence: 'Усиление эссенции',
+                essenceDesc: '+1 эссенция/варка',
+                backBtn: 'Назад'
+            },
+            fr: {
+                recipesTitle: 'Recettes',
+                cauldron: 'Chaudron supplémentaire',
+                cauldronDesc: '+1 chaudron',
+                speed: 'Brassage plus rapide',
+                speedDesc: '+0.5 vitesse',
+                essence: 'Renforcement d\'essence',
+                essenceDesc: '+1 essence/brassage',
+                backBtn: 'Retour'
+            },
+            de: {
+                recipesTitle: 'Rezepte',
+                cauldron: 'Zusätzlicher Kessel',
+                cauldronDesc: '+1 Kessel',
+                speed: 'Schnelleres Brauen',
+                speedDesc: '+0.5 Geschwindigkeit',
+                essence: 'Essenz-Boost',
+                essenceDesc: '+1 Essenz/Brau',
+                backBtn: 'Zurück'
+            },
+            es: {
+                recipesTitle: 'Recetas',
+                cauldron: 'Caldero adicional',
+                cauldronDesc: '+1 caldero',
+                speed: 'Elaboración más rápida',
+                speedDesc: '+0.5 velocidad',
+                essence: 'Impulso de esencia',
+                essenceDesc: '+1 esencia/elaboración',
+                backBtn: 'Atrás'
+            },
+            ja: {
+                recipesTitle: 'レシピ',
+                cauldron: '追加の大釜',
+                cauldronDesc: '+1大釜',
+                speed: 'より速い醸造',
+                speedDesc: '+0.5速度',
+                essence: 'エッセンスブースト',
+                essenceDesc: '+1エッセンス/醸造',
+                backBtn: '戻る'
+            },
+            zh: {
+                recipesTitle: '配方',
+                cauldron: '额外大锅',
+                cauldronDesc: '+1大锅',
+                speed: '更快酿造',
+                speedDesc: '+0.5速度',
+                essence: '精华增强',
+                essenceDesc: '+1精华/酿造',
+                backBtn: '返回'
+            },
+            ar: {
+                recipesTitle: 'الوصفات',
+                cauldron: 'مرجل إضافي',
+                cauldronDesc: '+1 مرجل',
+                speed: 'تخمير أسرع',
+                speedDesc: '+0.5 سرعة',
+                essence: 'تعزيز الجوهر',
+                essenceDesc: '+1 جوهر/تخمير',
+                backBtn: 'عودة'
+            },
+            pt: {
+                recipesTitle: 'Receitas',
+                cauldron: 'Caldeirão adicional',
+                cauldronDesc: '+1 caldeirão',
+                speed: 'Preparação mais rápida',
+                speedDesc: '+0.5 velocidade',
+                essence: 'Impulso de essência',
+                essenceDesc: '+1 essência/preparação',
+                backBtn: 'Voltar'
+            }
+        };
+        
+        const recipes = [
+            { id: 'cauldron', baseCost: 100, langKey: 'cauldron', descKey: 'cauldronDesc', effect: () => gameState.cauldrons++ },
+            { id: 'speed', baseCost: 75, langKey: 'speed', descKey: 'speedDesc', effect: () => gameState.brewSpeed += 0.5 },
+            { id: 'essence', baseCost: 50, langKey: 'essence', descKey: 'essenceDesc', effect: () => gameState.essencePerBrew++ }
+        ];
+        
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        
+        function createParticles(x, y, color = '#d4af37') {
+            for (let i = 0; i < 20; i++) {
+                const angle = (Math.PI * 2 * i) / 20;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * 3,
+                    vy: Math.sin(angle) * 3,
+                    life: 60,
+                    color: color
+                });
+            }
+        }
+        
+        function gameLoop() {
+            resizeCanvas();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw particles
+            particles = particles.filter(p => p.life > 0);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.2;
+                p.life--;
+                
+                ctx.fillStyle = p.color.replace(')', `, ${p.life / 60})`).replace('rgb', 'rgba');
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Update UI
+            document.getElementById('essence').textContent = Math.floor(gameState.essence);
+            document.getElementById('potions').textContent = Math.floor(gameState.potions);
+            document.getElementById('cauldrons').textContent = gameState.cauldrons;
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function brewPotion() {
+            gameState.essence += gameState.essencePerBrew * gameState.cauldrons;
+            gameState.potions++;
+            
+            const cauldron = document.getElementById('cauldron');
+            const rect = cauldron.getBoundingClientRect();
+            createParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, 'rgba(0, 255, 0, 1)');
+            
+            cauldron.style.animation = 'none';
+            setTimeout(() => {
+                cauldron.style.animation = 'pulse 0.3s ease-out';
+            }, 10);
+        }
+        
+        function renderRecipes() {
+            const list = document.getElementById('recipesList');
+            list.innerHTML = '';
+            
+            recipes.forEach(recipe => {
+                const cost = Math.ceil(recipe.baseCost * Math.pow(1.2, recipe.count || 0));
+                const canAfford = gameState.essence >= cost;
+                
+                const div = document.createElement('div');
+                div.className = `recipe ${!canAfford ? 'disabled' : ''}`;
+                div.innerHTML = `
+                    <div class="recipe-name">${languages[gameState.language][recipe.langKey]}</div>
+                    <div class="recipe-effect">${languages[gameState.language][recipe.descKey]}</div>
+                    <div class="recipe-cost">Cost: ${cost} ✨</div>
+                `;
+                
+                if (canAfford) {
+                    div.onclick = () => buyRecipe(recipe);
+                }
+                
+                list.appendChild(div);
+            });
+        }
+        
+        function buyRecipe(recipe) {
+            const cost = Math.ceil(recipe.baseCost * Math.pow(1.2, recipe.count || 0));
+            if (gameState.essence >= cost) {
+                gameState.essence -= cost;
+                recipe.count = (recipe.count || 0) + 1;
+                recipe.effect();
+                renderRecipes();
+            }
+        }
+        
+        function changeLanguage() {
+            gameState.language = document.getElementById('langSelect').value;
+            document.getElementById('recipesTitle').textContent = languages[gameState.language].recipesTitle;
+            renderRecipes();
+        }
+        
+        function goHome() {
+            window.location.href = '../index.html';
+        }
+        
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+                100% { transform: scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Save state
+        setInterval(() => {
+            localStorage.setItem('alchemistLabState', JSON.stringify(gameState));
+        }, 5000);
+        
+        // Load state
+        const saved = localStorage.getItem('alchemistLabState');
+        if (saved) {
+            Object.assign(gameState, JSON.parse(saved));
+            document.getElementById('langSelect').value = gameState.language;
+        }
+        
+        document.getElementById('recipesTitle').textContent = languages[gameState.language].recipesTitle;
+        renderRecipes();
+        gameLoop();
+    </script>
+</body>
+</html>

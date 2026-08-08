@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cosmic Miner - Idle Mining Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #e0e6ff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(10, 14, 39, 0.8);
+            padding: 12px 20px;
+            border-bottom: 2px solid #00d4ff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            color: #00d4ff;
+            text-shadow: 0 0 10px #00d4ff;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #00d4ff;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: rgba(0, 212, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 4px;
+            border-left: 3px solid #00d4ff;
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .game-area {
+            flex: 1;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 212, 255, 0.1), rgba(10, 14, 39, 0.9));
+            border: 2px solid #00d4ff;
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: rgba(10, 14, 39, 0.8);
+            border: 2px solid #00d4ff;
+            border-radius: 10px;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .sidebar h3 {
+            color: #00d4ff;
+            font-size: 16px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #00d4ff;
+            padding-bottom: 8px;
+        }
+        
+        .upgrade {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid #00d4ff;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+        
+        .upgrade:hover {
+            background: rgba(0, 212, 255, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .upgrade.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .upgrade-name {
+            color: #00ff88;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .upgrade-cost {
+            color: #ffaa00;
+            font-size: 11px;
+        }
+        
+        .upgrade-desc {
+            color: #aabbff;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+        
+        .lang-select {
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid #00d4ff;
+            color: #e0e6ff;
+            padding: 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #00d4ff;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⛏️ Cosmic Miner</h1>
+        <button class="back-btn" onclick="goHome()">← Back to Library</button>
+        <div class="stats">
+            <div class="stat-item">💎 Ore: <span id="ore">0</span></div>
+            <div class="stat-item">⚡ Power: <span id="power">0</span></div>
+            <div class="stat-item">🤖 Miners: <span id="miners">1</span></div>
+        </div>
+        <select class="lang-select" id="langSelect" onchange="changeLanguage()">
+            <option value="en">English</option>
+            <option value="hy">Հայերեն</option>
+            <option value="ru">Русский</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+            <option value="ja">日本語</option>
+            <option value="zh">中文</option>
+            <option value="ar">العربية</option>
+            <option value="pt">Português</option>
+        </select>
+    </div>
+    
+    <div class="container">
+        <div class="game-area">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+        
+        <div class="sidebar">
+            <h3 id="upgradesTitle">Upgrades</h3>
+            <div id="upgradesList"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameState = {
+            ore: 0,
+            power: 0,
+            miners: 1,
+            mineSpeed: 1,
+            powerGen: 0.5,
+            clickPower: 1,
+            language: 'en'
+        };
+        
+        const languages = {
+            en: {
+                upgradesTitle: 'Upgrades',
+                miner: 'Miner',
+                minerDesc: 'Adds 1 ore/sec',
+                powerGen: 'Power Generator',
+                powerGenDesc: 'Adds 0.5 power/sec',
+                clickUp: 'Click Power',
+                clickUpDesc: 'Each click +1 ore',
+                backToLib: 'Back to Library'
+            },
+            hy: {
+                upgradesTitle: 'Հարմարեցումներ',
+                miner: 'Հանքավար',
+                minerDesc: 'Ավելացնում է 1 հանք/վ',
+                powerGen: 'Ուժի Գեներատոր',
+                powerGenDesc: 'Ավելացնում է 0.5 ուժ/վ',
+                clickUp: 'Քլիքի Ուժ',
+                clickUpDesc: 'Յուրաքանչյուր քլիք +1 հանք',
+                backToLib: 'Վերադառնալ Գրադարան'
+            },
+            ru: {
+                upgradesTitle: 'Улучшения',
+                miner: 'Шахтер',
+                minerDesc: 'Добавляет 1 руду/сек',
+                powerGen: 'Генератор энергии',
+                powerGenDesc: 'Добавляет 0.5 энергии/сек',
+                clickUp: 'Сила клика',
+                clickUpDesc: 'Каждый клик +1 руда',
+                backToLib: 'Вернуться в библиотеку'
+            },
+            fr: {
+                upgradesTitle: 'Améliorations',
+                miner: 'Mineur',
+                minerDesc: 'Ajoute 1 minerai/sec',
+                powerGen: 'Générateur d\'énergie',
+                powerGenDesc: 'Ajoute 0.5 énergie/sec',
+                clickUp: 'Puissance de clic',
+                clickUpDesc: 'Chaque clic +1 minerai',
+                backToLib: 'Retour à la bibliothèque'
+            },
+            de: {
+                upgradesTitle: 'Verbesserungen',
+                miner: 'Bergmann',
+                minerDesc: 'Fügt 1 Erz/Sek hinzu',
+                powerGen: 'Stromgenerator',
+                powerGenDesc: 'Fügt 0,5 Strom/Sek hinzu',
+                clickUp: 'Klickleistung',
+                clickUpDesc: 'Jeder Klick +1 Erz',
+                backToLib: 'Zurück zur Bibliothek'
+            },
+            es: {
+                upgradesTitle: 'Mejoras',
+                miner: 'Minero',
+                minerDesc: 'Añade 1 mineral/seg',
+                powerGen: 'Generador de energía',
+                powerGenDesc: 'Añade 0.5 energía/seg',
+                clickUp: 'Poder de clic',
+                clickUpDesc: 'Cada clic +1 mineral',
+                backToLib: 'Volver a la biblioteca'
+            },
+            ja: {
+                upgradesTitle: 'アップグレード',
+                miner: '鉱夫',
+                minerDesc: '1鉱石/秒を追加',
+                powerGen: 'パワージェネレーター',
+                powerGenDesc: '0.5電力/秒を追加',
+                clickUp: 'クリック力',
+                clickUpDesc: 'クリックごとに+1鉱石',
+                backToLib: 'ライブラリに戻る'
+            },
+            zh: {
+                upgradesTitle: '升级',
+                miner: '矿工',
+                minerDesc: '每秒增加1矿石',
+                powerGen: '发电机',
+                powerGenDesc: '每秒增加0.5电力',
+                clickUp: '点击力',
+                clickUpDesc: '每次点击+1矿石',
+                backToLib: '返回库'
+            },
+            ar: {
+                upgradesTitle: 'الترقيات',
+                miner: 'عامل منجم',
+                minerDesc: 'إضافة 1 خام/ثانية',
+                powerGen: 'مولد الطاقة',
+                powerGenDesc: 'إضافة 0.5 طاقة/ثانية',
+                clickUp: 'قوة النقر',
+                clickUpDesc: 'كل نقرة +1 خام',
+                backToLib: 'العودة إلى المكتبة'
+            },
+            pt: {
+                upgradesTitle: 'Melhorias',
+                miner: 'Mineiro',
+                minerDesc: 'Adiciona 1 minério/seg',
+                powerGen: 'Gerador de energia',
+                powerGenDesc: 'Adiciona 0.5 energia/seg',
+                clickUp: 'Poder de clique',
+                clickUpDesc: 'Cada clique +1 minério',
+                backToLib: 'Voltar à biblioteca'
+            }
+        };
+        
+        const upgrades = [
+            { id: 'miner', baseCost: 10, langKey: 'miner', descKey: 'minerDesc', effect: () => gameState.miners++ },
+            { id: 'powerGen', baseCost: 15, langKey: 'powerGen', descKey: 'powerGenDesc', effect: () => gameState.powerGen += 0.5 },
+            { id: 'clickUp', baseCost: 20, langKey: 'clickUp', descKey: 'clickUpDesc', effect: () => gameState.clickPower++ }
+        ];
+        
+        let particles = [];
+        
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        
+        function gameLoop() {
+            resizeCanvas();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background stars
+            drawStars();
+            
+            // Draw ore asteroids
+            drawAsteroids();
+            
+            // Draw particles
+            updateParticles();
+            
+            // Update game state
+            gameState.ore += gameState.miners * gameState.mineSpeed * 0.016;
+            gameState.power += gameState.powerGen * 0.016;
+            
+            // Update UI
+            document.getElementById('ore').textContent = Math.floor(gameState.ore);
+            document.getElementById('power').textContent = Math.floor(gameState.power);
+            document.getElementById('miners').textContent = gameState.miners;
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function drawStars() {
+            ctx.fillStyle = '#ffffff';
+            for (let i = 0; i < 50; i++) {
+                const x = (i * 73) % canvas.width;
+                const y = (i * 47) % canvas.height;
+                const size = Math.sin(Date.now() * 0.001 + i) * 0.5 + 1;
+                ctx.fillRect(x, y, size, size);
+            }
+        }
+        
+        function drawAsteroids() {
+            ctx.fillStyle = 'rgba(0, 212, 255, 0.3)';
+            ctx.strokeStyle = '#00d4ff';
+            ctx.lineWidth = 2;
+            
+            for (let i = 0; i < 5; i++) {
+                const x = (i * 200 + Date.now() * 0.01) % canvas.width;
+                const y = 100 + i * 80;
+                const size = 40 + Math.sin(Date.now() * 0.001 + i) * 10;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            }
+        }
+        
+        function updateParticles() {
+            particles = particles.filter(p => p.life > 0);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                
+                ctx.fillStyle = `rgba(0, 212, 255, ${p.life / 100})`;
+                ctx.fillRect(p.x, p.y, 5, 5);
+            });
+        }
+        
+        function createParticles(x, y, count = 10) {
+            for (let i = 0; i < count; i++) {
+                const angle = (Math.PI * 2 * i) / count;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * 3,
+                    vy: Math.sin(angle) * 3,
+                    life: 100
+                });
+            }
+        }
+        
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            gameState.ore += gameState.clickPower;
+            createParticles(x, y, 15);
+        });
+        
+        function renderUpgrades() {
+            const list = document.getElementById('upgradesList');
+            list.innerHTML = '';
+            
+            upgrades.forEach(upgrade => {
+                const cost = Math.ceil(upgrade.baseCost * Math.pow(1.15, upgrade.count || 0));
+                const canAfford = gameState.ore >= cost;
+                
+                const div = document.createElement('div');
+                div.className = `upgrade ${!canAfford ? 'disabled' : ''}`;
+                div.innerHTML = `
+                    <div class="upgrade-name">${languages[gameState.language][upgrade.langKey]}</div>
+                    <div class="upgrade-desc">${languages[gameState.language][upgrade.descKey]}</div>
+                    <div class="upgrade-cost">Cost: ${cost} 💎</div>
+                `;
+                
+                if (canAfford) {
+                    div.onclick = () => buyUpgrade(upgrade);
+                }
+                
+                list.appendChild(div);
+            });
+        }
+        
+        function buyUpgrade(upgrade) {
+            const cost = Math.ceil(upgrade.baseCost * Math.pow(1.15, upgrade.count || 0));
+            if (gameState.ore >= cost) {
+                gameState.ore -= cost;
+                upgrade.count = (upgrade.count || 0) + 1;
+                upgrade.effect();
+                renderUpgrades();
+            }
+        }
+        
+        function changeLanguage() {
+            gameState.language = document.getElementById('langSelect').value;
+            document.getElementById('upgradesTitle').textContent = languages[gameState.language].upgradesTitle;
+            renderUpgrades();
+        }
+        
+        function goHome() {
+            window.location.href = '../index.html';
+        }
+        
+        // Save game state
+        setInterval(() => {
+            localStorage.setItem('cosmicMinerState', JSON.stringify(gameState));
+        }, 5000);
+        
+        // Load game state
+        const saved = localStorage.getItem('cosmicMinerState');
+        if (saved) {
+            Object.assign(gameState, JSON.parse(saved));
+            document.getElementById('langSelect').value = gameState.language;
+        }
+        
+        document.getElementById('upgradesTitle').textContent = languages[gameState.language].upgradesTitle;
+        renderUpgrades();
+        gameLoop();
+    </script>
+</body>
+</html>
