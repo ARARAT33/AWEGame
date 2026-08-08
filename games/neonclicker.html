@@ -3,516 +3,293 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Clicker - Rapid Fire Game</title>
+    <title>Neon Clicker - Rhythm Game</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body {
             font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #1a0033 0%, #330066 100%);
+            background: radial-gradient(circle at center, #1a0033, #0a0015);
             color: #ff00ff;
             overflow: hidden;
             height: 100vh;
             display: flex;
             flex-direction: column;
         }
-        
         .header {
-            background: rgba(26, 0, 51, 0.9);
-            padding: 15px 20px;
+            background: rgba(26, 0, 51, 0.95);
+            padding: 10px 15px;
             border-bottom: 3px solid #ff00ff;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 10px;
         }
-        
-        .header h1 {
-            font-size: 28px;
-            color: #ff00ff;
-            text-shadow: 0 0 20px #ff00ff;
-        }
-        
+        .header h1 { font-size: 20px; color: #ff00ff; text-shadow: 0 0 15px #ff00ff; }
         .back-btn {
-            background: linear-gradient(135deg, #ff00ff, #ff0080);
+            background: #ff00ff;
             border: none;
             color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 6px 12px;
+            border-radius: 50%;
             cursor: pointer;
             font-weight: bold;
-            font-size: 14px;
-            transition: all 0.3s;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        
-        .back-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 20px #ff00ff;
-        }
-        
         .stats {
             display: flex;
-            gap: 25px;
-            font-size: 16px;
+            gap: 15px;
+            font-size: 12px;
             flex-wrap: wrap;
         }
-        
         .stat {
-            background: rgba(255, 0, 255, 0.2);
-            padding: 10px 15px;
-            border-radius: 6px;
-            border: 2px solid #ff00ff;
+            background: rgba(255, 0, 255, 0.15);
+            padding: 5px 10px;
+            border-radius: 20px;
+            border: 1px solid #ff00ff;
         }
-        
         .container {
             display: flex;
             flex: 1;
-            gap: 20px;
-            padding: 20px;
+            gap: 10px;
+            padding: 10px;
             overflow: hidden;
         }
-        
         .game-area {
             flex: 1;
-            background: radial-gradient(circle, rgba(255, 0, 255, 0.1), rgba(26, 0, 51, 0.9));
+            background: radial-gradient(circle at center, rgba(255, 0, 255, 0.1), rgba(10, 0, 21, 0.9));
             border: 3px solid #ff00ff;
-            border-radius: 15px;
-            position: relative;
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
             overflow: hidden;
         }
-        
-        .clicker-button {
-            width: 150px;
-            height: 150px;
+        .rhythm-circle {
+            width: 200px;
+            height: 200px;
             border-radius: 50%;
-            background: radial-gradient(circle, #ff00ff, #ff0080);
-            border: 4px solid #00ffff;
-            cursor: pointer;
-            font-size: 60px;
+            background: conic-gradient(from 0deg, #ff00ff, #00ffff, #ff00ff);
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.1s;
-            box-shadow: 0 0 30px #ff00ff, inset 0 0 20px rgba(255, 0, 255, 0.5);
             position: relative;
-            z-index: 10;
+            animation: spin 3s linear infinite;
         }
-        
-        .clicker-button:active {
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .click-zone {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ff0080, #ff00ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 60px;
+            transition: all 0.1s;
+            box-shadow: 0 0 30px #ff00ff;
+        }
+        .click-zone:active {
             transform: scale(0.9);
-            box-shadow: 0 0 50px #ff00ff, inset 0 0 30px rgba(255, 0, 255, 0.8);
+            box-shadow: 0 0 50px #ff00ff;
         }
-        
-        .clicker-button:hover {
-            transform: scale(1.05);
-        }
-        
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
-        }
-        
         .sidebar {
-            width: 300px;
-            background: rgba(26, 0, 51, 0.9);
+            width: 200px;
+            background: rgba(26, 0, 51, 0.95);
             border: 3px solid #ff00ff;
             border-radius: 15px;
-            padding: 20px;
+            padding: 12px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 10px;
         }
-        
         .sidebar h3 {
             color: #00ffff;
-            font-size: 18px;
+            font-size: 13px;
             border-bottom: 2px solid #00ffff;
-            padding-bottom: 10px;
+            padding-bottom: 5px;
         }
-        
         .power-up {
             background: rgba(255, 0, 255, 0.15);
             border: 2px solid #ff00ff;
-            padding: 12px;
+            padding: 8px;
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.3s;
-            font-size: 13px;
+            font-size: 11px;
+            transition: all 0.2s;
         }
-        
         .power-up:hover {
             background: rgba(255, 0, 255, 0.3);
-            transform: translateX(5px);
-            box-shadow: 0 0 15px #ff00ff;
+            transform: translateX(3px);
         }
-        
         .power-up.disabled {
             opacity: 0.4;
             cursor: not-allowed;
         }
-        
-        .power-name {
-            color: #00ffff;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .power-cost {
-            color: #ffaa00;
-            font-size: 12px;
-        }
-        
-        .power-effect {
-            color: #aaffaa;
-            font-size: 12px;
-            margin-top: 5px;
-        }
-        
+        .power-name { color: #00ffff; font-weight: bold; }
+        .power-cost { color: #ffaa00; font-size: 10px; }
         .lang-select {
-            background: rgba(255, 0, 255, 0.2);
-            border: 2px solid #ff00ff;
+            background: rgba(255, 0, 255, 0.15);
+            border: 1px solid #ff00ff;
             color: #ff00ff;
-            padding: 8px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 11px;
         }
-        
-        .combo {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 48px;
-            color: #00ffff;
-            text-shadow: 0 0 20px #00ffff;
-            pointer-events: none;
-            z-index: 5;
-        }
-        
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 0, 255, 0.1);
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #ff00ff;
-            border-radius: 4px;
-        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 0, 255, 0.1); }
+        ::-webkit-scrollbar-thumb { background: #ff00ff; border-radius: 3px; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>⚡ Neon Clicker</h1>
-        <button class="back-btn" onclick="goHome()">← Back</button>
+        <h1>⚡ RHYTHM CLICKER</h1>
+        <button class="back-btn" onclick="goHome()">←</button>
         <div class="stats">
-            <div class="stat">Clicks: <span id="clicks">0</span></div>
-            <div class="stat">Combo: <span id="combo">0</span>x</div>
-            <div class="stat">CPS: <span id="cps">0</span></div>
+            <div class="stat">SCORE: <span id="score">0</span></div>
+            <div class="stat">COMBO: <span id="combo">0</span>x</div>
+            <div class="stat">BEAT: <span id="beat">0</span></div>
         </div>
         <select class="lang-select" id="langSelect" onchange="changeLanguage()">
-            <option value="en">English</option>
-            <option value="hy">Հայերեն</option>
-            <option value="ru">Русский</option>
-            <option value="fr">Français</option>
-            <option value="de">Deutsch</option>
-            <option value="es">Español</option>
-            <option value="ja">日本語</option>
-            <option value="zh">中文</option>
-            <option value="ar">العربية</option>
-            <option value="pt">Português</option>
+            <option value="en">EN</option>
+            <option value="hy">ՀԱ</option>
+            <option value="ru">РУ</option>
+            <option value="fr">FR</option>
+            <option value="de">DE</option>
+            <option value="es">ES</option>
+            <option value="ja">JA</option>
+            <option value="zh">ZH</option>
+            <option value="ar">AR</option>
+            <option value="pt">PT</option>
         </select>
     </div>
     
     <div class="container">
         <div class="game-area">
-            <canvas id="effectCanvas"></canvas>
-            <div class="combo" id="comboDisplay"></div>
-            <button class="clicker-button" id="clickerBtn">💥</button>
+            <div class="rhythm-circle">
+                <div class="click-zone" id="clickZone" onclick="click()">💥</div>
+            </div>
         </div>
         
         <div class="sidebar">
-            <h3 id="powerupsTitle">Power-ups</h3>
-            <div id="powerupsList"></div>
+            <h3 id="upgradesTitle">UPGRADES</h3>
+            <div id="upgradesList"></div>
         </div>
     </div>
 
     <script>
-        const canvas = document.getElementById('effectCanvas');
-        const ctx = canvas.getContext('2d');
-        const clickerBtn = document.getElementById('clickerBtn');
-        
+        const languages = {
+            en: { upgradesTitle: 'UPGRADES', multiplier: 'Multiplier', multDesc: 'x2 score', rhythm: 'Rhythm', rhythmDesc: 'Better timing', beat: 'Beat Sync', beatDesc: '+50% combo' },
+            hy: { upgradesTitle: 'ՀԱՐՄԱՐԵՑՈՒՄՆԵՐ', multiplier: 'Բազմապատկիչ', multDesc: 'x2 միավոր', rhythm: 'Ռիթմ', rhythmDesc: 'Ավելի լավ ժամանակ', beat: 'Բիթ Համաժամ', beatDesc: '+50% կոմբո' },
+            ru: { upgradesTitle: 'УЛУЧШЕНИЯ', multiplier: 'Множитель', multDesc: 'x2 очки', rhythm: 'Ритм', rhythmDesc: 'Лучший тайминг', beat: 'Синхро', beatDesc: '+50% комбо' },
+            fr: { upgradesTitle: 'AMÉLIORATIONS', multiplier: 'Multiplicateur', multDesc: 'x2 points', rhythm: 'Rythme', rhythmDesc: 'Meilleur timing', beat: 'Sync', beatDesc: '+50% combo' },
+            de: { upgradesTitle: 'VERBESSERUNGEN', multiplier: 'Multiplikator', multDesc: 'x2 Punkte', rhythm: 'Rhythmus', rhythmDesc: 'Besseres Timing', beat: 'Sync', beatDesc: '+50% Combo' },
+            es: { upgradesTitle: 'MEJORAS', multiplier: 'Multiplicador', multDesc: 'x2 puntos', rhythm: 'Ritmo', rhythmDesc: 'Mejor timing', beat: 'Sincronización', beatDesc: '+50% combo' },
+            ja: { upgradesTitle: 'アップグレード', multiplier: 'マルチプライヤー', multDesc: 'x2スコア', rhythm: 'リズム', rhythmDesc: 'より良いタイミング', beat: 'ビート同期', beatDesc: '+50%コンボ' },
+            zh: { upgradesTitle: '升级', multiplier: '倍数', multDesc: 'x2分数', rhythm: '节奏', rhythmDesc: '更好的时机', beat: '节拍同步', beatDesc: '+50%连击' },
+            ar: { upgradesTitle: 'الترقيات', multiplier: 'مضاعف', multDesc: 'x2 نقطة', rhythm: 'إيقاع', rhythmDesc: 'توقيت أفضل', beat: 'مزامنة', beatDesc: '+50% كومبو' },
+            pt: { upgradesTitle: 'MELHORIAS', multiplier: 'Multiplicador', multDesc: 'x2 pontos', rhythm: 'Ritmo', rhythmDesc: 'Melhor timing', beat: 'Sincronização', beatDesc: '+50% combo' }
+        };
+
         let gameState = {
-            clicks: 0,
+            score: 0,
             combo: 0,
-            cps: 0,
-            autoClicker: 0,
+            beat: 0,
             multiplier: 1,
+            beatSync: 0,
             language: 'en'
         };
-        
-        let lastClickTime = 0;
-        let clicksPerSecond = 0;
-        let particles = [];
-        
-        const languages = {
-            en: {
-                powerupsTitle: 'Power-ups',
-                autoClicker: 'Auto Clicker',
-                autoDesc: '+1 click/sec',
-                multiplier: 'Multiplier',
-                multDesc: 'x2 combo bonus',
-                combo: 'Combo Boost',
-                comboDesc: '+50% combo time',
-                backBtn: 'Back'
-            },
-            hy: {
-                powerupsTitle: 'Ուժեղացումներ',
-                autoClicker: 'Ավտո Քլիքեր',
-                autoDesc: '+1 քլիք/վ',
-                multiplier: 'Բազմապատկիչ',
-                multDesc: 'x2 combo բոնուս',
-                combo: 'Combo Բուստ',
-                comboDesc: '+50% combo ժամանակ',
-                backBtn: 'Վերադառնալ'
-            },
-            ru: {
-                powerupsTitle: 'Усиления',
-                autoClicker: 'Автокликер',
-                autoDesc: '+1 клик/сек',
-                multiplier: 'Множитель',
-                multDesc: 'x2 комбо бонус',
-                combo: 'Комбо Буст',
-                comboDesc: '+50% комбо время',
-                backBtn: 'Назад'
-            },
-            fr: {
-                powerupsTitle: 'Améliorations',
-                autoClicker: 'Auto-cliqueur',
-                autoDesc: '+1 clic/sec',
-                multiplier: 'Multiplicateur',
-                multDesc: 'x2 bonus combo',
-                combo: 'Boost Combo',
-                comboDesc: '+50% temps combo',
-                backBtn: 'Retour'
-            },
-            de: {
-                powerupsTitle: 'Verbesserungen',
-                autoClicker: 'Auto-Clicker',
-                autoDesc: '+1 Klick/Sek',
-                multiplier: 'Multiplikator',
-                multDesc: 'x2 Combo-Bonus',
-                combo: 'Combo-Boost',
-                comboDesc: '+50% Combo-Zeit',
-                backBtn: 'Zurück'
-            },
-            es: {
-                powerupsTitle: 'Potenciadores',
-                autoClicker: 'Auto-Clic',
-                autoDesc: '+1 clic/seg',
-                multiplier: 'Multiplicador',
-                multDesc: 'x2 bonificación combo',
-                combo: 'Impulso Combo',
-                comboDesc: '+50% tiempo combo',
-                backBtn: 'Atrás'
-            },
-            ja: {
-                powerupsTitle: 'パワーアップ',
-                autoClicker: 'オートクリッカー',
-                autoDesc: '+1クリック/秒',
-                multiplier: 'マルチプライヤー',
-                multDesc: 'x2コンボボーナス',
-                combo: 'コンボブースト',
-                comboDesc: '+50%コンボ時間',
-                backBtn: '戻る'
-            },
-            zh: {
-                powerupsTitle: '增强',
-                autoClicker: '自动点击',
-                autoDesc: '+1点击/秒',
-                multiplier: '倍数',
-                multDesc: 'x2连击奖励',
-                combo: '连击提升',
-                comboDesc: '+50%连击时间',
-                backBtn: '返回'
-            },
-            ar: {
-                powerupsTitle: 'تعزيزات',
-                autoClicker: 'نقر تلقائي',
-                autoDesc: '+1 نقرة/ثانية',
-                multiplier: 'مضاعف',
-                multDesc: 'x2 مكافأة كومبو',
-                combo: 'تعزيز كومبو',
-                comboDesc: '+50% وقت كومبو',
-                backBtn: 'عودة'
-            },
-            pt: {
-                powerupsTitle: 'Potenciadores',
-                autoClicker: 'Auto-clique',
-                autoDesc: '+1 clique/seg',
-                multiplier: 'Multiplicador',
-                multDesc: 'x2 bônus combo',
-                combo: 'Impulso Combo',
-                comboDesc: '+50% tempo combo',
-                backBtn: 'Voltar'
-            }
-        };
-        
-        const powerups = [
-            { id: 'autoClicker', baseCost: 50, langKey: 'autoClicker', descKey: 'autoDesc', effect: () => gameState.autoClicker++ },
-            { id: 'multiplier', baseCost: 100, langKey: 'multiplier', descKey: 'multDesc', effect: () => gameState.multiplier *= 2 },
-            { id: 'combo', baseCost: 75, langKey: 'combo', descKey: 'comboDesc', effect: () => gameState.combo *= 1.5 }
+
+        const upgrades = [
+            { id: 'multiplier', cost: 500, langKey: 'multiplier', descKey: 'multDesc', effect: () => gameState.multiplier *= 2 },
+            { id: 'rhythm', cost: 300, langKey: 'rhythm', descKey: 'rhythmDesc', effect: () => {} },
+            { id: 'beat', cost: 400, langKey: 'beat', descKey: 'beatDesc', effect: () => gameState.beatSync += 0.5 }
         ];
-        
-        function resizeCanvas() {
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
+
+        function click() {
+            gameState.beat++;
+            gameState.combo++;
+            gameState.score += (10 * gameState.multiplier * gameState.combo);
+            updateUI();
+            saveGame();
         }
-        
-        function createParticle(x, y) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = Math.random() * 5 + 3;
-            particles.push({
-                x: x,
-                y: y,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed,
-                life: 60,
-                size: Math.random() * 10 + 5
-            });
-        }
-        
-        function gameLoop() {
-            resizeCanvas();
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw particles
-            particles = particles.filter(p => p.life > 0);
-            particles.forEach(p => {
-                p.x += p.vx;
-                p.y += p.vy;
-                p.vy += 0.2;
-                p.life--;
-                
-                ctx.fillStyle = `rgba(255, 0, 255, ${p.life / 60})`;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            
-            // Auto clicker
-            if (gameState.autoClicker > 0 && Date.now() - lastClickTime > 1000 / gameState.autoClicker) {
-                gameState.clicks += gameState.autoClicker * gameState.multiplier;
-                lastClickTime = Date.now();
-            }
-            
-            // Update combo
-            if (gameState.combo > 0) {
-                gameState.combo -= 0.5;
-                if (gameState.combo < 0) gameState.combo = 0;
-            }
-            
-            // Update UI
-            document.getElementById('clicks').textContent = Math.floor(gameState.clicks);
-            document.getElementById('combo').textContent = Math.floor(gameState.combo);
-            document.getElementById('cps').textContent = gameState.autoClicker;
-            
-            requestAnimationFrame(gameLoop);
-        }
-        
-        clickerBtn.addEventListener('click', (e) => {
-            gameState.clicks += gameState.multiplier;
-            gameState.combo += 1;
-            
-            const rect = clickerBtn.getBoundingClientRect();
-            for (let i = 0; i < 20; i++) {
-                createParticle(
-                    rect.left + rect.width / 2 + (Math.random() - 0.5) * 50,
-                    rect.top + rect.height / 2 + (Math.random() - 0.5) * 50
-                );
-            }
-            
-            document.getElementById('comboDisplay').textContent = Math.floor(gameState.combo) + 'x';
-            setTimeout(() => {
-                document.getElementById('comboDisplay').textContent = '';
-            }, 500);
-        });
-        
-        function renderPowerups() {
-            const list = document.getElementById('powerupsList');
+
+        function renderUpgrades() {
+            const list = document.getElementById('upgradesList');
             list.innerHTML = '';
-            
-            powerups.forEach(pu => {
-                const cost = Math.ceil(pu.baseCost * Math.pow(1.2, pu.count || 0));
-                const canAfford = gameState.clicks >= cost;
-                
+            upgrades.forEach(up => {
+                const cost = Math.ceil(up.cost * Math.pow(1.4, up.count || 0));
+                const canAfford = gameState.score >= cost;
                 const div = document.createElement('div');
                 div.className = `power-up ${!canAfford ? 'disabled' : ''}`;
                 div.innerHTML = `
-                    <div class="power-name">${languages[gameState.language][pu.langKey]}</div>
-                    <div class="power-effect">${languages[gameState.language][pu.descKey]}</div>
+                    <div class="power-name">${languages[gameState.language][up.langKey]}</div>
+                    <div style="color: #aabbff; font-size: 10px;">${languages[gameState.language][up.descKey]}</div>
                     <div class="power-cost">Cost: ${cost}</div>
                 `;
-                
                 if (canAfford) {
-                    div.onclick = () => buyPowerup(pu);
+                    div.onclick = () => buyUpgrade(up);
                 }
-                
                 list.appendChild(div);
             });
         }
-        
-        function buyPowerup(pu) {
-            const cost = Math.ceil(pu.baseCost * Math.pow(1.2, pu.count || 0));
-            if (gameState.clicks >= cost) {
-                gameState.clicks -= cost;
-                pu.count = (pu.count || 0) + 1;
-                pu.effect();
-                renderPowerups();
+
+        function buyUpgrade(up) {
+            const cost = Math.ceil(up.cost * Math.pow(1.4, up.count || 0));
+            if (gameState.score >= cost) {
+                gameState.score -= cost;
+                up.count = (up.count || 0) + 1;
+                up.effect();
+                renderUpgrades();
+                updateUI();
+                saveGame();
             }
         }
-        
+
+        function updateUI() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('combo').textContent = gameState.combo;
+            document.getElementById('beat').textContent = gameState.beat;
+        }
+
         function changeLanguage() {
             gameState.language = document.getElementById('langSelect').value;
-            document.getElementById('powerupsTitle').textContent = languages[gameState.language].powerupsTitle;
-            renderPowerups();
+            document.getElementById('upgradesTitle').textContent = languages[gameState.language].upgradesTitle;
+            renderUpgrades();
         }
-        
+
+        function saveGame() {
+            localStorage.setItem('neonClicker2', JSON.stringify(gameState));
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem('neonClicker2');
+            if (saved) {
+                gameState = JSON.parse(saved);
+                document.getElementById('langSelect').value = gameState.language;
+            }
+        }
+
         function goHome() {
             window.location.href = '../index.html';
         }
-        
-        // Save state
+
+        loadGame();
+        document.getElementById('upgradesTitle').textContent = languages[gameState.language].upgradesTitle;
+        renderUpgrades();
+        updateUI();
+
         setInterval(() => {
-            localStorage.setItem('neonClickerState', JSON.stringify(gameState));
-        }, 5000);
-        
-        // Load state
-        const saved = localStorage.getItem('neonClickerState');
-        if (saved) {
-            Object.assign(gameState, JSON.parse(saved));
-            document.getElementById('langSelect').value = gameState.language;
-        }
-        
-        document.getElementById('powerupsTitle').textContent = languages[gameState.language].powerupsTitle;
-        renderPowerups();
-        gameLoop();
+            if (gameState.combo > 0) gameState.combo -= 0.3;
+            updateUI();
+        }, 1000);
     </script>
 </body>
 </html>
