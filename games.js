@@ -58,5 +58,26 @@ const games = [
     developer: "AWEGames",
     icon: "🌸"
   },
+  {
+    title: "Nebula Alchemy",
+    folder: "nebulaalchemy.html",
+    description: "Combine cosmic elements like Starlight, Cosmic Dust, and Cosmic Rays in your reactor to synthesize stars, planets, and galaxies. Features 16 unique cosmic elements, recipe discovery tracking, sound effects, and full support for 11 languages.",
+    developer: "AWEGames",
+    icon: "🧪✨"
+  },
+  {
+    title: "Cosmic Sudoku",
+    folder: "cosmicsudoku.html",
+    description: "Challenge your mind with Cosmic Sudoku! Featuring procedural starlight logic puzzles, 3 difficulty tiers, hint assistance, error tracking, interactive keypad, and full 11-language support.",
+    developer: "AWEGames",
+    icon: "🧩✨"
+  },
+  {
+    title: "Chrono Quest",
+    folder: "chronoquest.html",
+    description: "Master the time loop in Chrono Quest! Battle temporal shadows across infinite floors, harvest Time Echoes, upgrade your hero, and manipulate time in an interactive tactical RPG with 11-language support.",
+    developer: "AWEGames",
+    icon: "⏳⚔️"
+  }
 
 ];

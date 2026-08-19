@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Chrono Quest — Time Loop Tactical RPG</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏳</text></svg>">
+<style>
+:root {
+  --bg: #0d0714;
+  --card: rgba(255, 255, 255, 0.05);
+  --border: rgba(255, 255, 255, 0.12);
+  --primary: #a06cd5;
+  --accent: #e0aaff;
+  --gold: #ffb703;
+  --hp-color: #ff4d6d;
+  --text: #f8f7ff;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: 12px; padding: 14px 24px; background: rgba(20, 10, 35, 0.85);
+  backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand h1 { font-size: 1.4rem; font-weight: 700; color: #fff; text-shadow: 0 0 10px var(--primary); }
+.controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.btn {
+  background: var(--card); border: 1px solid var(--border); color: #fff;
+  padding: 8px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;
+  text-decoration: none;
+}
+.btn:hover { background: rgba(255, 255, 255, 0.15); border-color: var(--primary); transform: translateY(-1px); }
+select.btn { outline: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+select option { background: #1a0f2e; color: #fff; }
+
+main {
+  flex: 1; display: grid; grid-template-columns: 280px 1fr 280px; gap: 16px;
+  padding: 16px; max-width: 1400px; margin: 0 auto; width: 100%;
+}
+@media (max-width: 900px) {
+  main { grid-template-columns: 1fr; }
+}
+
+.panel {
+  background: rgba(25, 15, 45, 0.6); border: 1px solid var(--border);
+  border-radius: 16px; padding: 16px; backdrop-filter: blur(8px);
+  display: flex; flex-direction: column; gap: 14px;
+}
+.panel-title { font-weight: 700; font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 8px; color: var(--accent); }
+
+/* Hero Stats */
+.stat-row { display: flex; justify-content: space-between; font-size: 0.9rem; align-items: center; }
+.bar-wrap { height: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin-top: 4px; }
+.bar-fill { height: 100%; transition: width 0.3s; }
+
+/* Battle Arena */
+.arena {
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  padding: 24px; min-height: 400px; position: relative;
+  background: radial-gradient(circle at center, rgba(160, 108, 213, 0.15) 0%, transparent 70%);
+  border-radius: 20px; border: 1px solid var(--border);
+}
+.combatants { display: flex; justify-content: space-around; width: 100%; align-items: center; margin: 20px 0; }
+.fighter { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.fighter-avatar { font-size: 70px; filter: drop-shadow(0 0 15px var(--primary)); transition: transform 0.2s; }
+.fighter-avatar.hit { transform: translateX(10px) rotate(10deg); filter: drop-shadow(0 0 20px red); }
+
+.action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 400px; }
+.act-btn {
+  background: linear-gradient(135deg, #5a189a, #7b2cbf); color: #fff;
+  border: 1px solid var(--border); padding: 14px; border-radius: 14px;
+  font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: 0.2s;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.act-btn:hover { transform: scale(1.04); box-shadow: 0 4px 15px rgba(160, 108, 213, 0.4); }
+
+.log-box {
+  background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px;
+  font-size: 0.85rem; max-height: 200px; overflow-y: auto; display: flex;
+  flex-direction: column; gap: 6px;
+}
+.log-entry { padding: 4px 8px; border-radius: 4px; border-left: 3px solid var(--primary); background: rgba(255,255,255,0.02); }
+
+.upgrade-item {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--card); padding: 10px; border-radius: 10px; border: 1px solid var(--border);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:28px;">⏳</span>
+    <h1 id="titleTxt">Chrono Quest</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <!-- Left Panel: Hero Stats & Loop Counter -->
+  <section class="panel">
+    <div class="panel-title" id="heroTitle">Temporal Hero</div>
+    <div>
+      <div class="stat-row"><span id="lblHP">HP:</span> <b id="valHP">100/100</b></div>
+      <div class="bar-wrap"><div class="bar-fill" id="hpBar" style="width:100%; background:var(--hp-color);"></div></div>
+    </div>
+    <div>
+      <div class="stat-row"><span id="lblEnergy">Chrono Energy:</span> <b id="valEnergy">50/50</b></div>
+      <div class="bar-wrap"><div class="bar-fill" id="energyBar" style="width:100%; background:var(--primary);"></div></div>
+    </div>
+    <div class="stat-row"><span id="lblLoop">Time Loop:</span> <b id="valLoop" style="color:var(--gold)">1</b></div>
+    <div class="stat-row"><span id="lblEchoes">Time Echoes:</span> <b id="valEchoes" style="color:var(--accent)">0</b></div>
+    <div class="stat-row"><span id="lblFloor">Floor:</span> <b id="valFloor">1</b></div>
+  </section>
+
+  <!-- Middle Panel: Battle Arena -->
+  <section class="panel arena">
+    <div style="text-align:center;">
+      <h2 id="enemyName" style="color:var(--gold)">Temporal Shadow</h2>
+      <div style="font-size:0.85rem; color:#aaa;" id="enemySub">Floor 1 Guardian</div>
+    </div>
+
+    <div class="combatants">
+      <div class="fighter">
+        <div class="fighter-avatar" id="heroAvatar">🧙‍♂️</div>
+        <div style="font-weight:700" id="heroNameLbl">Time Weaver</div>
+      </div>
+      <div style="font-size:24px; font-weight:800; color:var(--primary)">VS</div>
+      <div class="fighter">
+        <div class="fighter-avatar" id="enemyAvatar">👾</div>
+        <div style="font-weight:700" id="enemyNameLbl">Shadow</div>
+        <div style="width:120px;">
+          <div class="bar-wrap"><div class="bar-fill" id="enemyHpBar" style="width:100%; background:var(--hp-color);"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-grid">
+      <button class="act-btn" onclick="heroAction('attack')" id="btnAttack">
+        <span>⚔️ Strike</span>
+      </button>
+      <button class="act-btn" onclick="heroAction('spell')" id="btnSpell">
+        <span>⚡ Chrono Blast</span>
+      </button>
+      <button class="act-btn" onclick="heroAction('heal')" id="btnHeal">
+        <span>✨ Rewind HP</span>
+      </button>
+      <button class="act-btn" onclick="heroAction('loop')" id="btnLoop" style="background:linear-gradient(135deg, #b5179e, #7209b7)">
+        <span>⏳ Reset Loop</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Right Panel: Chrono Upgrades & Log -->
+  <section class="panel">
+    <div class="panel-title" id="upgradesTitle">Echo Upgrades</div>
+    <div class="upgrade-item">
+      <div>
+        <div style="font-weight:700" id="upAtkTitle">Temporal Blade</div>
+        <div style="font-size:0.75rem; color:#aaa;" id="upAtkDesc">+5 Attack Power</div>
+      </div>
+      <button class="btn" onclick="buyUpgrade('atk')" id="btnBuyAtk">10 🔮</button>
+    </div>
+    <div class="upgrade-item">
+      <div>
+        <div style="font-weight:700" id="upHpTitle">Vitality Echo</div>
+        <div style="font-size:0.75rem; color:#aaa;" id="upHpDesc">+20 Max HP</div>
+      </div>
+      <button class="btn" onclick="buyUpgrade('hp')" id="btnBuyHp">15 🔮</button>
+    </div>
+
+    <div class="panel-title" style="margin-top:10px" id="logTitle">Chronicle Log</div>
+    <div class="log-box" id="logBox"></div>
+  </section>
+</main>
+
+<script>
+const I18N = {
+  en: {
+    title: "Chrono Quest", home: "Home", hero: "Temporal Hero", hp: "HP:", energy: "Chrono Energy:",
+    loop: "Time Loop:", echoes: "Time Echoes:", floor: "Floor:", attack: "⚔️ Strike", spell: "⚡ Chrono Blast",
+    heal: "✨ Rewind HP", resetLoop: "⏳ Reset Loop", upgrades: "Echo Upgrades", atkTitle: "Temporal Blade",
+    atkDesc: "+5 Attack Power", hpTitle: "Vitality Echo", hpDesc: "+20 Max HP", chronicle: "Chronicle Log",
+    loopResetMsg: "Time looped! You retained your echoes and upgrades.", enemyDefeated: "Enemy defeated! Advanced to next floor."
+  },
+  hy: {
+    title: "Ժամանակի Քվեստ", home: "Գլխավոր", hero: "Ժամանակի Հերոս", hp: "Կյանք:", energy: "Ժամանակի Էներգիա:",
+    loop: "Ժամանակի Ցիկլ:", echoes: "Ժամանակի Արձագանք:", floor: "Հարկ:", attack: "⚔️ Հարված", spell: "⚡ Պայթյուն",
+    heal: "✨ Վերականգնում", resetLoop: "⏳ Վերբեռնել Ցիկլը", upgrades: "Բարելավումներ", atkTitle: "Ժամանակի Սուր",
+    atkDesc: "+5 Հարվածի Ուժ", hpTitle: "Կյանքի Արձագանք", hpDesc: "+20 Մաքս. Կյանք", chronicle: "Պատմություն",
+    loopResetMsg: "Ժամանակը հետ պտտվեց: Դուք պահպանեցիք ձեր արձագանքները:", enemyDefeated: "Թշնամին պարտվեց! Անցաք հաջորդ հարկ:"
+  },
+  ru: {
+    title: "Хроно Квест", home: "Главная", hero: "Герой Времени", hp: "Здоровье:", energy: "Энергия Времени:",
+    loop: "Петля Времени:", echoes: "Эхо Времени:", floor: "Этаж:", attack: "⚔️ Удар", spell: "⚡ Взрыв Времени",
+    heal: "✨ Отмотать ХП", resetLoop: "⏳ Сброс Петли", upgrades: "Улучшения Эхо", atkTitle: "Клинок Времени",
+    atkDesc: "+5 к Атаке", hpTitle: "Эхо Жизни", hpDesc: "+20 к Макс ХП", chronicle: "Хроника",
+    loopResetMsg: "Петля замкнулась! Вы сохранили улучшения и эхо.", enemyDefeated: "Враг повержен! Переход на следующий этаж."
+  },
+  es: {
+    title: "Búsqueda del Tiempo", home: "Inicio", hero: "Héroe Temporal", hp: "Vida:", energy: "Energía Temporal:",
+    loop: "Bucle Temporal:", echoes: "Ecos Temporales:", floor: "Piso:", attack: "⚔️ Ataque", spell: "⚡ Ráfaga Temporal",
+    heal: "✨ Rebobinar Vida", resetLoop: "⏳ Reiniciar Bucle", upgrades: "Mejoras de Eco", atkTitle: "Espada Temporal",
+    atkDesc: "+5 de Ataque", hpTitle: "Eco de Vitalidad", hpDesc: "+20 de Vida Máx", chronicle: "Crónica",
+    loopResetMsg: "¡El tiempo regresó! Conservas tus ecos y mejoras.", enemyDefeated: "¡Enemigo derrotado! Avanzas al siguiente piso."
+  },
+  fr: {
+    title: "Quête du Chrono", home: "Accueil", hero: "Héros Temporel", hp: "PV :", energy: "Énergie Temporelle :",
+    loop: "Boucle Temporelle :", echoes: "Échos Temporels :", floor: "Étage :", attack: "⚔️ Attaque", spell: "⚡ Explosion Temporelle",
+    heal: "✨ Rembobiner PV", resetLoop: "⏳ Réinitialiser Boucle", upgrades: "Améliorations Écho", atkTitle: "Lame Temporelle",
+    atkDesc: "+5 Attaque", hpTitle: "Écho de Vitalité", hpDesc: "+20 PV Max", chronicle: "Chronique",
+    loopResetMsg: "Boucle temporelle réinitialisée ! Vos échos restent conservés.", enemyDefeated: "Ennemi vaincu ! Étage suivant atteint."
+  },
+  de: {
+    title: "Zeit-Quest", home: "Startseite", hero: "Zeit-Held", hp: "LP:", energy: "Zeit-Energie:",
+    loop: "Zeitschleife:", echoes: "Zeit-Echos:", floor: "Ebene:", attack: "⚔️ Angriff", spell: "⚡ Zeit-Explosion",
+    heal: "✨ LP Zurückspulen", resetLoop: "⏳ Schleife Zurücksetzen", upgrades: "Echo-Upgrades", atkTitle: "Zeit-Klinge",
+    atkDesc: "+5 Angriffskraft", hpTitle: "Vitalitäts-Echo", hpDesc: "+20 Max LP", chronicle: "Chronik",
+    loopResetMsg: "Zeitschleife zurückgesetzt! Deine Echos bleiben erhalten.", enemyDefeated: "Feind besiegt! Nächste Ebene erreicht."
+  },
+  it: {
+    title: "Chrono Quest", home: "Home", hero: "Eroe Temporale", hp: "PV:", energy: "Energia Temporale:",
+    loop: "Loop Temporale:", echoes: "Echi Temporali:", floor: "Piano:", attack: "⚔️ Attacco", spell: "⚡ Esplosione Temporale",
+    heal: "✨ Riavvolgi PV", resetLoop: "⏳ Ricomincia Loop", upgrades: "Potenziamenti Echi", atkTitle: "Lama Temporale",
+    atkDesc: "+5 Attacco", hpTitle: "Eco di Vitalità", hpDesc: "+20 PV Max", chronicle: "Cronaca",
+    loopResetMsg: "Tempo riavvolto! Hai mantenuto echi e potenziamenti.", enemyDefeated: "Nemico sconfitto! Avanzato al piano successivo."
+  },
+  pt: {
+    title: "Chrono Quest", home: "Início", hero: "Herói Temporal", hp: "PV:", energy: "Energia Temporal:",
+    loop: "Loop Temporal:", echoes: "Ecos Temporais:", floor: "Andar:", attack: "⚔️ Ataque", spell: "⚡ Explosão Temporal",
+    heal: "✨ Rebobinar PV", resetLoop: "⏳ Reiniciar Loop", upgrades: "Melhorias de Eco", atkTitle: "Lâmina Temporal",
+    atkDesc: "+5 de Ataque", hpTitle: "Eco de Vitalidade", hpDesc: "+20 PV Máx", chronicle: "Crônica",
+    loopResetMsg: "Loop temporal reiniciado! Seus ecos e melhorias continuam.", enemyDefeated: "Inimigo derrotado! Avançou para o próximo andar."
+  },
+  tr: {
+    title: "Zaman Görevi", home: "Ana Sayfa", hero: "Zaman Kahramanı", hp: "Can:", energy: "Zaman Enerjisi:",
+    loop: "Zaman Döngüsü:", echoes: "Zaman Yankısı:", floor: "Kat:", attack: "⚔️ Saldırı", spell: "⚡ Zaman Patlaması",
+    heal: "✨ Canı Geri Sar", resetLoop: "⏳ Döngüyü Sıfırla", upgrades: "Yankı Yükseltmeleri", atkTitle: "Zaman Kılıcı",
+    atkDesc: "+5 Saldırı Gücü", hpTitle: "Yaşam Yankısı", hpDesc: "+20 Maks Can", chronicle: "Günlük",
+    loopResetMsg: "Zaman döngüsü sıfırlandı! Yankılarınız korundu.", enemyDefeated: "Düşman yenildi! Bir sonraki kata geçildi."
+  },
+  ja: {
+    title: "クロノクエスト", home: "ホーム", hero: "時の勇者", hp: "体力:", energy: "クロノエネルギー:",
+    loop: "タイムループ:", echoes: "時間の残響:", floor: "階層:", attack: "⚔️ 攻撃", spell: "⚡ クロノブラスト",
+    heal: "✨ 時間巻き戻し", resetLoop: "⏳ ループリセット", upgrades: "残響強化", atkTitle: "時の剣",
+    atkDesc: "攻撃力 +5", hpTitle: "生命の残響", hpDesc: "最大体力 +20", chronicle: "クロニクル",
+    loopResetMsg: "時間がループしました！残響と強化は引き継がれます。", enemyDefeated: "敵を倒しました！次の階層へ進みます。"
+  },
+  zh: {
+    title: "时间探索", home: "主页", hero: "时间英雄", hp: "生命值:", energy: "时间能量:",
+    loop: "时间循环:", echoes: "时间回响:", floor: "层数:", attack: "⚔️ 攻击", spell: "⚡ 时间爆破",
+    heal: "✨ 回溯生命", resetLoop: "⏳ 重置循环", upgrades: "回响强化", atkTitle: "时间之刃",
+    atkDesc: "攻击力 +5", hpTitle: "生命回响", hpDesc: "最大生命 +20", chronicle: "历史日志",
+    loopResetMsg: "时间重置循环！你的回响和强化成功保留。", enemyDefeated: "击败敌人！进入下一层。"
+  }
+};
+
+const LANG_LIST = [
+  ["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"],
+  ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"],
+  ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]
+];
+
+let lang = "en";
+let sound = true;
+
+let state = {
+  hp: 100, maxHp: 100,
+  energy: 50, maxEnergy: 50,
+  atk: 15,
+  loop: 1, echoes: 0, floor: 1,
+  upAtkLvl: 0, upHpLvl: 0
+};
+
+let enemy = {
+  name: "Temporal Shadow",
+  hp: 40, maxHp: 40,
+  atk: 8, avatar: "👾"
+};
+
+let audioCtx = null;
+function playSound(freq, duration = 0.15) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + duration);
+}
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", (e) => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("heroTitle").textContent = dict.hero;
+  document.getElementById("lblHP").textContent = dict.hp;
+  document.getElementById("lblEnergy").textContent = dict.energy;
+  document.getElementById("lblLoop").textContent = dict.loop;
+  document.getElementById("lblEchoes").textContent = dict.echoes;
+  document.getElementById("lblFloor").textContent = dict.floor;
+  document.getElementById("btnAttack").querySelector("span").textContent = dict.attack;
+  document.getElementById("btnSpell").querySelector("span").textContent = dict.spell;
+  document.getElementById("btnHeal").querySelector("span").textContent = dict.heal;
+  document.getElementById("btnLoop").querySelector("span").textContent = dict.resetLoop;
+  document.getElementById("upgradesTitle").textContent = dict.upgrades;
+  document.getElementById("upAtkTitle").textContent = dict.atkTitle;
+  document.getElementById("upAtkDesc").textContent = dict.atkDesc;
+  document.getElementById("upHpTitle").textContent = dict.hpTitle;
+  document.getElementById("upHpDesc").textContent = dict.hpDesc;
+  document.getElementById("logTitle").textContent = dict.chronicle;
+}
+
+function updateUI() {
+  document.getElementById("valHP").textContent = `${Math.max(0, state.hp)}/${state.maxHp}`;
+  document.getElementById("hpBar").style.width = `${(Math.max(0, state.hp) / state.maxHp) * 100}%`;
+
+  document.getElementById("valEnergy").textContent = `${state.energy}/${state.maxEnergy}`;
+  document.getElementById("energyBar").style.width = `${(state.energy / state.maxEnergy) * 100}%`;
+
+  document.getElementById("valLoop").textContent = state.loop;
+  document.getElementById("valEchoes").textContent = state.echoes;
+  document.getElementById("valFloor").textContent = state.floor;
+
+  document.getElementById("enemyHpBar").style.width = `${(Math.max(0, enemy.hp) / enemy.maxHp) * 100}%`;
+
+  document.getElementById("btnBuyAtk").textContent = `${(state.upAtkLvl + 1) * 10} 🔮`;
+  document.getElementById("btnBuyHp").textContent = `${(state.upHpLvl + 1) * 15} 🔮`;
+}
+
+function logMsg(msg) {
+  const box = document.getElementById("logBox");
+  const entry = document.createElement("div");
+  entry.className = "log-entry";
+  entry.textContent = msg;
+  box.prepend(entry);
+}
+
+function spawnEnemy() {
+  const avatars = ["👾", "🐉", "🗿", "💀", "👹"];
+  enemy.avatar = avatars[(state.floor - 1) % avatars.length];
+  enemy.maxHp = 30 + state.floor * 15;
+  enemy.hp = enemy.maxHp;
+  enemy.atk = 6 + state.floor * 3;
+  document.getElementById("enemyAvatar").textContent = enemy.avatar;
+  document.getElementById("enemyName").textContent = `Floor ${state.floor} Shadow`;
+  updateUI();
+}
+
+function heroAction(type) {
+  const dict = I18N[lang] || I18N.en;
+  if (type === 'attack') {
+    playSound(400, 0.1);
+    let dmg = state.atk + Math.floor(Math.random() * 5);
+    enemy.hp -= dmg;
+    logMsg(`You struck the enemy for ${dmg} damage!`);
+  } else if (type === 'spell') {
+    if (state.energy < 15) { logMsg("Not enough Chrono Energy!"); return; }
+    state.energy -= 15;
+    playSound(700, 0.2);
+    let dmg = state.atk * 2;
+    enemy.hp -= dmg;
+    logMsg(`Chrono Blast dealt ${dmg} massive temporal damage!`);
+  } else if (type === 'heal') {
+    if (state.energy < 20) { logMsg("Not enough Chrono Energy!"); return; }
+    state.energy -= 20;
+    playSound(900, 0.2);
+    let heal = 35;
+    state.hp = Math.min(state.maxHp, state.hp + heal);
+    logMsg(`Rewound time! Restored ${heal} HP.`);
+  } else if (type === 'loop') {
+    resetLoop();
+    return;
+  }
+
+  // Enemy Turn
+  if (enemy.hp <= 0) {
+    state.echoes += 10 + state.floor * 5;
+    state.floor++;
+    logMsg(dict.enemyDefeated);
+    playSound(1100, 0.3);
+    spawnEnemy();
+  } else {
+    enemyTurn();
+  }
+  updateUI();
+}
+
+function enemyTurn() {
+  let dmg = enemy.atk + Math.floor(Math.random() * 4);
+  state.hp -= dmg;
+  logMsg(`Enemy counterattacked for ${dmg} damage!`);
+  if (state.hp <= 0) {
+    logMsg("You collapsed! Time Loop triggered automatically.");
+    resetLoop();
+  }
+}
+
+function resetLoop() {
+  const dict = I18N[lang] || I18N.en;
+  state.loop++;
+  state.floor = 1;
+  state.hp = state.maxHp;
+  state.energy = state.maxEnergy;
+  playSound(200, 0.4);
+  logMsg(dict.loopResetMsg);
+  spawnEnemy();
+  updateUI();
+}
+
+function buyUpgrade(type) {
+  if (type === 'atk') {
+    let cost = (state.upAtkLvl + 1) * 10;
+    if (state.echoes >= cost) {
+      state.echoes -= cost;
+      state.upAtkLvl++;
+      state.atk += 5;
+      playSound(800, 0.15);
+      logMsg("Upgraded Attack Power!");
+    }
+  } else if (type === 'hp') {
+    let cost = (state.upHpLvl + 1) * 15;
+    if (state.echoes >= cost) {
+      state.echoes -= cost;
+      state.upHpLvl++;
+      state.maxHp += 20;
+      state.hp += 20;
+      playSound(800, 0.15);
+      logMsg("Upgraded Max HP!");
+    }
+  }
+  updateUI();
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang();
+updateLang();
+spawnEnemy();
+updateUI();
+</script>
+</body>
+</html>
