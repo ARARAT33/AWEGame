@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Nebula Alchemy — Cosmic Element Fusion</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧪</text></svg>">
+<style>
+:root {
+  --bg: #070914;
+  --card: rgba(255,255,255,0.06);
+  --card-border: rgba(255,255,255,0.12);
+  --accent: #9d4edd;
+  --accent-light: #c77dff;
+  --gold: #ffb703;
+  --text: #e0aaff;
+  --text-muted: #9c8cb9;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+canvas#bgCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+header {
+  position: relative; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: 12px; padding: 14px 24px; background: rgba(10, 8, 26, 0.8);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--card-border);
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand-icon { font-size: 28px; }
+.brand h1 { font-size: 1.4rem; font-weight: 700; color: #fff; text-shadow: 0 0 10px var(--accent); }
+.controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.btn {
+  background: var(--card); border: 1px solid var(--card-border); color: #fff;
+  padding: 8px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;
+  text-decoration: none;
+}
+.btn:hover { background: rgba(255,255,255,0.15); border-color: var(--accent-light); transform: translateY(-1px); }
+select.btn { outline: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+select option { background: #120b29; color: #fff; }
+
+main {
+  position: relative; z-index: 10; flex: 1;
+  display: grid; grid-template-columns: 280px 1fr 300px;
+  gap: 16px; padding: 16px; max-width: 1440px; margin: 0 auto; width: 100%;
+}
+@media (max-width: 900px) {
+  main { grid-template-columns: 1fr; }
+}
+
+.panel {
+  background: rgba(18, 12, 38, 0.65); border: 1px solid var(--card-border);
+  border-radius: 16px; backdrop-filter: blur(10px); padding: 16px;
+  display: flex; flex-direction: column; gap: 12px;
+  max-height: calc(100vh - 100px); overflow-y: auto;
+}
+.panel::-webkit-scrollbar { width: 6px; }
+.panel::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+
+.panel-title { font-size: 1.1rem; font-weight: 700; color: #fff; border-bottom: 1px solid var(--card-border); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+
+/* Discovery / Palette */
+.element-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; }
+.el-card {
+  background: var(--card); border: 1px solid var(--card-border); border-radius: 12px;
+  padding: 8px 4px; text-align: center; cursor: pointer; transition: 0.2s;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.el-card:hover { background: rgba(199, 125, 255, 0.2); border-color: var(--accent-light); transform: scale(1.05); }
+.el-card.selected { border-color: var(--gold); box-shadow: 0 0 12px var(--gold); }
+.el-card .icon { font-size: 24px; }
+.el-card .name { font-size: 0.72rem; color: #e0e0e0; font-weight: 500; word-break: break-word; }
+
+/* Alchemy Cauldron Arena */
+.cauldron-area {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border: 2px dashed rgba(199, 125, 255, 0.3); border-radius: 20px;
+  padding: 24px; min-height: 380px; position: relative; background: rgba(0,0,0,0.2);
+}
+.slots { display: flex; align-items: center; gap: 20px; margin: 20px 0; }
+.slot {
+  width: 100px; height: 100px; border-radius: 20px; border: 2px solid var(--card-border);
+  background: rgba(255,255,255,0.03); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; cursor: pointer; transition: 0.3s;
+}
+.slot.filled { border-color: var(--accent-light); background: rgba(157, 78, 221, 0.15); box-shadow: 0 0 15px rgba(157, 78, 221, 0.3); }
+.slot .icon { font-size: 40px; }
+.slot .name { font-size: 0.8rem; margin-top: 4px; font-weight: 600; text-align: center; }
+.plus-sign { font-size: 28px; font-weight: 700; color: var(--accent-light); }
+
+.fuse-btn {
+  background: linear-gradient(135deg, #7b2cbf, #9d4edd);
+  color: #fff; border: none; padding: 12px 32px; border-radius: 30px;
+  font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: 0.25s;
+  box-shadow: 0 4px 15px rgba(157, 78, 221, 0.4);
+}
+.fuse-btn:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(157, 78, 221, 0.6); }
+.fuse-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* Recipe log / Stats */
+.log-list { display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; }
+.log-item { background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px; border-left: 3px solid var(--accent); }
+.stats-box { display: flex; justify-content: space-between; background: rgba(255,255,255,0.04); padding: 10px; border-radius: 10px; font-size: 0.85rem; }
+
+#toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
+  background: rgba(157, 78, 221, 0.9); color: #fff; padding: 10px 24px; border-radius: 30px;
+  font-weight: 600; box-shadow: 0 5px 20px rgba(0,0,0,0.5); z-index: 100;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<header>
+  <div class="brand">
+    <span class="brand-icon">🧪</span>
+    <h1 id="titleTxt">Nebula Alchemy</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn" id="homeBtn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <!-- Left Panel: Discovered Elements -->
+  <section class="panel">
+    <div class="panel-title">
+      <span id="elementsTitle">Elements</span>
+      <span id="elementCount" style="color:var(--gold)">4/16</span>
+    </div>
+    <div class="element-grid" id="elementGrid"></div>
+  </section>
+
+  <!-- Middle Panel: Fusion Cauldron -->
+  <section class="panel cauldron-area">
+    <h2 style="color:#fff; margin-bottom: 8px;" id="fusionTitle">Cosmic Fusion</h2>
+    <p style="font-size:0.85rem; color:var(--text-muted); text-align:center;" id="fusionDesc">Select 2 elements to combine them in the nebula reactor.</p>
+
+    <div class="slots">
+      <div class="slot" id="slot1" onclick="clearSlot(1)">
+        <span class="icon">❓</span>
+        <span class="name" id="slot1Name">Empty</span>
+      </div>
+      <div class="plus-sign">+</div>
+      <div class="slot" id="slot2" onclick="clearSlot(2)">
+        <span class="icon">❓</span>
+        <span class="name" id="slot2Name">Empty</span>
+      </div>
+    </div>
+
+    <button id="fuseBtn" class="fuse-btn" disabled onclick="fuseElements()">Fuse Elements</button>
+    <button class="btn" style="margin-top:14px; font-size:0.8rem;" onclick="clearCauldron()" id="clearBtn">Clear Slots</button>
+  </section>
+
+  <!-- Right Panel: Log & Stats -->
+  <section class="panel">
+    <div class="panel-title" id="logTitle">Fusion History</div>
+    <div class="stats-box">
+      <div><span id="stFusions">Fusions:</span> <b id="statFusions">0</b></div>
+      <div><span id="stDiscovered">Discovered:</span> <b id="statDiscovered">4</b></div>
+    </div>
+    <div class="log-list" id="logList"></div>
+  </section>
+</main>
+
+<div id="toast">New Element Discovered!</div>
+
+<script>
+/* Languages */
+const I18N = {
+  en: {
+    title: "Nebula Alchemy", home: "Home", elements: "Discovered Elements", fusion: "Cosmic Fusion",
+    fusionDesc: "Select 2 elements from the list to fuse them.", fuse: "Fuse Elements", clear: "Clear Slots",
+    history: "Fusion History", fusions: "Fusions:", discovered: "Discovered:", empty: "Empty",
+    discoveredToast: "New Element Discovered: ", failedToast: "No reaction occurred between these elements.",
+    e_starlight: "Starlight", e_dust: "Cosmic Dust", e_ray: "Cosmic Ray", e_water: "Celestial Dew",
+    e_nebula: "Nebula", e_plasma: "Plasma", e_star: "Proto-Star", e_comet: "Comet",
+    e_planet: "Planet", e_blackhole: "Black Hole", e_life: "Alien Life", e_supernova: "Supernova",
+    e_galaxy: "Galaxy", e_darkmatter: "Dark Matter", e_time: "Chrono Essence", e_singularity: "Singularity"
+  },
+  hy: {
+    title: "Նեբուլա Ալքիմիա", home: "Գլխավոր", elements: "Բացահայտված էլեմենտներ", fusion: "Տիեզերական Միաձուլում",
+    fusionDesc: "Ընտրեք 2 էլեմենտ ցանկից դրանք միացնելու համար:", fuse: "Միաձուլել", clear: "Մաքրել",
+    history: "Միաձուլման Պատմություն", fusions: "Միացումներ:", discovered: "Բացահայտված:", empty: "Դատարկ",
+    discoveredToast: "Նոր էլեմենտ բացահայտվեց: ", failedToast: "Ռեակցիա չստացվեց այս էլեմենտների միջև:",
+    e_starlight: "Աստղալույս", e_dust: "Տիեզերական Փոշի", e_ray: "Տիեզերական Ճառագայթ", e_water: "Երկնային Ցող",
+    e_nebula: "Միգամածություն", e_plasma: "Պլազմա", e_star: "Աստղ", e_comet: "Գիսաստղ",
+    e_planet: "Մոլորակ", e_blackhole: "Սև Խոռոչ", e_life: "Այլմոլորակային Կյանք", e_supernova: "Գերնոր Աստղ",
+    e_galaxy: "Գալակտիկա", e_darkmatter: "Մութ Նյութ", e_time: "Ժամանակի Էսենցիա", e_singularity: "Եզակիություն"
+  },
+  ru: {
+    title: "Небула Алхимия", home: "Главная", elements: "Открытые элементы", fusion: "Космический синтез",
+    fusionDesc: "Выберите 2 элемента из списка для синтеза.", fuse: "Синтезировать", clear: "Очистить",
+    history: "История синтеза", fusions: "Синтезов:", discovered: "Открыто:", empty: "Пусто",
+    discoveredToast: "Открыт новый элемент: ", failedToast: "Реакции не произошло.",
+    e_starlight: "Звёздный свет", e_dust: "Космическая пыль", e_ray: "Космический луч", e_water: "Небесная роса",
+    e_nebula: "Туманность", e_plasma: "Плазма", e_star: "Звезда", e_comet: "Комета",
+    e_planet: "Планета", e_blackhole: "Чёрная дыра", e_life: "Внеземная жизнь", e_supernova: "Сверхновая",
+    e_galaxy: "Галактика", e_darkmatter: "Тёмная материя", e_time: "Хроно-эссенция", e_singularity: "Сингулярность"
+  },
+  es: {
+    title: "Alquimia de Nébula", home: "Inicio", elements: "Elementos Descubiertos", fusion: "Fusión Cósmica",
+    fusionDesc: "Selecciona 2 elementos para fusionar.", fuse: "Fusionar Elementos", clear: "Limpiar Slots",
+    history: "Historial de Fusión", fusions: "Fusiones:", discovered: "Descubiertos:", empty: "Vacío",
+    discoveredToast: "¡Nuevo Elemento Descubierto!: ", failedToast: "No hubo reacción entre estos elementos.",
+    e_starlight: "Luz Estelar", e_dust: "Polvo Cósmico", e_ray: "Rayo Cósmico", e_water: "Rocío Celestial",
+    e_nebula: "Nebulosa", e_plasma: "Plasma", e_star: "Estrella", e_comet: "Cometa",
+    e_planet: "Planeta", e_blackhole: "Agujero Negro", e_life: "Vida Extraterrestre", e_supernova: "Supernova",
+    e_galaxy: "Galaxia", e_darkmatter: "Materia Oscura", e_time: "Esencia Temporal", e_singularity: "Singularidad"
+  },
+  fr: {
+    title: "Alchimie de la Nébuleuse", home: "Accueil", elements: "Éléments Découverts", fusion: "Fusion Cosmique",
+    fusionDesc: "Sélectionnez 2 éléments pour les fusionner.", fuse: "Fusionner", clear: "Effacer",
+    history: "Historique des Fusions", fusions: "Fusions :", discovered: "Découverts :", empty: "Vide",
+    discoveredToast: "Nouvel Élément Découvert : ", failedToast: "Aucune réaction entre ces éléments.",
+    e_starlight: "Lumière Stellaire", e_dust: "Poussière Cosmique", e_ray: "Rayon Cosmique", e_water: "Rosée Céleste",
+    e_nebula: "Nébuleuse", e_plasma: "Plasma", e_star: "Étoile", e_comet: "Comète",
+    e_planet: "Planète", e_blackhole: "Trou Noir", e_life: "Vie Extraterrestre", e_supernova: "Supernova",
+    e_galaxy: "Galaxie", e_darkmatter: "Matière Noire", e_time: "Essence Temporelle", e_singularity: "Singularité"
+  },
+  de: {
+    title: "Nebel-Alchemie", home: "Startseite", elements: "Entdeckte Elemente", fusion: "Kosmische Fusion",
+    fusionDesc: "Wähle 2 Elemente zum Verschmelzen aus.", fuse: "Verschmelzen", clear: "Leeren",
+    history: "Fusionsverlauf", fusions: "Fusionen:", discovered: "Entdeckt:", empty: "Leer",
+    discoveredToast: "Neues Element entdeckt: ", failedToast: "Keine Reaktion zwischen diesen Elementen.",
+    e_starlight: "Sternenlicht", e_dust: "Kosmischer Staub", e_ray: "Kosmischer Strahl", e_water: "Himmlischer Tau",
+    e_nebula: "Nebel", e_plasma: "Plasma", e_star: "Stern", e_comet: "Komet",
+    e_planet: "Planet", e_blackhole: "Schwarzes Loch", e_life: "Außerirdisches Leben", e_supernova: "Supernova",
+    e_galaxy: "Galaxie", e_darkmatter: "Dunkle Materie", e_time: "Zeit-Essenz", e_singularity: "Singularität"
+  },
+  it: {
+    title: "Alchimia della Nebulosa", home: "Home", elements: "Elementi Scoperti", fusion: "Fusione Cosmica",
+    fusionDesc: "Seleziona 2 elementi per fonderli.", fuse: "Fondi Elementi", clear: "Svuota",
+    history: "Cronologia Fusioni", fusions: "Fusioni:", discovered: "Scoperti:", empty: "Vuoto",
+    discoveredToast: "Nuovo Elemento Scoperto: ", failedToast: "Nessuna reazione tra questi elementi.",
+    e_starlight: "Luce Stellare", e_dust: "Polvere Cosmica", e_ray: "Raggio Cosmico", e_water: "Rugiada Celeste",
+    e_nebula: "Nebulosa", e_plasma: "Plasma", e_star: "Stella", e_comet: "Cometa",
+    e_planet: "Pianeta", e_blackhole: "Buco Nero", e_life: "Vita Aliena", e_supernova: "Supernova",
+    e_galaxy: "Galassia", e_darkmatter: "Materia Oscura", e_time: "Essenza Temporale", e_singularity: "Singolarità"
+  },
+  pt: {
+    title: "Alquimia da Nebulosa", home: "Início", elements: "Elementos Descobertos", fusion: "Fusão Cósmica",
+    fusionDesc: "Selecione 2 elementos para fundi-los.", fuse: "Fundir Elementos", clear: "Limpar",
+    history: "Histórico de Fusão", fusions: "Fusões:", discovered: "Descobertos:", empty: "Vazio",
+    discoveredToast: "Novo Elemento Descoberto: ", failedToast: "Nenhuma reação ocorreu.",
+    e_starlight: "Luz Estelar", e_dust: "Poeira Cósmica", e_ray: "Raio Cósmico", e_water: "Orvalho Celestial",
+    e_nebula: "Nebulosa", e_plasma: "Plasma", e_star: "Estrela", e_comet: "Cometa",
+    e_planet: "Planeta", e_blackhole: "Buraco Negro", e_life: "Vida Alienígena", e_supernova: "Supernova",
+    e_galaxy: "Galáxia", e_darkmatter: "Matéria Escura", e_time: "Essência do Tempo", e_singularity: "Singularidade"
+  },
+  tr: {
+    title: "Bulutsu Simyası", home: "Ana Sayfa", elements: "Keşfedilen Elementler", fusion: "Kozmik Birleşme",
+    fusionDesc: "Birleştirmek için 2 element seçin.", fuse: "Birleştir", clear: "Temizle",
+    history: "Birleşme Geçmişi", fusions: "Birleşmeler:", discovered: "Keşfedilen:", empty: "Boş",
+    discoveredToast: "Yeni Element Keşfedildi: ", failedToast: "Bu elementler arasında reaksiyon olmadı.",
+    e_starlight: "Yıldız Işığı", e_dust: "Kozmik Toz", e_ray: "Kozmik Işın", e_water: "Göksel Çiy",
+    e_nebula: "Bulutsu", e_plasma: "Plazma", e_star: "Yıldız", e_comet: "Kuyruklu Yıldız",
+    e_planet: "Gezegen", e_blackhole: "Kara Delik", e_life: "Uzaylı Yaşamı", e_supernova: "Süpernova",
+    e_galaxy: "Galaksi", e_darkmatter: "Karanlık Madde", e_time: "Zaman Esansı", e_singularity: "Tekillik"
+  },
+  ja: {
+    title: "星雲の錬金術", home: "ホーム", elements: "発見した元素", fusion: "宇宙融合",
+    fusionDesc: "合成する元素を2つ選択してください。", fuse: "融合する", clear: "クリア",
+    history: "融合の履歴", fusions: "融合回数:", discovered: "発見数:", empty: "空",
+    discoveredToast: "新しい元素を発見しました: ", failedToast: "化学反応は起きませんでした。",
+    e_starlight: "星明かり", e_dust: "宇宙の塵", e_ray: "宇宙線", e_water: "恵みの dew",
+    e_nebula: "星雲", e_plasma: "プラズマ", e_star: "恒星", e_comet: "彗星",
+    e_planet: "惑星", e_blackhole: "ブラックホール", e_life: "宇宙 an 生命", e_supernova: "超新星",
+    e_galaxy: "銀河", e_darkmatter: "ダークマター", e_time: "時間の精髄", e_singularity: "特異点"
+  },
+  zh: {
+    title: "星云炼金术", home: "主页", elements: "已发现元素", fusion: "宇宙融合",
+    fusionDesc: "选择 2 个元素进行融合。", fuse: "融合元素", clear: "清空槽位",
+    history: "融合历史", fusions: "融合次数:", discovered: "已发现:", empty: "空",
+    discoveredToast: "发现新元素：", failedToast: "这些元素之间没有发生反应。",
+    e_starlight: "星光", e_dust: "宇宙尘埃", e_ray: "宇宙射线", e_water: "天露",
+    e_nebula: "星云", e_plasma: "等离子体", e_star: "恒星", e_comet: "彗星",
+    e_planet: "行星", e_blackhole: "黑洞", e_life: "外星生命", e_supernova: "超新星",
+    e_galaxy: "银河", e_darkmatter: "暗物质", e_time: "时间精粹", e_singularity: "奇点"
+  }
+};
+
+const LANG_LIST = [
+  ["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"],
+  ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"],
+  ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]
+];
+
+/* All Elements Definition */
+const ELEMENTS = {
+  starlight: { icon: "✨", key: "e_starlight" },
+  dust: { icon: "🌌", key: "e_dust" },
+  ray: { icon: "⚡", key: "e_ray" },
+  water: { icon: "💧", key: "e_water" },
+  nebula: { icon: "☁️", key: "e_nebula" },
+  plasma: { icon: "🔥", key: "e_plasma" },
+  star: { icon: "⭐", key: "e_star" },
+  comet: { icon: "☄️", key: "e_comet" },
+  planet: { icon: "🪐", key: "e_planet" },
+  blackhole: { icon: "🕳️", key: "e_blackhole" },
+  life: { icon: "👾", key: "e_life" },
+  supernova: { icon: "💥", key: "e_supernova" },
+  galaxy: { icon: "🌀", key: "e_galaxy" },
+  darkmatter: { icon: "🔮", key: "e_darkmatter" },
+  time: { icon: "⏳", key: "e_time" },
+  singularity: { icon: "☸️", key: "e_singularity" }
+};
+
+/* Recipes: Pair -> Result */
+const RECIPES = {
+  "starlight+dust": "nebula",
+  "ray+dust": "plasma",
+  "starlight+plasma": "star",
+  "water+dust": "comet",
+  "star+dust": "planet",
+  "star+plasma": "supernova",
+  "supernova+starlight": "blackhole",
+  "planet+water": "life",
+  "star+planet": "galaxy",
+  "blackhole+ray": "darkmatter",
+  "galaxy+starlight": "time",
+  "darkmatter+time": "singularity"
+};
+
+/* Game State */
+let state = {
+  lang: "en",
+  sound: true,
+  discovered: ["starlight", "dust", "ray", "water"],
+  fusionsCount: 0,
+  history: []
+};
+
+let slot1 = null;
+let slot2 = null;
+
+/* Audio Context */
+let audioCtx = null;
+function playSound(freq, duration = 0.2, type = "sine") {
+  if (!state.sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
+}
+
+/* UI Init */
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([code, name]) => {
+    const opt = document.createElement("option");
+    opt.value = code; opt.textContent = name;
+    sel.appendChild(opt);
+  });
+  sel.value = state.lang;
+  sel.addEventListener("change", (e) => {
+    state.lang = e.target.value;
+    updateLanguage();
+    saveState();
+  });
+}
+
+function updateLanguage() {
+  const dict = I18N[state.lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("elementsTitle").textContent = dict.elements;
+  document.getElementById("fusionTitle").textContent = dict.fusion;
+  document.getElementById("fusionDesc").textContent = dict.fusionDesc;
+  document.getElementById("fuseBtn").textContent = dict.fuse;
+  document.getElementById("clearBtn").textContent = dict.clear;
+  document.getElementById("logTitle").textContent = dict.history;
+  document.getElementById("stFusions").textContent = dict.fusions;
+  document.getElementById("stDiscovered").textContent = dict.discovered;
+
+  renderElements();
+  updateSlots();
+}
+
+function renderElements() {
+  const grid = document.getElementById("elementGrid");
+  grid.innerHTML = "";
+  const dict = I18N[state.lang] || I18N.en;
+
+  state.discovered.forEach(id => {
+    const elData = ELEMENTS[id];
+    const card = document.createElement("div");
+    card.className = "el-card";
+    if (slot1 === id || slot2 === id) card.classList.add("selected");
+    card.innerHTML = `<span class="icon">${elData.icon}</span><span class="name">${dict[elData.key]}</span>`;
+    card.onclick = () => selectElement(id);
+    grid.appendChild(card);
+  });
+
+  document.getElementById("elementCount").textContent = `${state.discovered.length}/${Object.keys(ELEMENTS).length}`;
+  document.getElementById("statDiscovered").textContent = state.discovered.length;
+}
+
+function selectElement(id) {
+  playSound(440, 0.1);
+  if (!slot1) slot1 = id;
+  else if (!slot2) slot2 = id;
+  else { slot1 = id; slot2 = null; }
+  updateSlots();
+  renderElements();
+}
+
+function clearSlot(num) {
+  if (num === 1) slot1 = null;
+  if (num === 2) slot2 = null;
+  playSound(300, 0.1);
+  updateSlots();
+  renderElements();
+}
+
+function clearCauldron() {
+  slot1 = null; slot2 = null;
+  updateSlots();
+  renderElements();
+}
+
+function updateSlots() {
+  const dict = I18N[state.lang] || I18N.en;
+  const s1 = document.getElementById("slot1");
+  const s2 = document.getElementById("slot2");
+
+  if (slot1) {
+    s1.classList.add("filled");
+    s1.querySelector(".icon").textContent = ELEMENTS[slot1].icon;
+    document.getElementById("slot1Name").textContent = dict[ELEMENTS[slot1].key];
+  } else {
+    s1.classList.remove("filled");
+    s1.querySelector(".icon").textContent = "❓";
+    document.getElementById("slot1Name").textContent = dict.empty;
+  }
+
+  if (slot2) {
+    s2.classList.add("filled");
+    s2.querySelector(".icon").textContent = ELEMENTS[slot2].icon;
+    document.getElementById("slot2Name").textContent = dict[ELEMENTS[slot2].key];
+  } else {
+    s2.classList.remove("filled");
+    s2.querySelector(".icon").textContent = "❓";
+    document.getElementById("slot2Name").textContent = dict.empty;
+  }
+
+  document.getElementById("fuseBtn").disabled = !(slot1 && slot2);
+}
+
+function fuseElements() {
+  if (!slot1 || !slot2) return;
+  const pair1 = `${slot1}+${slot2}`;
+  const pair2 = `${slot2}+${slot1}`;
+  const result = RECIPES[pair1] || RECIPES[pair2];
+
+  state.fusionsCount++;
+  document.getElementById("statFusions").textContent = state.fusionsCount;
+
+  const dict = I18N[state.lang] || I18N.en;
+  const name1 = dict[ELEMENTS[slot1].key];
+  const name2 = dict[ELEMENTS[slot2].key];
+
+  if (result) {
+    playSound(880, 0.4, "triangle");
+    let isNew = false;
+    if (!state.discovered.includes(result)) {
+      state.discovered.push(result);
+      isNew = true;
+      showToast(dict.discoveredToast + dict[ELEMENTS[result].key]);
+    }
+    addLog(`${ELEMENTS[slot1].icon} ${name1} + ${ELEMENTS[slot2].icon} ${name2} ➔ ${ELEMENTS[result].icon} ${dict[ELEMENTS[result].key]}`);
+    slot1 = result;
+    slot2 = null;
+  } else {
+    playSound(180, 0.3, "sawtooth");
+    showToast(dict.failedToast);
+    addLog(`${ELEMENTS[slot1].icon} ${name1} + ${ELEMENTS[slot2].icon} ${name2} ➔ ❌`);
+  }
+
+  updateSlots();
+  renderElements();
+  saveState();
+}
+
+function addLog(text) {
+  const log = document.getElementById("logList");
+  const item = document.createElement("div");
+  item.className = "log-item";
+  item.textContent = text;
+  log.prepend(item);
+  if (log.children.length > 20) log.removeChild(log.lastChild);
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2500);
+}
+
+function saveState() {
+  localStorage.setItem("nebula_alchemy_save", JSON.stringify(state));
+}
+
+function loadState() {
+  const saved = localStorage.getItem("nebula_alchemy_save");
+  if (saved) {
+    try { Object.assign(state, JSON.parse(saved)); } catch(e){}
+  }
+}
+
+/* Background Canvas Starfield */
+const canvas = document.getElementById("bgCanvas");
+const ctx = canvas.getContext("2d");
+let stars = [];
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  stars = [];
+  for (let i = 0; i < 120; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.5 + 0.5,
+      alpha: Math.random(),
+      speed: Math.random() * 0.02 + 0.005
+    });
+  }
+}
+
+function drawBackground() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  stars.forEach(s => {
+    s.alpha += s.speed;
+    if (s.alpha > 1 || s.alpha < 0) s.speed = -s.speed;
+    ctx.fillStyle = `rgba(224, 170, 255, ${Math.abs(s.alpha)})`;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  requestAnimationFrame(drawBackground);
+}
+
+/* Sound Toggle */
+document.getElementById("sndBtn").onclick = () => {
+  state.sound = !state.sound;
+  document.getElementById("sndBtn").textContent = state.sound ? "🔊" : "🔇";
+  saveState();
+};
+
+window.addEventListener("resize", resizeCanvas);
+loadState();
+initLang();
+updateLanguage();
+resizeCanvas();
+drawBackground();
+</script>
+</body>
+</html>
