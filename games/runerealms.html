@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Rune Realms — Elemental Deckbuilder</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🃏</text></svg>">
+<style>
+:root {
+  --bg: #090814;
+  --panel: rgba(20, 16, 40, 0.85);
+  --border: rgba(255, 183, 3, 0.25);
+  --primary: #ffb703;
+  --fire: #ef4444;
+  --water: #3b82f6;
+  --earth: #10b981;
+  --air: #8b5cf6;
+  --text: #f8fafc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 20px; background: rgba(12, 10, 26, 0.9);
+  backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+  z-index: 10; flex-wrap: wrap; gap: 10px;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand h1 { font-size: 1.3rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px var(--primary); }
+.controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;
+  text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(255, 183, 3, 0.2); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #f59e0b; }
+select.btn { outline: none; appearance: none; padding-right: 24px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main {
+  flex: 1; display: flex; flex-direction: column; justify-content: space-between;
+  padding: 20px; max-width: 1000px; margin: 0 auto; width: 100%; position: relative;
+}
+
+/* Battle Arena */
+.battle-field {
+  display: flex; justify-content: space-around; align-items: center;
+  flex: 1; min-height: 260px;
+}
+.char-card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 18px;
+  padding: 20px; width: 220px; text-align: center; display: flex; flex-direction: column;
+  gap: 10px; align-items: center; box-shadow: 0 8px 32px rgba(0,0,0,0.4); backdrop-filter: blur(8px);
+}
+.char-avatar { font-size: 3.5rem; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
+.hp-bg { width: 100%; height: 12px; background: rgba(255,255,255,0.1); border-radius: 6px; overflow: hidden; }
+.hp-fill { height: 100%; background: #22c55e; transition: width 0.3s; }
+.shield-badge { font-size: 0.85rem; color: #38bdf8; font-weight: 700; }
+
+/* Hand Cards Area */
+.hand-container {
+  display: flex; justify-content: center; gap: 12px; padding: 10px 0;
+  min-height: 180px; flex-wrap: wrap;
+}
+.rune-card {
+  width: 120px; height: 165px; background: #13122b; border: 2px solid var(--border);
+  border-radius: 14px; padding: 10px; display: flex; flex-direction: column;
+  justify-content: space-between; cursor: pointer; transition: 0.25s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5); position: relative;
+}
+.rune-card:hover { transform: translateY(-12px) scale(1.05); border-color: var(--primary); box-shadow: 0 10px 25px var(--primary); }
+.rune-card.fire { border-color: var(--fire); }
+.rune-card.water { border-color: var(--water); }
+.rune-card.earth { border-color: var(--earth); }
+.rune-card.air { border-color: var(--air); }
+
+.card-cost {
+  position: absolute; top: -10px; left: -10px; width: 28px; height: 28px;
+  background: var(--primary); color: #000; border-radius: 50%; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; font-size: 0.9rem;
+  box-shadow: 0 0 8px var(--primary);
+}
+.card-icon { font-size: 2rem; text-align: center; }
+.card-name { font-size: 0.8rem; font-weight: 700; text-align: center; }
+.card-desc { font-size: 0.7rem; color: #cbd5e1; text-align: center; line-height: 1.2; }
+
+/* Control Bar */
+.action-hud {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+  padding: 10px 20px; backdrop-filter: blur(8px);
+}
+
+/* Modal */
+.modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+  display: none; align-items: center; justify-content: center; z-index: 50;
+}
+.modal-box {
+  background: #14122b; border: 2px solid var(--primary); border-radius: 20px;
+  padding: 30px; text-align: center; max-width: 380px; box-shadow: 0 0 40px var(--primary);
+  display: flex; flex-direction: column; gap: 16px;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🃏</span>
+    <h1 id="titleTxt">Rune Realms</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <div class="battle-field">
+    <!-- Player -->
+    <div class="char-card">
+      <div class="char-avatar">🧙‍♂️</div>
+      <div style="font-weight:700;" id="heroName">Rune Mage</div>
+      <div class="hp-bg"><div class="hp-fill" id="heroHpFill"></div></div>
+      <div style="font-size:0.85rem;" id="heroHpTxt">HP: 80/80</div>
+      <div class="shield-badge" id="heroShield">🛡️ Shield: 0</div>
+    </div>
+
+    <div style="font-size:2rem; font-weight:800; color:var(--primary)">VS</div>
+
+    <!-- Enemy -->
+    <div class="char-card">
+      <div class="char-avatar" id="enemyAvatar">👹</div>
+      <div style="font-weight:700;" id="enemyName">Shadow Golem</div>
+      <div class="hp-bg"><div class="hp-fill" id="enemyHpFill" style="background:#ef4444;"></div></div>
+      <div style="font-size:0.85rem;" id="enemyHpTxt">HP: 60/60</div>
+      <div class="shield-badge" id="enemyShield">🛡️ Shield: 0</div>
+    </div>
+  </div>
+
+  <!-- Cards Hand -->
+  <div class="hand-container" id="hand"></div>
+
+  <!-- HUD -->
+  <div class="action-hud">
+    <div style="font-size:1.1rem; font-weight:800; color:var(--primary);">
+      <span id="lblEnergy">Energy:</span> <span id="energyTxt">3/3 ⚡</span>
+    </div>
+    <div>
+      <span id="lblFloor">Floor:</span> <span id="floorTxt" style="font-weight:700; color:#38bdf8;">1</span>
+    </div>
+    <button class="btn btn-primary" id="endTurnBtn" style="padding:10px 20px;">⌛ End Turn</button>
+  </div>
+</main>
+
+<div class="modal" id="resultModal">
+  <div class="modal-box">
+    <h2 id="modalTitle" style="color:var(--primary)">Victory!</h2>
+    <p id="modalDesc">You vanquished the realm guardian.</p>
+    <button class="btn btn-primary" style="justify-content:center; padding:12px;" id="nextBtn">Next Battle</button>
+  </div>
+</div>
+
+<script>
+const I18N = {
+  en: { title: "Rune Realms", home: "Home", energy: "Energy:", floor: "Floor:", endTurn: "⌛ End Turn", victory: "Victory!", defeat: "Defeated!", winDesc: "You vanquished the monster!", loseDesc: "You collapsed in the shadow realm.", next: "Next Floor", restart: "Restart Quest" },
+  hy: { title: "Ռուն Ռելմս", home: "Գլխավոր", energy: "Էներգիա:", floor: "Հարկ:", endTurn: "⌛ Ավարտել Քայլը", victory: "Հաղթանակ!", defeat: "Պարտություն!", winDesc: "Դուք հաղթեցիք հրեշին!", loseDesc: "Դուք ընկաք ստվերային թագավորությունում:", next: "Հաջորդ Հարկ", restart: "Սկսել Նորից" },
+  ru: { title: "Рун Рэлмс", home: "Главная", energy: "Энергия:", floor: "Этаж:", endTurn: "⌛ Конец Хода", victory: "Победа!", defeat: "Поражение!", winDesc: "Вы одолели монстра!", loseDesc: "Вы пали в темном королевстве.", next: "Следующий Этаж", restart: "Начать Заново" },
+  es: { title: "Rune Realms", home: "Inicio", energy: "Energía:", floor: "Piso:", endTurn: "⌛ Terminar Turno", victory: "¡Victoria!", defeat: "¡Derrota!", winDesc: "¡Has derrotado al monstruo!", loseDesc: "Caíste en el reino de las sombras.", next: "Siguiente Piso", restart: "Reiniciar" },
+  fr: { title: "Rune Realms", home: "Accueil", energy: "Énergie :", floor: "Étage :", endTurn: "⌛ Fin du Tour", victory: "Victoire !", defeat: "Défaite !", winDesc: "Vous avez vaincu le monstre !", loseDesc: "Vous êtes tombé dans l'ombre.", next: "Étage Suivant", restart: "Recommencer" },
+  de: { title: "Rune Realms", home: "Startseite", energy: "Energie:", floor: "Ebene:", endTurn: "⌛ Zug Beenden", victory: "Sieg!", defeat: "Niederlage!", winDesc: "Du hast das Monster besiegt!", loseDesc: "Du bist im Schattenreich gefallen.", next: "Nächste Ebene", restart: "Neustart" },
+  it: { title: "Rune Realms", home: "Home", energy: "Energia:", floor: "Piano:", endTurn: "⌛ Fine Turno", victory: "Vittoria!", defeat: "Sconfitta!", winDesc: "Hai sconfitto il mostro!", loseDesc: "Sei caduto nel regno delle ombre.", next: "Prossimo Piano", restart: "Ricomincia" },
+  pt: { title: "Rune Realms", home: "Início", energy: "Energia:", floor: "Andar:", endTurn: "⌛ Terminar Turno", victory: "Vitória!", defeat: "Derrota!", winDesc: "Você derrotou o monstro!", loseDesc: "Você caiu no reino das sombras.", next: "Próximo Andar", restart: "Reiniciar" },
+  tr: { title: "Rune Realms", home: "Ana Sayfa", energy: "Enerji:", floor: "Kat:", endTurn: "⌛ Turu Bitir", victory: "Zafer!", defeat: "Yenilgi!", winDesc: "Canavarı yendiniz!", loseDesc: "Gölge diyarında yenildiniz.", next: "Sonraki Kat", restart: "Yeniden Başlat" },
+  ja: { title: "ルーンレルム", home: "ホーム", energy: "エネルギー:", floor: "フロア:", endTurn: "⌛ ターン終了", victory: "勝利！", defeat: "敗北...", winDesc: "モンスターを撃破しました！", loseDesc: "影の領域で倒れました。", next: "次のフロア", restart: "再挑戦" },
+  zh: { title: "符文 Realm", home: "主页", energy: "能量:", floor: "层数:", endTurn: "⌛ 结束回合", victory: "胜利！", defeat: "失败！", winDesc: "你击败了暗影巨兽！", loseDesc: "你在暗影符文界战倒了。", next: "下一层", restart: "重新开始" }
+};
+
+const LANG_LIST = [
+  ["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"],
+  ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"],
+  ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]
+];
+
+let lang = "en";
+let sound = true;
+let floor = 1;
+
+// Hero & Enemy stats
+let hero = { hp: 80, maxHp: 80, shield: 0, energy: 3, maxEnergy: 3 };
+let enemy = { hp: 60, maxHp: 60, shield: 0, avatar: "👹", name: "Shadow Golem" };
+
+const CARDS_DB = [
+  { name: "Firebolt", cost: 1, type: "fire", icon: "🔥", dmg: 10, shield: 0, desc: "Deal 10 Fire Damage" },
+  { name: "Flameburst", cost: 2, type: "fire", icon: "💥", dmg: 18, shield: 0, desc: "Deal 18 Fire Damage" },
+  { name: "Water Shield", cost: 1, type: "water", icon: "🛡️", dmg: 0, shield: 8, desc: "Gain 8 Shield" },
+  { name: "Ocean Heal", cost: 2, type: "water", icon: "💧", dmg: 0, shield: 14, heal: 6, desc: "Gain 14 Shield & 6 HP" },
+  { name: "Earth Wall", cost: 2, type: "earth", icon: "🪨", dmg: 4, shield: 12, desc: "4 Damage & 12 Shield" },
+  { name: "Gale Slash", cost: 1, type: "air", icon: "🌪️", dmg: 8, shield: 2, desc: "8 Damage & 2 Shield" }
+];
+
+let deck = [];
+let hand = [];
+
+// Sound API
+let audioCtx = null;
+function playSound(freq, duration = 0.15) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + duration);
+}
+
+function initBattle() {
+  enemy.maxHp = 50 + floor * 15;
+  enemy.hp = enemy.maxHp;
+  enemy.shield = 0;
+  hero.shield = 0;
+  hero.energy = hero.maxEnergy;
+
+  let avatars = ["👹", "🐉", "💀", "👾", "👺"];
+  enemy.avatar = avatars[(floor - 1) % avatars.length];
+
+  drawHand();
+  updateUI();
+}
+
+function drawHand() {
+  hand = [];
+  for (let i = 0; i < 4; i++) {
+    let card = CARDS_DB[Math.floor(Math.random() * CARDS_DB.length)];
+    hand.push({ ...card, id: Math.random() });
+  }
+  renderHand();
+}
+
+function renderHand() {
+  const container = document.getElementById("hand");
+  container.innerHTML = "";
+  hand.forEach((card, idx) => {
+    const el = document.createElement("div");
+    el.className = `rune-card ${card.type}`;
+    el.innerHTML = `
+      <div class="card-cost">${card.cost}</div>
+      <div class="card-icon">${card.icon}</div>
+      <div class="card-name">${card.name}</div>
+      <div class="card-desc">${card.desc}</div>
+    `;
+    el.onclick = () => playCard(idx);
+    container.appendChild(el);
+  });
+}
+
+function playCard(idx) {
+  let card = hand[idx];
+  if (hero.energy >= card.cost) {
+    hero.energy -= card.cost;
+
+    if (card.dmg > 0) {
+      let dmg = card.dmg;
+      if (enemy.shield > 0) {
+        let absorbed = Math.min(enemy.shield, dmg);
+        enemy.shield -= absorbed;
+        dmg -= absorbed;
+      }
+      enemy.hp = Math.max(0, enemy.hp - dmg);
+      playSound(300);
+    }
+
+    if (card.shield > 0) {
+      hero.shield += card.shield;
+      playSound(600);
+    }
+
+    if (card.heal > 0) {
+      hero.hp = Math.min(hero.maxHp, hero.hp + card.heal);
+      playSound(800);
+    }
+
+    hand.splice(idx, 1);
+    renderHand();
+    updateUI();
+
+    if (enemy.hp <= 0) {
+      showResult(true);
+    }
+  } else {
+    playSound(150);
+  }
+}
+
+function enemyTurn() {
+  let atk = 8 + floor * 3;
+  if (hero.shield > 0) {
+    let absorbed = Math.min(hero.shield, atk);
+    hero.shield -= absorbed;
+    atk -= absorbed;
+  }
+  hero.hp = Math.max(0, hero.hp - atk);
+  playSound(220);
+
+  hero.energy = hero.maxEnergy;
+  hero.shield = 0;
+  drawHand();
+  updateUI();
+
+  if (hero.hp <= 0) {
+    showResult(false);
+  }
+}
+
+document.getElementById("endTurnBtn").onclick = () => enemyTurn();
+
+function updateUI() {
+  document.getElementById("heroHpFill").style.width = `${(hero.hp / hero.maxHp) * 100}%`;
+  document.getElementById("heroHpTxt").textContent = `HP: ${hero.hp}/${hero.maxHp}`;
+  document.getElementById("heroShield").textContent = `🛡️ Shield: ${hero.shield}`;
+
+  document.getElementById("enemyHpFill").style.width = `${(enemy.hp / enemy.maxHp) * 100}%`;
+  document.getElementById("enemyHpTxt").textContent = `HP: ${enemy.hp}/${enemy.maxHp}`;
+  document.getElementById("enemyShield").textContent = `🛡️ Shield: ${enemy.shield}`;
+  document.getElementById("enemyAvatar").textContent = enemy.avatar;
+
+  document.getElementById("energyTxt").textContent = `${hero.energy}/${hero.maxEnergy} ⚡`;
+  document.getElementById("floorTxt").textContent = floor;
+}
+
+function showResult(win) {
+  const modal = document.getElementById("resultModal");
+  const dict = I18N[lang] || I18N.en;
+  modal.style.display = "flex";
+
+  if (win) {
+    document.getElementById("modalTitle").textContent = dict.victory;
+    document.getElementById("modalDesc").textContent = dict.winDesc;
+    document.getElementById("nextBtn").textContent = dict.next;
+    document.getElementById("nextBtn").onclick = () => {
+      floor++;
+      modal.style.display = "none";
+      initBattle();
+    };
+  } else {
+    document.getElementById("modalTitle").textContent = dict.defeat;
+    document.getElementById("modalDesc").textContent = dict.loseDesc;
+    document.getElementById("nextBtn").textContent = dict.restart;
+    document.getElementById("nextBtn").onclick = () => {
+      floor = 1;
+      hero.hp = hero.maxHp;
+      modal.style.display = "none";
+      initBattle();
+    };
+  }
+}
+
+// Multi-language system
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", (e) => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("lblEnergy").textContent = dict.energy;
+  document.getElementById("lblFloor").textContent = dict.floor;
+  document.getElementById("endTurnBtn").textContent = dict.endTurn;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang();
+updateLang();
+initBattle();
+</script>
+</body>
+</html>
