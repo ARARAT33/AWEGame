@@ -1,5 +1,4 @@
 
-
 const games = [
   {
     title: "Random Links",
@@ -78,6 +77,27 @@ const games = [
     description: "Master the time loop in Chrono Quest! Battle temporal shadows across infinite floors, harvest Time Echoes, upgrade your hero, and manipulate time in an interactive tactical RPG with 11-language support.",
     developer: "AWEGames",
     icon: "⏳⚔️"
+  },
+  {
+    title: "⚔️ Cyber Clash P2P",
+    folder: "cyberclash.html",
+    description: "Real-time 2-player P2P tank arena battle featuring WebRTC data sync, live text chat, P2P voice chat, AI bot practice mode, Web Audio effects, and 11-language support!",
+    developer: "AWEGames",
+    icon: "⚔️🎙️"
+  },
+  {
+    title: "🪐 Stellar Forge",
+    folder: "stellarforge.html",
+    description: "Build galaxy systems in Stellar Forge! Launch planets, moons, and black holes into orbital equilibrium, harness gravity physics, earn stellar energy, and explore 11 languages.",
+    developer: "AWEGames",
+    icon: "🪐✨"
+  },
+  {
+    title: "🃏 Rune Realms",
+    folder: "runerealms.html",
+    description: "A rogue-like elemental card deckbuilder RPG. Channel Fire, Water, Earth, and Air runes, overcome realm guardians, unlock powerful combos, and play across 11 languages.",
+    developer: "AWEGames",
+    icon: "🃏🔥"
   }
 
 ];

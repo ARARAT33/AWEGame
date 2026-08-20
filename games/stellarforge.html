@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Stellar Forge — Galaxy Gravity Simulator</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪐</text></svg>">
+<style>
+:root {
+  --bg: #04060f;
+  --panel: rgba(12, 18, 38, 0.85);
+  --border: rgba(147, 86, 255, 0.25);
+  --primary: #a855f7;
+  --accent: #38bdf8;
+  --gold: #f59e0b;
+  --text: #f1f5f9;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 20px; background: rgba(10, 14, 30, 0.9);
+  backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+  z-index: 10; flex-wrap: wrap; gap: 10px;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand h1 { font-size: 1.3rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px var(--primary); }
+.controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;
+  text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(168, 85, 247, 0.2); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #fff; border: none; font-weight: 700; }
+.btn-primary:hover { background: #9333ea; }
+select.btn { outline: none; appearance: none; padding-right: 24px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+
+#spaceCanvas {
+  background: radial-gradient(circle at center, #0b112c 0%, #03050c 100%);
+  display: block; touch-action: none; cursor: crosshair;
+}
+
+/* UI Panel */
+.hud-bar {
+  position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+  background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+  padding: 8px 20px; display: flex; align-items: center; gap: 20px;
+  backdrop-filter: blur(10px); z-index: 5; font-size: 0.9rem; font-weight: 600;
+}
+
+.bottom-toolbar {
+  position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+  background: var(--panel); border: 1px solid var(--border); border-radius: 20px;
+  padding: 8px 16px; display: flex; align-items: center; gap: 10px;
+  backdrop-filter: blur(10px); z-index: 5;
+}
+.tool-btn {
+  background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+  color: #fff; padding: 8px 14px; border-radius: 12px; font-weight: 600;
+  cursor: pointer; transition: 0.2s; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;
+}
+.tool-btn.active { background: rgba(168, 85, 247, 0.3); border-color: var(--primary); box-shadow: 0 0 10px var(--primary); }
+
+.info-box {
+  position: absolute; top: 16px; right: 16px; background: var(--panel);
+  border: 1px solid var(--border); border-radius: 14px; padding: 12px 16px;
+  width: 220px; font-size: 0.8rem; backdrop-filter: blur(8px); pointer-events: none;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🪐</span>
+    <h1 id="titleTxt">Stellar Forge</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <button id="clearBtn" class="btn">🗑️ <span id="clearTxt">Clear</span></button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="spaceCanvas"></canvas>
+
+  <div class="hud-bar">
+    <div><span id="lblEnergy">Energy:</span> <span id="energyTxt" style="color:var(--gold); font-weight:800;">100 ✨</span></div>
+    <div><span id="lblBodies">Bodies:</span> <span id="bodiesTxt" style="color:var(--accent); font-weight:800;">0</span></div>
+    <div><span id="lblTarget">Target Orbits:</span> <span id="targetTxt" style="color:var(--primary); font-weight:800;">0/3</span></div>
+  </div>
+
+  <div class="info-box">
+    <div style="font-weight:700; color:var(--primary); margin-bottom:4px;" id="guideHead">Gravity Launch Guide</div>
+    <div id="guideDesc" style="color:#ccc; line-height:1.4;">Click & drag anywhere to launch a planet into orbit around stars! Keep them balanced.</div>
+  </div>
+
+  <div class="bottom-toolbar">
+    <button class="tool-btn active" id="btnPlanet">🪐 <span id="lblPlanet">Planet</span></button>
+    <button class="tool-btn" id="btnMoon">🌑 <span id="lblMoon">Moon</span></button>
+    <button class="tool-btn" id="btnStar">☀️ <span id="lblStar">Star</span></button>
+    <button class="tool-btn" id="btnBlackHole">🕳️ <span id="lblHole">Black Hole</span></button>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Stellar Forge", home: "Home", clear: "Clear", energy: "Energy:", bodies: "Bodies:", target: "Target Orbits:", guideHead: "Gravity Launch Guide", guideDesc: "Click & drag anywhere to launch a celestial body into orbit! Maintain stable orbits to generate energy.", planet: "Planet", moon: "Moon", star: "Star", hole: "Black Hole" },
+  hy: { title: "Ստելլար Ֆորջ", home: "Գլխավոր", clear: "Մաքրել", energy: "Էներգիա:", bodies: "Մարմիններ:", target: "Ուղեծրեր:", guideHead: "Ուղեցույց", guideDesc: "Սեղմեք և քաշեք՝ մոլորակները ուղեծիր արձակելու համար! Պահպանեք կայունությունը:", planet: "Մոլորակ", moon: "Լուսին", star: "Աստղ", hole: "Սև Խոռոչ" },
+  ru: { title: "Стеллар Фордж", home: "Главная", clear: "Очистить", energy: "Энергия:", bodies: "Тела:", target: "Орбиты:", guideHead: "Инструкция", guideDesc: "Зажгите и потяните, чтобы запустить планету на орбиту! Сохраняйте баланс.", planet: "Планета", moon: "Луна", star: "Звезда", hole: "Черная Дыра" },
+  es: { title: "Stellar Forge", home: "Inicio", clear: "Limpiar", energy: "Energía:", bodies: "Cuerpos:", target: "Órbitas:", guideHead: "Guía de Gravedad", guideDesc: "¡Haz clic y arrastra para lanzar cuerpos celestes a la órbita!", planet: "Planeta", moon: "Luna", star: "Estrella", hole: "Agujero Negro" },
+  fr: { title: "Stellar Forge", home: "Accueil", clear: "Effacer", energy: "Énergie :", bodies: "Corps :", target: "Orbites :", guideHead: "Guide Gravité", guideDesc: "Cliquez et glissez pour lancer un corps céleste en orbite !", planet: "Planète", moon: "Lune", star: "Étoile", hole: "Trou Noir" },
+  de: { title: "Stellar Forge", home: "Startseite", clear: "Löschen", energy: "Energie:", bodies: "Körper:", target: "Orbit-Ziel:", guideHead: "Schwerkraft-Guide", guideDesc: "Klicken und ziehen, um Himmelskörper in eine Umlaufbahn zu starten!", planet: "Planet", moon: "Mond", star: "Stern", hole: "Schwarzes Loch" },
+  it: { title: "Stellar Forge", home: "Home", clear: "Pulisci", energy: "Energia:", bodies: "Corpi:", target: "Orbita Target:", guideHead: "Guida Gravità", guideDesc: "Clicca e trascina per lanciare pianeti in orbita!", planet: "Pianeta", moon: "Luna", star: "Stella", hole: "Buco Nero" },
+  pt: { title: "Stellar Forge", home: "Início", clear: "Limpar", energy: "Energia:", bodies: "Corpos:", target: "Órbitas:", guideHead: "Guia de Gravidade", guideDesc: "Clique e arraste para lançar corpos celestes em órbita!", planet: "Planeta", moon: "Lua", star: "Estrela", hole: "Buraco Negro" },
+  tr: { title: "Stellar Forge", home: "Ana Sayfa", clear: "Temizle", energy: "Enerji:", bodies: "Cisimler:", target: "Yörüngeler:", guideHead: "Yerçekimi Rehberi", guideDesc: "Gök cisimlerini yörüngeye fırlatmak için tıklayıp sürükleyin!", planet: "Gezegen", moon: "Ay", star: "Yıldız", hole: "Kara Delik" },
+  ja: { title: "ステラフォージ", home: "ホーム", clear: "消去", energy: "エネルギー:", bodies: "天体数:", target: "目標軌道:", guideHead: "重力ガイド", guideDesc: "ドラッグして天体を軌道上に打ち上げよう！安定した軌道でエネルギーを獲得。", planet: "惑星", moon: "月", star: "恒星", hole: "ブラックホール" },
+  zh: { title: "星核工坊", home: "主页", clear: "清除", energy: "能量:", bodies: "天体:", target: "目标轨道:", guideHead: "引力指南", guideDesc: "拖拽发射天体进入轨道！保持系统稳定可不断产生能量。", planet: "行星", moon: "卫星", star: "恒星", hole: "黑洞" }
+};
+
+const LANG_LIST = [
+  ["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"],
+  ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"],
+  ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]
+];
+
+let lang = "en";
+let sound = true;
+let energy = 100;
+let selectedTool = "planet"; // "planet", "moon", "star", "blackHole"
+
+const canvas = document.getElementById("spaceCanvas");
+const ctx = canvas.getContext("2d");
+let W = 800, H = 600;
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight - 60;
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resize);
+resize();
+
+// Web Audio
+let audioCtx = null;
+function playSound(freq, duration = 0.2) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + duration);
+}
+
+// Physics Body
+const G = 0.8;
+class Body {
+  constructor(x, y, vx, vy, mass, radius, color, isFixed = false) {
+    this.x = x; this.y = y;
+    this.vx = vx; this.vy = vy;
+    this.mass = mass;
+    this.radius = radius;
+    this.color = color;
+    this.isFixed = isFixed;
+    this.trail = [];
+  }
+  update(bodies) {
+    if (!this.isFixed) {
+      for (let b of bodies) {
+        if (b === this) continue;
+        let dx = b.x - this.x;
+        let dy = b.y - this.y;
+        let distSq = dx * dx + dy * dy;
+        let dist = Math.sqrt(distSq);
+        if (dist < this.radius + b.radius) continue; // Collision handled separately
+
+        let force = (G * this.mass * b.mass) / Math.max(distSq, 100);
+        let fx = force * (dx / dist);
+        let fy = force * (dy / dist);
+
+        this.vx += fx / this.mass;
+        this.vy += fy / this.mass;
+      }
+
+      this.x += this.vx;
+      this.y += this.vy;
+
+      this.trail.push({ x: this.x, y: this.y });
+      if (this.trail.length > 40) this.trail.shift();
+    }
+  }
+  draw() {
+    // Draw Trail
+    if (this.trail.length > 1) {
+      ctx.beginPath();
+      ctx.moveTo(this.trail[0].x, this.trail[0].y);
+      for (let i = 1; i < this.trail.length; i++) {
+        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+      }
+      ctx.strokeStyle = this.color;
+      ctx.globalAlpha = 0.25;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+    }
+
+    // Draw Body
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = this.radius * 2;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
+let bodies = [];
+
+// Center Star
+function initSystem() {
+  bodies = [];
+  bodies.push(new Body(W / 2, H / 2, 0, 0, 5000, 24, "#ffb703", true));
+}
+
+// Drag Launching
+let isDragging = false;
+let dragStart = { x: 0, y: 0 };
+let currentPos = { x: 0, y: 0 };
+
+canvas.addEventListener("mousedown", (e) => {
+  isDragging = true;
+  dragStart = { x: e.clientX, y: e.clientY - 60 };
+  currentPos = { ...dragStart };
+});
+
+canvas.addEventListener("mousemove", (e) => {
+  if (isDragging) {
+    currentPos = { x: e.clientX, y: e.clientY - 60 };
+  }
+});
+
+canvas.addEventListener("mouseup", () => {
+  if (isDragging) {
+    isDragging = false;
+    let vx = (dragStart.x - currentPos.x) * 0.05;
+    let vy = (dragStart.y - currentPos.y) * 0.05;
+
+    if (selectedTool === "planet" && energy >= 10) {
+      bodies.push(new Body(dragStart.x, dragStart.y, vx, vy, 100, 8, "#38bdf8"));
+      energy -= 10;
+      playSound(600);
+    } else if (selectedTool === "moon" && energy >= 5) {
+      bodies.push(new Body(dragStart.x, dragStart.y, vx, vy, 30, 4, "#cbd5e1"));
+      energy -= 5;
+      playSound(800);
+    } else if (selectedTool === "star" && energy >= 50) {
+      bodies.push(new Body(dragStart.x, dragStart.y, vx, vy, 3000, 20, "#f59e0b", true));
+      energy -= 50;
+      playSound(400);
+    } else if (selectedTool === "blackHole" && energy >= 80) {
+      bodies.push(new Body(dragStart.x, dragStart.y, vx, vy, 12000, 16, "#a855f7", true));
+      energy -= 80;
+      playSound(200);
+    }
+  }
+});
+
+// Main Loop
+function update() {
+  for (let b of bodies) b.update(bodies);
+
+  // Check collisions / black hole eating
+  for (let i = bodies.length - 1; i >= 0; i--) {
+    let b1 = bodies[i];
+    for (let j = i - 1; j >= 0; j--) {
+      let b2 = bodies[j];
+      let dist = Math.hypot(b1.x - b2.x, b1.y - b2.y);
+      if (dist < b1.radius + b2.radius) {
+        // Merge or absorb
+        if (b1.mass >= b2.mass) {
+          b1.mass += b2.mass * 0.5;
+          bodies.splice(j, 1);
+          playSound(180);
+        } else {
+          b2.mass += b1.mass * 0.5;
+          bodies.splice(i, 1);
+          playSound(180);
+          break;
+        }
+      }
+    }
+  }
+
+  // Energy generation from active orbiting bodies
+  let orbiting = bodies.filter(b => !b.isFixed).length;
+  if (Math.random() < 0.05 && orbiting > 0) {
+    energy += orbiting;
+  }
+
+  document.getElementById("energyTxt").textContent = `${energy} ✨`;
+  document.getElementById("bodiesTxt").textContent = bodies.length;
+  document.getElementById("targetTxt").textContent = `${orbiting}/3`;
+}
+
+function render() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Background stars
+  ctx.fillStyle = "rgba(255,255,255,0.15)";
+  for (let i = 0; i < 30; i++) {
+    let x = (Math.sin(i * 99) * 0.5 + 0.5) * W;
+    let y = (Math.cos(i * 33) * 0.5 + 0.5) * H;
+    ctx.fillRect(x, y, 2, 2);
+  }
+
+  // Draw Launch Trajectory Vector
+  if (isDragging) {
+    ctx.beginPath();
+    ctx.moveTo(dragStart.x, dragStart.y);
+    ctx.lineTo(currentPos.x, currentPos.y);
+    ctx.strokeStyle = "var(--primary)";
+    ctx.lineWidth = 3;
+    ctx.setLineDash([6, 6]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Draw Bodies
+  for (let b of bodies) b.draw();
+}
+
+function loop() {
+  update();
+  render();
+  requestAnimationFrame(loop);
+}
+
+// Tool Selection
+function selectToolBtn(id, tool) {
+  document.querySelectorAll(".tool-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  selectedTool = tool;
+}
+document.getElementById("btnPlanet").onclick = () => selectToolBtn("btnPlanet", "planet");
+document.getElementById("btnMoon").onclick = () => selectToolBtn("btnMoon", "moon");
+document.getElementById("btnStar").onclick = () => selectToolBtn("btnStar", "star");
+document.getElementById("btnBlackHole").onclick = () => selectToolBtn("btnBlackHole", "blackHole");
+
+document.getElementById("clearBtn").onclick = () => { initSystem(); energy = 100; };
+document.getElementById("sndBtn").onclick = () => { sound = !sound; document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇"; };
+
+// Multi-language system
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", (e) => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("clearTxt").textContent = dict.clear;
+  document.getElementById("lblEnergy").textContent = dict.energy;
+  document.getElementById("lblBodies").textContent = dict.bodies;
+  document.getElementById("lblTarget").textContent = dict.target;
+  document.getElementById("guideHead").textContent = dict.guideHead;
+  document.getElementById("guideDesc").textContent = dict.guideDesc;
+  document.getElementById("lblPlanet").textContent = dict.planet;
+  document.getElementById("lblMoon").textContent = dict.moon;
+  document.getElementById("lblStar").textContent = dict.star;
+  document.getElementById("lblHole").textContent = dict.hole;
+}
+
+initLang();
+updateLang();
+initSystem();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
