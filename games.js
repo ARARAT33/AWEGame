@@ -14,4 +14,11 @@ const games = [
   {title:"🪐 Stellar Forge",folder:"stellarforge.html",description:"Build galaxy systems in Stellar Forge! Launch planets, moons, and black holes into orbital equilibrium, harness gravity physics, earn stellar energy, and explore 11 languages.",developer:"AWEGames",icon:"🪐✨"},
   {title:"🃏 Rune Realms",folder:"runerealms.html",description:"A rogue-like elemental card deckbuilder RPG. Channel Fire, Water, Earth, and Air runes, overcome realm guardians, unlock powerful combos, and play across 11 languages.",developer:"AWEGames",icon:"🃏🔥"}
 ];
-(function injectAWEHubNav(){if(document.querySelector('#aweHubNav'))return;const nav=document.querySelector('.nav-links');if(!nav)return;[['AWE A2Z','https://awe-a2z.pages.dev/'],['AWEEXP','https://awe-exp.pages.dev/'],['AWEGame','https://awegame.pages.dev/'],['AWEARCHIVE','https://awearchive.pages.dev/']].forEach(([name,url],i)=>{const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.textContent=name;a.className='nav-link';a.id=i===0?'aweHubNav':`aweHub-${i}`;nav.appendChild(a)});})();
+(function injectAWEHubNav(){
+  if(document.querySelector('#aweHubNav'))return;
+  const nav=document.querySelector('.nav-links');
+  if(!nav)return;
+  const links=[['AWE A2Z','https://awe-a2z.pages.dev/'],['AWEEXP','https://awe-exp.pages.dev/'],['AWEGame','https://awegame.pages.dev/'],['AWELib','https://awelib.pages.dev/'],['AWE Blog','https://blogma-wa.blogspot.com/']];
+  const style=document.createElement('style');style.textContent=`#aweHubNav,#aweHubNav~a{position:relative;overflow:hidden;transition:transform .25s ease,color .25s ease,background .25s ease;animation:aweNavIn .55s both}#aweHubNav::after,#aweHubNav~a::after{content:"";position:absolute;left:12%;right:12%;bottom:2px;height:2px;border-radius:99px;background:currentColor;transform:scaleX(0);transform-origin:center;transition:transform .25s ease}#aweHubNav:hover,#aweHubNav~a:hover{transform:translateY(-2px);color:#7657e8}#aweHubNav:hover::after,#aweHubNav~a:hover::after{transform:scaleX(1)}@keyframes aweNavIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}`;document.head.appendChild(style);
+  links.forEach(([name,url],i)=>{const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.textContent=name;a.className='nav-link';a.id=i===0?'aweHubNav':`aweHub-${i}`;a.style.animationDelay=`${i*70}ms`;nav.appendChild(a)});
+})();
