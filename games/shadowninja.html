@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🥷 Shadow Ninja — Action Platformer</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥷</text></svg>">
+<style>
+:root {
+  --bg: #090a10;
+  --panel: rgba(18, 20, 32, 0.88);
+  --border: rgba(239, 68, 68, 0.3);
+  --primary: #ef4444;
+  --accent: #eab308;
+  --text: #f8fafc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 20px; background: rgba(12, 14, 24, 0.95);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+  z-index: 10; flex-wrap: wrap; gap: 10px;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand h1 { font-size: 1.3rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;
+  text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(239, 68, 68, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #fff; border: none; font-weight: 700; }
+.btn-primary:hover { background: #dc2626; }
+select.btn { outline: none; appearance: none; padding-right: 24px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+select option { background: #0c0e18; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #151928 0%, #090a10 100%);
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.15); display: block; touch-action: none;
+}
+
+/* UI Overlay */
+.overlay {
+  position: absolute; inset: 0; pointer-events: none;
+  display: flex; flex-direction: column; justify-content: space-between; padding: 16px;
+}
+.hud-top {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; max-width: 900px; margin: 0 auto; pointer-events: auto;
+}
+.badge {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+  padding: 8px 14px; display: flex; align-items: center; gap: 10px;
+  backdrop-filter: blur(8px); font-weight: 700;
+}
+.hp-bar-bg { width: 120px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
+.hp-bar-fill { height: 100%; width: 100%; background: var(--primary); box-shadow: 0 0 8px var(--primary); transition: width 0.2s; }
+
+/* Shop / Upgrade Modal */
+.modal-overlay {
+  position: absolute; inset: 0; background: rgba(9, 10, 16, 0.88);
+  backdrop-filter: blur(12px); display: none; align-items: center; justify-content: center;
+  z-index: 20; pointer-events: auto;
+}
+.modal-card {
+  background: #111422; border: 1px solid var(--primary); border-radius: 20px;
+  padding: 28px; width: 90%; max-width: 440px; text-align: center;
+  box-shadow: 0 0 40px rgba(239, 68, 68, 0.2); display: flex; flex-direction: column; gap: 16px;
+}
+.upg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.upg-card {
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 6px;
+  align-items: center; cursor: pointer; transition: 0.2s;
+}
+.upg-card:hover { border-color: var(--accent); background: rgba(234,179,8,0.1); }
+
+/* Touch controls */
+.touch-controls {
+  position: absolute; bottom: 20px; right: 20px; display: none;
+  gap: 10px; pointer-events: auto;
+}
+.touch-btn {
+  width: 54px; height: 54px; background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border); border-radius: 14px; display: flex;
+  align-items: center; justify-content: center; color: #fff; font-size: 1.3rem;
+}
+.touch-btn:active { background: rgba(239, 68, 68, 0.3); }
+
+@media (max-width: 768px) {
+  .touch-controls { display: flex; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🥷</span>
+    <h1 id="titleTxt">Shadow Ninja</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="shopBtn" class="btn">🛒 <span id="shopTxt">Upgrades</span></button>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="badge">
+        <span style="color:var(--primary);">HP</span>
+        <div class="hp-bar-bg"><div class="hp-bar-fill" id="hpFill"></div></div>
+      </div>
+      <div class="badge">
+        <span style="color:var(--accent);">🪙 Orbs:</span>
+        <span id="orbsTxt">0</span>
+      </div>
+      <div class="badge">
+        <span>Wave: <strong id="waveTxt" style="color:var(--primary);">1</strong></span>
+      </div>
+    </div>
+
+    <div class="touch-controls">
+      <div class="touch-btn" id="btnLeft">◄</div>
+      <div class="touch-btn" id="btnRight">►</div>
+      <div class="touch-btn" id="btnJump">▲</div>
+      <div class="touch-btn" id="btnSlash" style="background:rgba(239, 68, 68, 0.25);">🗡️</div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="shopModal">
+    <div class="modal-card">
+      <h2 id="modalHead">Dojo Upgrades</h2>
+      <p style="color:#aaa; font-size:0.9rem;" id="modalDesc">Enhance your shadow skills using collected soul orbs!</p>
+
+      <div class="upg-grid">
+        <div class="upg-card" id="upgAtk">
+          <div style="font-size:1.5rem;">🗡️</div>
+          <div style="font-weight:700;" id="lblAtk">Katana Damage</div>
+          <div style="font-size:0.8rem; color:var(--accent);" id="costAtk">Cost: 10 Orbs</div>
+        </div>
+        <div class="upg-card" id="upgHp">
+          <div style="font-size:1.5rem;">❤️</div>
+          <div style="font-weight:700;" id="lblHp">Max Health</div>
+          <div style="font-size:0.8rem; color:var(--accent);" id="costHp">Cost: 15 Orbs</div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="justify-content:center; padding:12px; margin-top:10px;" id="closeShopBtn">Back to Battle</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Shadow Ninja", home: "Home", upgrades: "Upgrades", close: "Back to Battle", damage: "Katana Damage", hp: "Max Health" },
+  hy: { title: "Շադոու Նինջա", home: "Գլխավոր", upgrades: "Բարելավումներ", close: "Վերադառնալ Մարտին", damage: "Կատանայի Հարված", hp: "Առավելագույն Կյանք" },
+  ru: { title: "Шэдоу Ниндзя", home: "Главная", upgrades: "Улучшения", close: "Вернуться в бой", damage: "Урон Катаны", hp: "Макс Здоровье" },
+  es: { title: "Shadow Ninja", home: "Inicio", upgrades: "Mejoras", close: "Volver a luchar", damage: "Daño Katana", hp: "Salud Máxima" },
+  fr: { title: "Shadow Ninja", home: "Accueil", upgrades: "Améliorations", close: "Retour au combat", damage: "Dégâts Katana", hp: "Santé Max" },
+  de: { title: "Shadow Ninja", home: "Startseite", upgrades: "Upgrades", close: "Zurück zum Kampf", damage: "Katana Schaden", hp: "Max Gesundheit" },
+  it: { title: "Shadow Ninja", home: "Home", upgrades: "Potenziamenti", close: "Torna alla battaglia", damage: "Danno Katana", hp: "Salute Massima" },
+  pt: { title: "Shadow Ninja", home: "Início", upgrades: "Melhorias", close: "Voltar à Batalha", damage: "Dano Katana", hp: "Vida Máxima" },
+  tr: { title: "Shadow Ninja", home: "Ana Sayfa", upgrades: "Geliştirmeler", close: "Savaşa Dön", damage: "Katana Hasarı", hp: "Maks Sağlık" },
+  ja: { title: "シャドウニンジャ", home: "ホーム", upgrades: "強化", close: "戦闘に戻る", damage: "刀の攻撃力", hp: "最大体力" },
+  zh: { title: "暗影忍者", home: "主页", upgrades: "技能强化", close: "返回战场", damage: "太刀伤害", hp: "最大生命" }
+};
+
+const LANG_LIST = [
+  ["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"],
+  ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"],
+  ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]
+];
+
+let lang = "en";
+let sound = true;
+
+// Persistence
+let saveState = { orbs: 0, atkLvl: 1, hpLvl: 1 };
+function loadSave() {
+  const data = localStorage.getItem("shadowninja_save");
+  if (data) { try { saveState = JSON.parse(data); } catch(e){} }
+  updateStats();
+}
+function writeSave() {
+  localStorage.setItem("shadowninja_save", JSON.stringify(saveState));
+  updateStats();
+}
+
+// Canvas Setup
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 800, H = 500;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 60;
+  let aspect = 16 / 10;
+  let w = maxW;
+  let h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width;
+  H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'slash') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(now + 0.1);
+  } else if (type === 'hit') {
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(150, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(now + 0.15);
+  }
+}
+
+// Platforms
+const platforms = [
+  { x: 0, y: H - 40, w: W, h: 40 },
+  { x: 150, y: H - 150, w: 200, h: 20 },
+  { x: 450, y: H - 220, w: 200, h: 20 },
+  { x: 250, y: H - 320, w: 300, h: 20 }
+];
+
+// Ninja Player
+let ninja = {
+  x: 100, y: 100, vx: 0, vy: 0,
+  w: 24, h: 36, facing: 1,
+  hp: 100, maxHp: 100,
+  grounded: false, slashing: 0
+};
+
+let enemies = [];
+let wave = 1;
+let keys = {};
+
+window.addEventListener("keydown", (e) => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
+
+function bindTouch(id, keyName) {
+  const btn = document.getElementById(id);
+  btn.addEventListener("touchstart", (e) => { e.preventDefault(); keys[keyName] = true; });
+  btn.addEventListener("touchend", (e) => { e.preventDefault(); keys[keyName] = false; });
+}
+bindTouch("btnLeft", "a");
+bindTouch("btnRight", "d");
+bindTouch("btnJump", "w");
+bindTouch("btnSlash", " ");
+
+function spawnWave() {
+  enemies = [];
+  let count = 2 + wave * 2;
+  for (let i = 0; i < count; i++) {
+    enemies.push({
+      x: 200 + Math.random() * (W - 300),
+      y: 50, vx: (Math.random() - 0.5) * 3, vy: 0,
+      w: 24, h: 36, hp: 20 + wave * 10, maxHp: 20 + wave * 10
+    });
+  }
+}
+
+function updateGame() {
+  // Player Movement
+  if (keys['a'] || keys['arrowleft']) { ninja.vx = -4; ninja.facing = -1; }
+  else if (keys['d'] || keys['arrowright']) { ninja.vx = 4; ninja.facing = 1; }
+  else { ninja.vx *= 0.8; }
+
+  if ((keys['w'] || keys['arrowup']) && ninja.grounded) {
+    ninja.vy = -12;
+    ninja.grounded = false;
+  }
+
+  if (keys[' '] && ninja.slashing === 0) {
+    ninja.slashing = 12;
+    playSound('slash');
+  }
+  if (ninja.slashing > 0) ninja.slashing--;
+
+  // Gravity
+  ninja.vy += 0.6;
+  ninja.x += ninja.vx;
+  ninja.y += ninja.vy;
+
+  // Platform collision
+  ninja.grounded = false;
+  platforms.forEach(p => {
+    if (ninja.x + ninja.w > p.x && ninja.x < p.x + p.w &&
+        ninja.y + ninja.h >= p.y && ninja.y + ninja.h <= p.y + p.h + 10 && ninja.vy >= 0) {
+      ninja.y = p.y - ninja.h;
+      ninja.vy = 0;
+      ninja.grounded = true;
+    }
+  });
+
+  // Slash Hitbox
+  if (ninja.slashing === 8) {
+    let slashRect = {
+      x: ninja.facing === 1 ? ninja.x + ninja.w : ninja.x - 40,
+      y: ninja.y - 10, w: 40, h: ninja.h + 20
+    };
+
+    enemies.forEach(e => {
+      if (slashRect.x + slashRect.w > e.x && slashRect.x < e.x + e.w &&
+          slashRect.y + slashRect.h > e.y && slashRect.y < e.y + e.h) {
+        let dmg = 15 + saveState.atkLvl * 10;
+        e.hp -= dmg;
+        e.vx += ninja.facing * 5;
+        playSound('hit');
+        if (e.hp <= 0) {
+          saveState.orbs += 3;
+          writeSave();
+        }
+      }
+    });
+  }
+
+  // Update Enemies
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    let e = enemies[i];
+    e.vy += 0.6;
+    e.x += e.vx;
+    e.y += e.vy;
+
+    platforms.forEach(p => {
+      if (e.x + e.w > p.x && e.x < p.x + p.w &&
+          e.y + e.h >= p.y && e.y + e.h <= p.y + p.h + 10 && e.vy >= 0) {
+        e.y = p.y - e.h;
+        e.vy = 0;
+      }
+    });
+
+    // Enemy AI patrol bounds
+    if (e.x < 20 || e.x > W - 40) e.vx *= -1;
+
+    // Contact damage
+    if (Math.hypot(e.x - ninja.x, e.y - ninja.y) < 25 && ninja.hp > 0) {
+      ninja.hp -= 0.5;
+      if (ninja.hp <= 0) {
+        ninja.hp = ninja.maxHp;
+        wave = 1;
+        spawnWave();
+      }
+    }
+
+    if (e.hp <= 0) enemies.splice(i, 1);
+  }
+
+  if (enemies.length === 0) {
+    wave++;
+    spawnWave();
+  }
+
+  document.getElementById("hpFill").style.width = `${(ninja.hp / ninja.maxHp) * 100}%`;
+  document.getElementById("waveTxt").textContent = wave;
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw Platforms
+  ctx.fillStyle = "#1e293b";
+  ctx.strokeStyle = "var(--border)";
+  platforms.forEach(p => {
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.strokeRect(p.x, p.y, p.w, p.h);
+  });
+
+  // Draw Ninja
+  ctx.save();
+  ctx.fillStyle = "#ef4444";
+  ctx.fillRect(ninja.x, ninja.y, ninja.w, ninja.h);
+
+  // Headband trail
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(ninja.facing === 1 ? ninja.x - 6 : ninja.x + ninja.w, ninja.y + 6, 8, 4);
+
+  // Slash visual
+  if (ninja.slashing > 0) {
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    let sx = ninja.facing === 1 ? ninja.x + ninja.w : ninja.x;
+    ctx.arc(sx, ninja.y + ninja.h/2, 30, -Math.PI/3, Math.PI/3);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Draw Enemies
+  enemies.forEach(e => {
+    ctx.fillStyle = "#a855f7";
+    ctx.fillRect(e.x, e.y, e.w, e.h);
+    ctx.fillStyle = "#ef4444";
+    ctx.fillRect(e.x, e.y - 6, (e.hp / e.maxHp) * e.w, 4);
+  });
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+function updateStats() {
+  ninja.maxHp = 100 + (saveState.hpLvl - 1) * 30;
+  ninja.hp = ninja.maxHp;
+  document.getElementById("orbsTxt").textContent = saveState.orbs;
+  document.getElementById("costAtk").textContent = `Cost: ${saveState.atkLvl * 10} Orbs`;
+  document.getElementById("costHp").textContent = `Cost: ${saveState.hpLvl * 15} Orbs`;
+}
+
+// Shop handlers
+document.getElementById("shopBtn").onclick = () => document.getElementById("shopModal").style.display = "flex";
+document.getElementById("closeShopBtn").onclick = () => document.getElementById("shopModal").style.display = "none";
+
+document.getElementById("upgAtk").onclick = () => {
+  let cost = saveState.atkLvl * 10;
+  if (saveState.orbs >= cost) {
+    saveState.orbs -= cost;
+    saveState.atkLvl++;
+    writeSave();
+  }
+};
+document.getElementById("upgHp").onclick = () => {
+  let cost = saveState.hpLvl * 15;
+  if (saveState.orbs >= cost) {
+    saveState.orbs -= cost;
+    saveState.hpLvl++;
+    writeSave();
+  }
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", (e) => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("shopTxt").textContent = dict.upgrades;
+  document.getElementById("closeShopBtn").textContent = dict.close;
+  document.getElementById("lblAtk").textContent = dict.damage;
+  document.getElementById("lblHp").textContent = dict.hp;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+loadSave();
+initLang();
+updateLang();
+spawnWave();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
