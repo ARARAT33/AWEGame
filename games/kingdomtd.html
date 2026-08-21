@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🏰 Kingdom Defense TD — Tower Defense Strategy</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏰</text></svg>">
+<style>
+:root {
+  --bg: #06110d;
+  --panel: rgba(12, 30, 22, 0.88);
+  --border: rgba(34, 197, 94, 0.3);
+  --primary: #22c55e;
+  --gold: #eab308;
+  --text: #f8fafc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 20px; background: rgba(8, 22, 16, 0.95);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+  z-index: 10; flex-wrap: wrap; gap: 10px;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand h1 { font-size: 1.3rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;
+  text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(34, 197, 94, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #4ade80; }
+select.btn { outline: none; appearance: none; padding-right: 24px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+select option { background: #081610; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0f2d1e 0%, #06110d 100%);
+  box-shadow: 0 0 30px rgba(34, 197, 94, 0.15); display: block; touch-action: none;
+}
+
+.overlay {
+  position: absolute; inset: 0; pointer-events: none;
+  display: flex; flex-direction: column; justify-content: space-between; padding: 16px;
+}
+.hud-top {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; max-width: 900px; margin: 0 auto; pointer-events: auto;
+}
+.badge {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+  padding: 8px 14px; display: flex; align-items: center; gap: 10px;
+  backdrop-filter: blur(8px); font-weight: 700;
+}
+
+/* Tower Selector Panel */
+.tower-bar {
+  position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+  padding: 8px 16px; display: flex; gap: 12px; pointer-events: auto; backdrop-filter: blur(8px);
+}
+.t-btn {
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px;
+  padding: 8px 12px; cursor: pointer; text-align: center; display: flex; flex-direction: column;
+  align-items: center; gap: 4px; transition: 0.2s;
+}
+.t-btn.active { border-color: var(--gold); background: rgba(234, 179, 8, 0.2); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🏰</span>
+    <h1 id="titleTxt">Kingdom Defense TD</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="badge">
+        <span>❤️ Lives: <strong id="livesTxt" style="color:#ef4444;">20</strong></span>
+      </div>
+      <div class="badge">
+        <span>🪙 Gold: <strong id="goldTxt" style="color:var(--gold);">120</strong></span>
+      </div>
+      <div class="badge">
+        <span>Wave: <strong id="waveTxt" style="color:var(--primary);">1</strong></span>
+      </div>
+      <button class="btn btn-primary" id="startWaveBtn" style="pointer-events:auto;">⚔️ Start Wave</button>
+    </div>
+
+    <div class="tower-bar">
+      <div class="t-btn active" id="tArcher" onclick="selectTower('archer')">
+        <span style="font-size:1.4rem;">🏹</span>
+        <span style="font-size:0.75rem; font-weight:700;">Archer (50g)</span>
+      </div>
+      <div class="t-btn" id="tCannon" onclick="selectTower('cannon')">
+        <span style="font-size:1.4rem;">💣</span>
+        <span style="font-size:0.75rem; font-weight:700;">Cannon (80g)</span>
+      </div>
+      <div class="t-btn" id="tMage" onclick="selectTower('mage')">
+        <span style="font-size:1.4rem;">🧙‍♂️</span>
+        <span style="font-size:0.75rem; font-weight:700;">Mage (100g)</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Kingdom Defense TD", home: "Home", startWave: "⚔️ Start Wave" },
+  hy: { title: "Թագավորության Պաշտպանություն", home: "Գլխավոր", startWave: "⚔️ Սկսել Ալիքը" },
+  ru: { title: "Защита Королевства TD", home: "Главная", startWave: "⚔️ Начать Волну" },
+  es: { title: "Kingdom Defense TD", home: "Inicio", startWave: "⚔️ Iniciar Ola" },
+  fr: { title: "Kingdom Defense TD", home: "Accueil", startWave: "⚔️ Lancer la Vague" },
+  de: { title: "Kingdom Defense TD", home: "Startseite", startWave: "⚔️ Welle Starten" },
+  it: { title: "Kingdom Defense TD", home: "Home", startWave: "⚔️ Inizia Ondata" },
+  pt: { title: "Kingdom Defense TD", home: "Início", startWave: "⚔️ Iniciar Onda" },
+  tr: { title: "Kingdom Defense TD", home: "Ana Sayfa", startWave: "⚔️ Dalga Başlat" },
+  ja: { title: "キングダムディフェンス TD", home: "ホーム", startWave: "⚔️ ウェーブ開始" },
+  zh: { title: "王国防御 TD", home: "主页", startWave: "⚔️ 开始波次" }
+};
+
+const LANG_LIST = [
+  ["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"],
+  ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"],
+  ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]
+];
+
+let lang = "en";
+let sound = true;
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 800, H = 500;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 60;
+  let aspect = 16 / 10;
+  let w = maxW;
+  let h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width;
+  H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio API
+let audioCtx = null;
+function playSound(freq, duration = 0.1) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + duration);
+}
+
+// Map Path
+const path = [
+  { x: 0, y: 150 },
+  { x: 250, y: 150 },
+  { x: 250, y: 380 },
+  { x: 550, y: 380 },
+  { x: 550, y: 120 },
+  { x: 800, y: 120 }
+];
+
+let gold = 120;
+let lives = 20;
+let wave = 1;
+let waveActive = false;
+let selectedTower = 'archer';
+
+let towers = [];
+let enemies = [];
+let projectiles = [];
+
+const TOWER_TYPES = {
+  archer: { cost: 50, range: 110, rate: 30, icon: "🏹", dmg: 12 },
+  cannon: { cost: 80, range: 90, rate: 60, icon: "💣", dmg: 35 },
+  mage: { cost: 100, range: 130, rate: 40, icon: "🧙‍♂️", dmg: 22 }
+};
+
+function selectTower(type) {
+  selectedTower = type;
+  document.querySelectorAll('.t-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`t${type.charAt(0).toUpperCase() + type.slice(1)}`).classList.add('active');
+}
+
+canvas.addEventListener("click", (e) => {
+  const rect = canvas.getBoundingClientRect();
+  let cx = (e.clientX - rect.left) * (W / rect.width);
+  let cy = (e.clientY - rect.top) * (H / rect.height);
+
+  let typeInfo = TOWER_TYPES[selectedTower];
+  if (gold >= typeInfo.cost) {
+    // Ensure not placed directly on path
+    towers.push({ x: cx, y: cy, type: selectedTower, cooldown: 0, ...typeInfo });
+    gold -= typeInfo.cost;
+    playSound(520);
+    updateHUD();
+  }
+});
+
+function spawnWave() {
+  if (waveActive) return;
+  waveActive = true;
+  let count = 5 + wave * 3;
+  let delay = 0;
+
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      enemies.push({
+        pathIdx: 0,
+        x: path[0].x,
+        y: path[0].y,
+        speed: 1.2 + Math.random() * 0.4,
+        hp: 30 + wave * 15,
+        maxHp: 30 + wave * 15
+      });
+    }, delay);
+    delay += 800;
+  }
+}
+
+document.getElementById("startWaveBtn").onclick = spawnWave;
+
+function updateGame() {
+  // Update Towers
+  towers.forEach(t => {
+    if (t.cooldown > 0) t.cooldown--;
+    else {
+      let target = enemies.find(e => Math.hypot(e.x - t.x, e.y - t.y) <= t.range);
+      if (target) {
+        projectiles.push({ x: t.x, y: t.y, tx: target.x, ty: target.y, target, dmg: t.dmg, speed: 6 });
+        t.cooldown = t.rate;
+        playSound(300);
+      }
+    }
+  });
+
+  // Update Projectiles
+  for (let i = projectiles.length - 1; i >= 0; i--) {
+    let p = projectiles[i];
+    let dx = p.target.x - p.x;
+    let dy = p.target.y - p.y;
+    let dist = Math.hypot(dx, dy);
+
+    if (dist < 8) {
+      p.target.hp -= p.dmg;
+      projectiles.splice(i, 1);
+      playSound(180);
+    } else {
+      p.x += (dx / dist) * p.speed;
+      p.y += (dy / dist) * p.speed;
+    }
+  }
+
+  // Update Enemies
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    let e = enemies[i];
+    let targetPoint = path[e.pathIdx + 1];
+
+    if (targetPoint) {
+      let dx = targetPoint.x - e.x;
+      let dy = targetPoint.y - e.y;
+      let dist = Math.hypot(dx, dy);
+
+      if (dist < e.speed) {
+        e.pathIdx++;
+      } else {
+        e.x += (dx / dist) * e.speed;
+        e.y += (dy / dist) * e.speed;
+      }
+    } else {
+      // Reached base
+      lives--;
+      enemies.splice(i, 1);
+      playSound(120);
+      updateHUD();
+      if (lives <= 0) {
+        alert("Game Over! Restarting...");
+        lives = 20; gold = 120; wave = 1; towers = []; enemies = [];
+        updateHUD();
+      }
+      continue;
+    }
+
+    if (e.hp <= 0) {
+      gold += 15;
+      enemies.splice(i, 1);
+      updateHUD();
+    }
+  }
+
+  if (waveActive && enemies.length === 0) {
+    waveActive = false;
+    wave++;
+    gold += 40;
+    updateHUD();
+  }
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw Path
+  ctx.strokeStyle = "rgba(234, 179, 8, 0.4)";
+  ctx.lineWidth = 36;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  path.forEach((p, idx) => {
+    if (idx === 0) ctx.moveTo(p.x, p.y);
+    else ctx.lineTo(p.x, p.y);
+  });
+  ctx.stroke();
+
+  // Draw Towers
+  towers.forEach(t => {
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, 16, 0, Math.PI * 2);
+    ctx.fillStyle = "#22c55e";
+    ctx.fill();
+    ctx.font = "16px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(t.icon, t.x, t.y);
+  });
+
+  // Draw Projectiles
+  ctx.fillStyle = "#eab308";
+  projectiles.forEach(p => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Draw Enemies
+  enemies.forEach(e => {
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, 10, 0, Math.PI * 2);
+    ctx.fillStyle = "#ef4444";
+    ctx.fill();
+
+    // HP Bar
+    ctx.fillStyle = "#22c55e";
+    ctx.fillRect(e.x - 10, e.y - 16, (e.hp / e.maxHp) * 20, 3);
+  });
+}
+
+function updateHUD() {
+  document.getElementById("livesTxt").textContent = lives;
+  document.getElementById("goldTxt").textContent = gold;
+  document.getElementById("waveTxt").textContent = wave;
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", (e) => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("startWaveBtn").textContent = dict.startWave;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang();
+updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
