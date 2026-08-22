@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Cyber Drift Turbo — Synthwave Racer</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏎️</text></svg>">
+<style>
+:root {
+  --bg: #090014;
+  --panel: rgba(20, 8, 38, 0.88);
+  --border: rgba(236, 72, 153, 0.35);
+  --primary: #ec4899;
+  --cyan: #06b6d4;
+  --gold: #fbbf24;
+  --purple: #8b5cf6;
+  --text: #fdf2f8;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 20px; background: rgba(15, 5, 28, 0.9);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+  z-index: 10; flex-wrap: wrap; gap: 10px;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand h1 { font-size: 1.3rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 14px; border-radius: 18px; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;
+  text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(236, 72, 153, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #fff; border: none; font-weight: 700; box-shadow: 0 0 12px rgba(236,72,153,0.4); }
+.btn-primary:hover { background: #db2777; }
+select.btn { outline: none; appearance: none; padding-right: 24px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+select option { background: #140826; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+
+#gameCanvas {
+  background: #000;
+  box-shadow: 0 0 40px rgba(236, 72, 153, 0.2); display: block; touch-action: none;
+}
+
+.overlay {
+  position: absolute; inset: 0; pointer-events: none;
+  display: flex; flex-direction: column; justify-content: space-between; padding: 18px;
+}
+.hud-top {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; max-width: 800px; margin: 0 auto; pointer-events: auto;
+}
+.hud-badge {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+  padding: 8px 16px; font-weight: 700; backdrop-filter: blur(10px);
+  display: flex; align-items: center; gap: 8px;
+}
+
+.nitro-bar-bg { width: 120px; height: 12px; background: rgba(255,255,255,0.1); border-radius: 6px; overflow: hidden; }
+.nitro-bar-fill { height: 100%; width: 100%; background: linear-gradient(90deg, var(--cyan), var(--primary)); box-shadow: 0 0 10px var(--cyan); transition: width 0.1s; }
+
+/* Modal */
+.modal-overlay {
+  position: absolute; inset: 0; background: rgba(9, 0, 20, 0.92);
+  backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center;
+  z-index: 20; pointer-events: auto;
+}
+.modal-card {
+  background: #140826; border: 1px solid var(--primary); border-radius: 24px;
+  padding: 32px; width: 90%; max-width: 450px; text-align: center;
+  box-shadow: 0 0 50px rgba(236, 72, 153, 0.25); display: flex; flex-direction: column; gap: 18px;
+}
+.modal-card h2 { font-size: 1.8rem; color: #fff; text-shadow: 0 0 15px var(--primary); }
+
+.touch-controls {
+  position: absolute; bottom: 20px; right: 20px; display: none;
+  gap: 12px; pointer-events: auto;
+}
+.touch-btn {
+  width: 60px; height: 60px; background: rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--border); border-radius: 18px; display: flex;
+  align-items: center; justify-content: center; color: #fff; font-size: 1.5rem;
+  user-select: none; -webkit-user-select: none;
+}
+.touch-btn:active { background: rgba(236, 72, 153, 0.4); }
+
+@media (max-width: 768px) {
+  .touch-controls { display: flex; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:26px;">🏎️</span>
+    <h1 id="titleTxt">Cyber Drift Turbo</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="hud-badge">
+        <span id="scoreLbl" style="color:var(--cyan);">SCORE:</span>
+        <span id="scoreVal" style="font-size:1.1rem; color:#fff;">0</span>
+      </div>
+
+      <div class="hud-badge">
+        <span style="color:var(--gold);">NITRO</span>
+        <div class="nitro-bar-bg"><div class="nitro-bar-fill" id="nitroFill"></div></div>
+      </div>
+
+      <div class="hud-badge">
+        <span id="speedLbl" style="color:var(--primary);">SPEED:</span>
+        <span id="speedVal" style="font-size:1.1rem; color:#fff;">0 MPH</span>
+      </div>
+    </div>
+
+    <div class="touch-controls">
+      <div class="touch-btn" id="btnLeft">◄</div>
+      <div class="touch-btn" id="btnNitro" style="background:rgba(236,72,153,0.3);">⚡</div>
+      <div class="touch-btn" id="btnRight">►</div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="startModal">
+    <div class="modal-card">
+      <h2 id="modalHead">Cyber Drift Turbo</h2>
+      <p style="color:#f472b6; font-size:0.92rem;" id="modalDesc">Dodge incoming synthwave traffic, hit boost pads, activate time-warp nitro, and set high scores in retro neon gridways!</p>
+
+      <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:14px; border:1px solid var(--border);">
+        <div>Best Score: <strong id="bestScoreVal" style="color:var(--gold);">0</strong></div>
+        <div>Credits Earned: <strong id="creditsVal" style="color:var(--cyan);">0 💎</strong></div>
+      </div>
+
+      <button class="btn btn-primary" style="justify-content:center; padding:14px; font-size:1.1rem;" id="startBtn">🚀 Start Race</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Drift Turbo", home: "Home", score: "SCORE:", speed: "SPEED:", start: "🚀 Start Race", over: "CRASHED!", restart: "🔄 Race Again", desc: "Dodge incoming synthwave traffic, hit boost pads, activate time-warp nitro, and set high scores in retro neon gridways!" },
+  hy: { title: "Սայբեր Դրիֆթ Տուրբո", home: "Գլխավոր", score: "ՄԻԱՎՈՐ:", speed: "ԱՐԱԳՈՒԹՅՈՒՆ:", start: "🚀 Սկսել Մրցարշավը", over: "ՎԹԱՐ!", restart: "🔄 Կրկին Խաղալ", desc: "Խուսափեք նեոնային մեքենաներից, օգտագործեք նիտրո արագացուցիչը և սահմանեք ռեկորդներ!" },
+  ru: { title: "Сайбер Дрифт Турбо", home: "Главная", score: "СЧЕТ:", speed: "СКОРОСТЬ:", start: "🚀 Старт Гонки", over: "АВАРИЯ!", restart: "🔄 Еще Раз", desc: "Уворачивайтесь от машин, используйте нитро и ставьте рекорды в неоновом стиле!" },
+  es: { title: "Cyber Drift Turbo", home: "Inicio", score: "PUNTOS:", speed: "VELOCIDAD:", start: "🚀 Iniciar Carrera", over: "¡CHOQUE!", restart: "🔄 Carrera Nueva", desc: "¡Esquiva el tráfico synthwave, usa nitro y rompe récords!" },
+  fr: { title: "Cyber Drift Turbo", home: "Accueil", score: "SCORE:", speed: "VITESSE:", start: "🚀 Démarrer Course", over: "CRASH !", restart: "🔄 Recommencer", desc: "Évite le trafic synthwave, utilise le nitro et bats des records !" },
+  de: { title: "Cyber Drift Turbo", home: "Startseite", score: "PUNKTE:", speed: "TEMPO:", start: "🚀 Rennen Starten", over: "CRASH!", restart: "🔄 Neustart", desc: "Weiche dem Synthwave-Verkehr aus, nutze Nitro und hole Highscores!" },
+  it: { title: "Cyber Drift Turbo", home: "Home", score: "PUNTI:", speed: "VELOCITÀ:", start: "🚀 Avvia Gara", over: "INCIDENTE!", restart: "🔄 Riprova", desc: "Schiva il traffico synthwave, attiva il nitro e fai il record!" },
+  pt: { title: "Cyber Drift Turbo", home: "Início", score: "PONTOS:", speed: "VELOCIDADE:", start: "🚀 Iniciar Corrida", over: "BATIDA!", restart: "🔄 Correr De Novo", desc: "Desvie do tráfego synthwave, use nitro e supere recordes!" },
+  tr: { title: "Cyber Drift Turbo", home: "Ana Sayfa", score: "SKOR:", speed: "HIZ:", start: "🚀 Yarışı Başlat", over: "KAZA!", restart: "🔄 Tekrar Yarış", desc: "Neon trafikte araçlardan kaçın, nitro kullanın ve rekor kırın!" },
+  ja: { title: "サイバードリフト ターボ", home: "ホーム", score: "スコア:", speed: "スピード:", start: "🚀 レーススタート", over: "クラッシュ！", restart: "🔄 もう一度", desc: "ネオン道路でライバル車をかわし、ナイトロで爆走してハイスコアを目指そう！" },
+  zh: { title: "赛博漂移 极速", home: "主页", score: "得分:", speed: "速度:", start: "🚀 开始比赛", over: "碰撞！", restart: "🔄 重新比赛", desc: "躲避霓虹车流，开启氮气加速，刷新最高得分记录！" }
+};
+
+const LANG_LIST = [
+  ["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"],
+  ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"],
+  ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]
+];
+
+let lang = "en";
+let sound = true;
+
+// Saved Progress
+let progress = JSON.parse(localStorage.getItem("cyberdrift_data")) || { bestScore: 0, credits: 0 };
+function saveProgress() {
+  localStorage.setItem("cyberdrift_data", JSON.stringify(progress));
+  document.getElementById("bestScoreVal").textContent = progress.bestScore;
+  document.getElementById("creditsVal").textContent = progress.credits + " 💎";
+}
+
+// Canvas
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 800, H = 600;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 60;
+  let aspect = 4 / 3;
+  let w = maxW;
+  let h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width;
+  H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Audio
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'boost') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, now);
+    osc.frequency.exponentialRampToValueAtTime(800, now + 0.3);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.3);
+  } else if (type === 'crash') {
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(100, now);
+    osc.frequency.exponentialRampToValueAtTime(20, now + 0.4);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.4);
+  }
+}
+
+// Game State Variables
+let isRacing = false;
+let score = 0;
+let speed = 120;
+let nitro = 100;
+let isNitroActive = false;
+let playerX = 0; // -1 to 1 lane factor
+let horizonY = 180;
+let roadGridOffset = 0;
+
+let traffic = [];
+let particles = [];
+let keys = {};
+
+window.addEventListener("keydown", (e) => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
+
+function bindTouch(id, keyName) {
+  const btn = document.getElementById(id);
+  btn.addEventListener("touchstart", (e) => { e.preventDefault(); keys[keyName] = true; });
+  btn.addEventListener("touchend", (e) => { e.preventDefault(); keys[keyName] = false; });
+}
+bindTouch("btnLeft", "a");
+bindTouch("btnRight", "d");
+bindTouch("btnNitro", " ");
+
+function spawnTraffic() {
+  if (traffic.length < 5 && Math.random() < 0.03) {
+    traffic.push({
+      x: (Math.random() - 0.5) * 1.6,
+      z: 1000,
+      speed: Math.random() * 20 + 40,
+      color: Math.random() < 0.5 ? "#06b6d4" : "#fbbf24"
+    });
+  }
+}
+
+function updateGame() {
+  if (!isRacing) return;
+
+  // Nitro Input
+  if ((keys[' '] || keys['w'] || keys['arrowup']) && nitro > 0) {
+    isNitroActive = true;
+    nitro = Math.max(0, nitro - 0.8);
+    speed = 220;
+    playSound('boost');
+  } else {
+    isNitroActive = false;
+    speed = 130;
+    if (nitro < 100) nitro += 0.2;
+  }
+
+  // Steering
+  if (keys['a'] || keys['arrowleft']) playerX = Math.max(-1.1, playerX - 0.04);
+  if (keys['d'] || keys['arrowright']) playerX = Math.min(1.1, playerX + 0.04);
+
+  // Score
+  score += Math.floor(speed / 30);
+
+  // Grid anim
+  roadGridOffset = (roadGridOffset + speed * 0.1) % 40;
+
+  // Traffic update
+  spawnTraffic();
+  for (let i = traffic.length - 1; i >= 0; i--) {
+    let t = traffic[i];
+    t.z -= (speed - t.speed) * 0.35;
+
+    // Collision check
+    if (t.z < 80 && t.z > 20) {
+      if (Math.abs(t.x - playerX) < 0.35) {
+        gameOver();
+        return;
+      }
+    }
+
+    if (t.z < 10) traffic.splice(i, 1);
+  }
+
+  // Particles for nitro
+  if (isNitroActive) {
+    for (let i = 0; i < 3; i++) {
+      particles.push({
+        x: W / 2 + playerX * 220 + (Math.random() - 0.5) * 20,
+        y: H - 70,
+        vx: (Math.random() - 0.5) * 4,
+        vy: Math.random() * 6 + 4,
+        life: 1.0,
+        color: "#06b6d4"
+      });
+    }
+  }
+
+  for (let i = particles.length - 1; i >= 0; i--) {
+    let p = particles[i];
+    p.x += p.vx; p.y += p.vy; p.life -= 0.05;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+
+  // HUD updates
+  document.getElementById("scoreVal").textContent = score;
+  document.getElementById("speedVal").textContent = `${Math.floor(speed)} MPH`;
+  document.getElementById("nitroFill").style.width = `${nitro}%`;
+}
+
+function gameOver() {
+  isRacing = false;
+  playSound('crash');
+
+  if (score > progress.bestScore) progress.bestScore = score;
+  progress.credits += Math.floor(score / 100);
+  saveProgress();
+
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("modalHead").textContent = dict.over;
+  document.getElementById("startBtn").textContent = dict.restart;
+  document.getElementById("startModal").style.display = "flex";
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Synthwave Sun
+  let sunGradient = ctx.createLinearGradient(0, horizonY - 80, 0, horizonY);
+  sunGradient.addColorStop(0, "#fbbf24");
+  sunGradient.addColorStop(1, "#ec4899");
+  ctx.beginPath();
+  ctx.arc(W / 2, horizonY - 10, 70, 0, Math.PI * 2);
+  ctx.fillStyle = sunGradient;
+  ctx.shadowColor = "#ec4899";
+  ctx.shadowBlur = 30;
+  ctx.fill();
+
+  // Retro Horizon Line
+  ctx.strokeStyle = "#ec4899";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, horizonY);
+  ctx.lineTo(W, horizonY);
+  ctx.stroke();
+
+  // Perspective 3D Road
+  ctx.beginPath();
+  ctx.moveTo(W / 2 - 20, horizonY);
+  ctx.lineTo(W / 2 + 20, horizonY);
+  ctx.lineTo(W / 2 + 380, H);
+  ctx.lineTo(W / 2 - 380, H);
+  ctx.closePath();
+  ctx.fillStyle = "rgba(15, 5, 30, 0.95)";
+  ctx.fill();
+  ctx.strokeStyle = "#06b6d4";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Road Grid Lines
+  ctx.strokeStyle = "rgba(236, 72, 153, 0.35)";
+  ctx.lineWidth = 1.5;
+  for (let z = 0; z < H - horizonY; z += 20) {
+    let y = horizonY + Math.pow(z / (H - horizonY), 2) * (H - horizonY);
+    ctx.beginPath();
+    ctx.moveTo(W / 2 - (y - horizonY) * 1.5, y);
+    ctx.lineTo(W / 2 + (y - horizonY) * 1.5, y);
+    ctx.stroke();
+  }
+
+  // Draw Traffic Cars
+  traffic.sort((a, b) => b.z - a.z);
+  traffic.forEach(t => {
+    let perspective = 200 / (t.z + 100);
+    let rx = W / 2 + t.x * 260 * (1 - t.z / 1000);
+    let ry = horizonY + (1 - t.z / 1000) * (H - horizonY - 50);
+    let rw = 50 * perspective;
+    let rh = 25 * perspective;
+
+    ctx.fillStyle = t.color;
+    ctx.shadowColor = t.color;
+    ctx.shadowBlur = 10;
+    ctx.fillRect(rx - rw / 2, ry - rh / 2, rw, rh);
+  });
+
+  // Draw Player Hovercar
+  let px = W / 2 + playerX * 220;
+  let py = H - 70;
+  ctx.save();
+  ctx.translate(px, py);
+
+  // Hovercar body
+  ctx.fillStyle = "#ec4899";
+  ctx.shadowColor = "#ec4899";
+  ctx.shadowBlur = isNitroActive ? 25 : 12;
+  ctx.fillRect(-25, -15, 50, 30);
+
+  // Cockpit
+  ctx.fillStyle = "#06b6d4";
+  ctx.fillRect(-15, -10, 30, 12);
+
+  ctx.restore();
+
+  // Particles
+  particles.forEach(p => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = Math.max(0, p.life);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+document.getElementById("startBtn").onclick = () => {
+  isRacing = true;
+  score = 0;
+  playerX = 0;
+  traffic = [];
+  document.getElementById("startModal").style.display = "none";
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", (e) => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("scoreLbl").textContent = dict.score;
+  document.getElementById("speedLbl").textContent = dict.speed;
+  document.getElementById("modalHead").textContent = dict.title;
+  document.getElementById("modalDesc").textContent = dict.desc;
+  document.getElementById("startBtn").textContent = dict.start;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang();
+updateLang();
+saveProgress();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
