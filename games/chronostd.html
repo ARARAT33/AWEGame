@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Chronos TD: Time Defense</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⌛</text></svg>">
+<style>
+:root {
+  --bg: #070a14;
+  --panel: rgba(18, 26, 48, 0.9);
+  --border: rgba(59, 130, 246, 0.3);
+  --primary: #3b82f6;
+  --accent: #f59e0b;
+  --purple: #8b5cf6;
+  --green: #10b981;
+  --text: #e0f2fe;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 20px; background: rgba(10, 15, 30, 0.92);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+  z-index: 10; flex-wrap: wrap; gap: 10px;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand h1 { font-size: 1.3rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 14px; border-radius: 18px; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;
+  text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(59, 130, 246, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #fff; border: none; font-weight: 700; box-shadow: 0 0 12px rgba(59,130,246,0.4); }
+.btn-primary:hover { background: #2563eb; }
+select.btn { outline: none; appearance: none; padding-right: 24px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+select option { background: #0f172a; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+
+#gameCanvas {
+  background: #0b1120;
+  box-shadow: 0 0 40px rgba(59, 130, 246, 0.15); display: block; touch-action: none;
+}
+
+.overlay {
+  position: absolute; inset: 0; pointer-events: none;
+  display: flex; flex-direction: column; justify-content: space-between; padding: 16px;
+}
+.hud-top {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; max-width: 850px; margin: 0 auto; pointer-events: auto;
+}
+.hud-badge {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+  padding: 8px 16px; font-weight: 700; backdrop-filter: blur(10px);
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* Tower Build Bar */
+.tower-bar {
+  position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--panel); border: 1px solid var(--border); border-radius: 20px;
+  padding: 8px 16px; display: flex; gap: 12px; pointer-events: auto;
+  backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+.tower-card {
+  background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 14px;
+  padding: 8px 14px; text-align: center; cursor: pointer; transition: 0.2s;
+  display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 90px;
+}
+.tower-card:hover, .tower-card.selected {
+  background: rgba(59, 130, 246, 0.25); border-color: var(--primary); transform: translateY(-3px);
+}
+
+/* Modal */
+.modal-overlay {
+  position: absolute; inset: 0; background: rgba(7, 10, 20, 0.92);
+  backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center;
+  z-index: 20; pointer-events: auto;
+}
+.modal-card {
+  background: #0f172a; border: 1px solid var(--primary); border-radius: 24px;
+  padding: 32px; width: 90%; max-width: 460px; text-align: center;
+  box-shadow: 0 0 50px rgba(59, 130, 246, 0.25); display: flex; flex-direction: column; gap: 18px;
+}
+.modal-card h2 { font-size: 1.8rem; color: #fff; text-shadow: 0 0 15px var(--primary); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:26px;">⌛</span>
+    <h1 id="titleTxt">Chronos TD: Time Defense</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="hud-badge">
+        <span style="color:var(--accent);">💰 Energy:</span>
+        <span id="goldVal" style="font-size:1.1rem; color:#fff;">150</span>
+      </div>
+
+      <div class="hud-badge">
+        <span style="color:#ef4444;">❤️ Core Health:</span>
+        <span id="hpVal" style="font-size:1.1rem; color:#fff;">20</span>
+      </div>
+
+      <div class="hud-badge">
+        <span style="color:var(--primary);">🌊 Wave:</span>
+        <span id="waveVal" style="font-size:1.1rem; color:#fff;">1 / 10</span>
+      </div>
+
+      <button class="btn btn-primary" id="nextWaveBtn">▶ Next Wave</button>
+    </div>
+
+    <div class="tower-bar">
+      <div class="tower-card selected" data-type="laser">
+        <span style="font-size:1.4rem;">⚡</span>
+        <span style="font-weight:700; font-size:0.85rem;">Laser</span>
+        <span style="font-size:0.75rem; color:var(--accent);">50 💰</span>
+      </div>
+
+      <div class="tower-card" data-type="slow">
+        <span style="font-size:1.4rem;">❄️</span>
+        <span style="font-weight:700; font-size:0.85rem;">Chrono</span>
+        <span style="font-size:0.75rem; color:var(--accent);">75 💰</span>
+      </div>
+
+      <div class="tower-card" data-type="warp">
+        <span style="font-size:1.4rem;">🌌</span>
+        <span style="font-weight:700; font-size:0.85rem;">Warp Burst</span>
+        <span style="font-size:0.75rem; color:var(--accent);">100 💰</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="startModal">
+    <div class="modal-card">
+      <h2 id="modalHead">Chronos TD</h2>
+      <p style="color:#93c5fd; font-size:0.92rem;" id="modalDesc">Place tactical time-manipulating towers to stop rogue chronological shadows from reaching your time core!</p>
+
+      <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:14px; border:1px solid var(--border);">
+        <div>High Wave Reached: <strong id="bestWaveVal" style="color:var(--accent);">1</strong></div>
+        <div>Total Stars Collected: <strong id="totalStarsVal" style="color:var(--primary);">0 ⭐</strong></div>
+      </div>
+
+      <button class="btn btn-primary" style="justify-content:center; padding:14px; font-size:1.1rem;" id="startBtn">⚔️ Defend Core</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Chronos TD: Time Defense", home: "Home", start: "⚔️ Defend Core", nextWave: "▶ Next Wave", gameOver: "CORE OVERLOAD!", win: "TIMELINE SECURED!", restart: "🔄 Play Again", desc: "Place tactical time-manipulating towers to stop rogue chronological shadows from reaching your time core!" },
+  hy: { title: "Քրոնոս TD: Ժամանակի Պաշտպանություն", home: "Գլխավոր", start: "⚔️ Պաշտպանել Միջուկը", nextWave: "▶ Հաջորդ Ալիքը", gameOver: "ՄԻՋՈՒԿԻ ՈՉՆՉԱՑՈՒՄ!", win: "ՀԱՂԹԱՆԱԿ!", restart: "🔄 Կրկին Խաղալ", desc: "Տեղադրեք աշտարակներ, կառավարեք ժամանակը և պաշտպանեք միջուկը ստվերներից!" },
+  ru: { title: "Кронос TD: Защита Времени", home: "Главная", start: "⚔️ Защитить Ядро", nextWave: "▶ Следующая Волна", gameOver: "ЯДРО УНИЧТОЖЕНО!", win: "ПОБЕДА!", restart: "🔄 Заново", desc: "Стройте хроно-башни и не дайте временным теням прорваться к ядру!" },
+  es: { title: "Chronos TD: Defensa Temporal", home: "Inicio", start: "⚔️ Defender Núcleo", nextWave: "▶ Siguiente Ola", gameOver: "¡NÚCLEO DESTRUIDO!", win: "¡VICTORIA!", restart: "🔄 Jugar de nuevo", desc: "¡Construye torres temporales y protege el núcleo de las sombras!" },
+  fr: { title: "Chronos TD: Défense Temporelle", home: "Accueil", start: "⚔️ Défendre le Cœur", nextWave: "▶ Vague Suivante", gameOver: "CŒUR DÉTRUIT !", win: "VICTOIRE !", restart: "🔄 Recommencer", desc: "Place des tours temporelles tactiques pour protéger le cœur !" },
+  de: { title: "Chronos TD: Zeitverteidigung", home: "Startseite", start: "⚔️ Kern Verteidigen", nextWave: "▶ Nächste Welle", gameOver: "KERN ZERSTÖRT!", win: "SIEG!", restart: "🔄 Neustart", desc: "Baue Zeit-Türme und schütze deinen Kern vor Schatten!" },
+  it: { title: "Chronos TD: Difesa Temporale", home: "Home", start: "⚔️ Difendi Nucleo", nextWave: "▶ Prossima Ondata", gameOver: "NUCLEO DISTRUTTO!", win: "VITTORIA!", restart: "🔄 Gioca Ancora", desc: "Piazza torri temporali per proteggere il nucleo dal nemico!" },
+  pt: { title: "Chronos TD: Defesa Temporal", home: "Início", start: "⚔️ Defender Núcleo", nextWave: "▶ Próxima Onda", gameOver: "NÚCLEO DESTRUÍDO!", win: "VITÓRIA!", restart: "🔄 Jogar Novamente", desc: "Posicione torres temporais para proteger o núcleo contra as sombras!" },
+  tr: { title: "Chronos TD: Zaman Savunması", home: "Ana Sayfa", start: "⚔️ Çekirdeği Koru", nextWave: "▶ Sonraki Dalga", gameOver: "ÇEKİRDEK İMHASI!", win: "ZAFER!", restart: "🔄 Tekrar Oyna", desc: "Zaman kuleleri kurun ve çekirdeğinizi gölgelerden koruyun!" },
+  ja: { title: "クロノス TD: タイムディフェンス", home: "ホーム", start: "⚔️ コアを防衛", nextWave: "▶ 次のウェーブ", gameOver: "コア破壊！", win: "勝利！", restart: "🔄 もう一度", desc: "時間操作タワーを配置して、時間の影からコアを守り抜け！" },
+  zh: { title: "克洛诺斯 TD: 时间防御", home: "主页", start: "⚔️ 保卫核心", nextWave: "▶ 下一波", gameOver: "核心过载！", win: "胜利！", restart: "🔄 重新开始", desc: "建造时间防御塔，阻止时空阴影入侵核心！" }
+};
+
+const LANG_LIST = [
+  ["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"],
+  ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"],
+  ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]
+];
+
+let lang = "en";
+let sound = true;
+
+// Saved Progress
+let progress = JSON.parse(localStorage.getItem("chronostd_data")) || { bestWave: 1, stars: 0 };
+function saveProgress() {
+  localStorage.setItem("chronostd_data", JSON.stringify(progress));
+  document.getElementById("bestWaveVal").textContent = progress.bestWave;
+  document.getElementById("totalStarsVal").textContent = progress.stars + " ⭐";
+}
+
+// Canvas & Path Grid
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 800, H = 600;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 80;
+  let aspect = 4 / 3;
+  let w = maxW;
+  let h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width;
+  H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Audio
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'zap') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(500, now);
+    osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.1);
+  }
+}
+
+// Path waypoints
+const pathWaypoints = [
+  { x: 50, y: 100 }, { x: 250, y: 100 }, { x: 250, y: 350 },
+  { x: 500, y: 350 }, { x: 500, y: 180 }, { x: 720, y: 180 },
+  { x: 720, y: 500 }
+];
+
+// Game State
+let energy = 150;
+let hp = 20;
+let wave = 1;
+let selectedTowerType = "laser";
+let towers = [];
+let enemies = [];
+let projectiles = [];
+let particles = [];
+let isWaveActive = false;
+let waveSpawnCount = 0;
+let spawnTimer = 0;
+
+const TOWER_COSTS = { laser: 50, slow: 75, warp: 100 };
+
+class Tower {
+  constructor(x, y, type) {
+    this.x = x; this.y = y;
+    this.type = type;
+    this.range = type === 'slow' ? 120 : (type === 'warp' ? 140 : 150);
+    this.cooldown = 0;
+    this.fireRate = type === 'warp' ? 40 : 20;
+  }
+  update() {
+    if (this.cooldown > 0) this.cooldown--;
+    else {
+      // Find enemy in range
+      let target = enemies.find(e => Math.hypot(e.x - this.x, e.y - this.y) < this.range);
+      if (target) {
+        projectiles.push(new Projectile(this.x, this.y, target, this.type));
+        this.cooldown = this.fireRate;
+        playSound('zap');
+      }
+    }
+  }
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+
+    ctx.beginPath();
+    ctx.arc(0, 0, 18, 0, Math.PI * 2);
+    ctx.fillStyle = this.type === 'laser' ? '#3b82f6' : (this.type === 'slow' ? '#06b6d4' : '#8b5cf6');
+    ctx.shadowColor = ctx.fillStyle;
+    ctx.shadowBlur = 12;
+    ctx.fill();
+
+    ctx.restore();
+  }
+}
+
+class Enemy {
+  constructor(hp) {
+    this.pathIdx = 0;
+    this.x = pathWaypoints[0].x;
+    this.y = pathWaypoints[0].y;
+    this.maxHp = hp;
+    this.hp = hp;
+    this.speed = 1.6;
+    this.slowTimer = 0;
+  }
+  update() {
+    if (this.slowTimer > 0) {
+      this.slowTimer--;
+      this.currentSpeed = this.speed * 0.4;
+    } else {
+      this.currentSpeed = this.speed;
+    }
+
+    let target = pathWaypoints[this.pathIdx + 1];
+    if (!target) return;
+
+    let dx = target.x - this.x;
+    let dy = target.y - this.y;
+    let dist = Math.hypot(dx, dy);
+
+    if (dist < this.currentSpeed) {
+      this.pathIdx++;
+      if (this.pathIdx >= pathWaypoints.length - 1) {
+        hp--;
+        this.hp = 0; // core hit
+      }
+    } else {
+      this.x += (dx / dist) * this.currentSpeed;
+      this.y += (dy / dist) * this.currentSpeed;
+    }
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 10, 0, Math.PI * 2);
+    ctx.fillStyle = this.slowTimer > 0 ? '#06b6d4' : '#f59e0b';
+    ctx.fill();
+
+    // HP Bar
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.fillRect(this.x - 12, this.y - 18, 24, 4);
+    ctx.fillStyle = '#10b981';
+    ctx.fillRect(this.x - 12, this.y - 18, (this.hp / this.maxHp) * 24, 4);
+  }
+}
+
+class Projectile {
+  constructor(x, y, target, type) {
+    this.x = x; this.y = y;
+    this.target = target;
+    this.type = type;
+    this.speed = 7;
+    this.alive = true;
+  }
+  update() {
+    if (!this.target || this.target.hp <= 0) { this.alive = false; return; }
+
+    let dx = this.target.x - this.x;
+    let dy = this.target.y - this.y;
+    let dist = Math.hypot(dx, dy);
+
+    if (dist < this.speed) {
+      this.alive = false;
+      this.target.hp -= this.type === 'warp' ? 35 : 18;
+      if (this.type === 'slow') this.target.slowTimer = 90;
+
+      if (this.target.hp <= 0) {
+        energy += 15;
+      }
+    } else {
+      this.x += (dx / dist) * this.speed;
+      this.y += (dy / dist) * this.speed;
+    }
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = this.type === 'laser' ? '#3b82f6' : (this.type === 'slow' ? '#06b6d4' : '#8b5cf6');
+    ctx.fill();
+  }
+}
+
+// Canvas Click to Build
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  let x = (e.clientX - rect.left) * (W / rect.width);
+  let y = (e.clientY - rect.top) * (H / rect.height);
+
+  let cost = TOWER_COSTS[selectedTowerType];
+  if (energy >= cost) {
+    towers.push(new Tower(x, y, selectedTowerType));
+    energy -= cost;
+  }
+});
+
+// Tower selection buttons
+document.querySelectorAll('.tower-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.tower-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedTowerType = card.dataset.type;
+  });
+});
+
+document.getElementById('nextWaveBtn').onclick = () => {
+  if (!isWaveActive) {
+    isWaveActive = true;
+    waveSpawnCount = 5 + wave * 3;
+  }
+};
+
+function updateGame() {
+  if (isWaveActive) {
+    spawnTimer++;
+    if (spawnTimer > 40 && waveSpawnCount > 0) {
+      enemies.push(new Enemy(40 + wave * 20));
+      waveSpawnCount--;
+      spawnTimer = 0;
+    }
+
+    if (waveSpawnCount === 0 && enemies.length === 0) {
+      isWaveActive = false;
+      wave++;
+      if (wave > progress.bestWave) progress.bestWave = wave;
+      progress.stars += 3;
+      saveProgress();
+    }
+  }
+
+  towers.forEach(t => t.update());
+
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    enemies[i].update();
+    if (enemies[i].hp <= 0) enemies.splice(i, 1);
+  }
+
+  for (let i = projectiles.length - 1; i >= 0; i--) {
+    projectiles[i].update();
+    if (!projectiles[i].alive) projectiles.splice(i, 1);
+  }
+
+  document.getElementById('goldVal').textContent = energy;
+  document.getElementById('hpVal').textContent = hp;
+  document.getElementById('waveVal').textContent = `${wave} / 10`;
+
+  if (hp <= 0) {
+    alert("Core overloaded!");
+    hp = 20; wave = 1; energy = 150; towers = []; enemies = [];
+  }
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw Path
+  ctx.strokeStyle = "rgba(59, 130, 246, 0.25)";
+  ctx.lineWidth = 36;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  pathWaypoints.forEach((pt, i) => {
+    if (i === 0) ctx.moveTo(pt.x, pt.y);
+    else ctx.lineTo(pt.x, pt.y);
+  });
+  ctx.stroke();
+
+  // Draw Core Base
+  let corePt = pathWaypoints[pathWaypoints.length - 1];
+  ctx.beginPath();
+  ctx.arc(corePt.x, corePt.y, 25, 0, Math.PI * 2);
+  ctx.fillStyle = "#ef4444";
+  ctx.shadowColor = "#ef4444";
+  ctx.shadowBlur = 20;
+  ctx.fill();
+
+  towers.forEach(t => t.draw());
+  enemies.forEach(e => e.draw());
+  projectiles.forEach(p => p.draw());
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+document.getElementById("startBtn").onclick = () => {
+  document.getElementById("startModal").style.display = "none";
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", (e) => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("modalHead").textContent = dict.title;
+  document.getElementById("modalDesc").textContent = dict.desc;
+  document.getElementById("startBtn").textContent = dict.start;
+  document.getElementById("nextWaveBtn").textContent = dict.nextWave;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang();
+updateLang();
+saveProgress();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
