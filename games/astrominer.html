@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>⛏️ Astro Digger RPG — Subterranean Mining</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⛏️</text></svg>">
+<style>
+:root {
+  --bg: #070913;
+  --panel: rgba(14, 18, 38, 0.9);
+  --border: rgba(0, 242, 254, 0.28);
+  --primary: #00f2fe;
+  --accent: #ff007f;
+  --gold: #ffc300;
+  --green: #39ff14;
+  --text: #e0f7fa;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 28, 0.94);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+  z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 20px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px;
+  text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 242, 254, 0.22); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #4facfe; color: #000; }
+.btn-accent { background: var(--accent); color: #fff; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+
+#gameCanvas {
+  background: #0d0f1a;
+  box-shadow: 0 0 40px rgba(0, 242, 254, 0.12); display: block; touch-action: none;
+}
+
+/* UI Overlay HUD */
+.hud-bar {
+  position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 14px; background: var(--panel); border: 1px solid var(--border);
+  border-radius: 12px; padding: 6px 16px; backdrop-filter: blur(10px); z-index: 5;
+  font-weight: 700; font-size: 0.85rem; flex-wrap: wrap; justify-content: center;
+}
+.stat-item { display: flex; align-items: center; gap: 4px; }
+.stat-val { color: var(--gold); }
+
+/* Mobile Touch D-Pad */
+.touch-controls {
+  position: absolute; bottom: 16px; right: 16px; display: none;
+  grid-template-columns: repeat(3, 46px); gap: 6px; pointer-events: auto; z-index: 5;
+}
+.touch-btn {
+  width: 46px; height: 46px; background: rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--border); border-radius: 12px; display: flex;
+  align-items: center; justify-content: center; color: #fff; font-size: 1.1rem;
+  user-select: none; -webkit-user-select: none;
+}
+.touch-btn:active { background: rgba(0, 242, 254, 0.35); }
+
+/* Station / Upgrade Modal */
+.modal-overlay {
+  position: absolute; inset: 0; background: rgba(3, 5, 18, 0.88);
+  backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center;
+  z-index: 20;
+}
+.modal-card {
+  background: #0a0e24; border: 1px solid var(--primary); border-radius: 20px;
+  padding: 24px; width: 90%; max-width: 440px; text-align: center;
+  box-shadow: 0 0 50px rgba(0, 242, 254, 0.22); display: flex; flex-direction: column; gap: 12px;
+}
+.modal-card h2 { font-size: 1.5rem; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.upgrade-list { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
+.upgrade-row {
+  display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px;
+}
+
+@media (max-width: 768px) {
+  .touch-controls { display: grid; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:22px;">⛏️</span>
+    <h1 id="titleTxt">Astro Digger RPG</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <button id="stationBtn" class="btn btn-primary">🛰️ <span id="stationTxt">Surface Base</span></button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="hud-bar">
+    <div class="stat-item"><span id="fuelLbl">FUEL:</span> <span class="stat-val" id="fuelVal">100/100</span></div>
+    <div class="stat-item"><span id="cargoLbl">CARGO:</span> <span class="stat-val" id="cargoVal">0/20</span></div>
+    <div class="stat-item"><span id="creditsLbl">CREDITS:</span> <span class="stat-val" id="creditsVal">$0</span></div>
+    <div class="stat-item"><span id="depthLbl">DEPTH:</span> <span class="stat-val" id="depthVal">0m</span></div>
+  </div>
+
+  <div class="touch-controls">
+    <div></div><div class="touch-btn" id="btnUp">▲</div><div></div>
+    <div class="touch-btn" id="btnLeft">◄</div><div class="touch-btn" id="btnDown">▼</div><div class="touch-btn" id="btnRight">►</div>
+  </div>
+
+  <div class="modal-overlay" id="stationModal" style="display:none;">
+    <div class="modal-card">
+      <h2 id="modalTitle">Surface Station</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Refuel your rig, sell mined ore, and upgrade drill specs!</p>
+
+      <div style="display:flex; gap:10px; justify-content:center;">
+        <button class="btn btn-accent" id="sellOreBtn">💰 Sell All Ore</button>
+        <button class="btn btn-primary" id="refuelBtn">⛽ Refuel Rig</button>
+      </div>
+
+      <div class="upgrade-list">
+        <div class="upgrade-row">
+          <div style="text-align:left;">
+            <div style="font-weight:700;" id="upDrillTitle">Drill Speed (Lvl <span id="upDrillLvl">1</span>)</div>
+          </div>
+          <button class="btn btn-primary" id="buyDrillBtn">$200</button>
+        </div>
+        <div class="upgrade-row">
+          <div style="text-align:left;">
+            <div style="font-weight:700;" id="upFuelTitle">Fuel Tank (Lvl <span id="upFuelLvl">1</span>)</div>
+          </div>
+          <button class="btn btn-primary" id="buyFuelBtn">$300</button>
+        </div>
+        <div class="upgrade-row">
+          <div style="text-align:left;">
+            <div style="font-weight:700;" id="upCargoTitle">Cargo Bay (Lvl <span id="upCargoLvl">1</span>)</div>
+          </div>
+          <button class="btn btn-primary" id="buyCargoBtn">$250</button>
+        </div>
+      </div>
+
+      <button class="btn" style="justify-content:center; background:rgba(255,255,255,0.1);" id="closeModalBtn">Return to Drill</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Astro Digger RPG", home: "Home", station: "Surface Base", fuel: "FUEL:", cargo: "CARGO:", credits: "CREDITS:", depth: "DEPTH:", modalTitle: "Surface Station", modalDesc: "Refuel your rig, sell mined ore, and upgrade drill specs!", sell: "💰 Sell Ore", refuel: "⛽ Refuel Rig", close: "Return to Drill", upDrill: "Drill Speed", upFuel: "Fuel Tank", upCargo: "Cargo Bay" },
+  hy: { title: "Աստրո Դիգեր RPG", home: "Գլխավոր", station: "Մակերևույթի Բազա", fuel: "ՎԱՌԵԼԻՔ:", cargo: "ԲԵՌ:", credits: "ԿՐԵԴԻՏՆԵՐ:", depth: "ԽՈՐՈՒԹՅՈՒՆ:", modalTitle: "Մակերևույթի Կայան", modalDesc: "Լիցքավորեք հորատիչը, վաճառեք հանքաքարը և թարմացրեք սարքավորումները!", sell: "💰 Վաճառել", refuel: "⛽ Լիցքավորել", close: "Վերադառնալ", upDrill: "Հորատման Արագություն", upFuel: "Վառելիքի Բաք", upCargo: "Բեռնախցիկ" },
+  ru: { title: "Астро Диггер RPG", home: "Главная", station: "База На Поверхности", fuel: "ТОПЛИВО:", cargo: "ГРУЗ:", credits: "КРЕДИТЫ:", depth: "ГЛУБИНА:", modalTitle: "База На Поверхности", modalDesc: "Заправляйтесь, продавайте руду и улучшайте бур!", sell: "💰 Продать Руду", refuel: "⛽ Заправиться", close: "Вернуться к Бурению", upDrill: "Скорость Бура", upFuel: "Топливный Бак", upCargo: "Грузовой Отсек" },
+  es: { title: "Astro Digger RPG", home: "Inicio", station: "Base Superficie", fuel: "COMBUSTIBLE:", cargo: "CARGA:", credits: "CRÉDITOS:", depth: "PROF:", modalTitle: "Estación de Superficie", modalDesc: "¡Recarga combustible, vende minerales y mejora tu taladro!", sell: "💰 Vender Mineral", refuel: "⛽ Recargar", close: "Volver a Taladrar", upDrill: "Velocidad Taladro", upFuel: "Tanque Combustible", upCargo: "Bodega Carga" },
+  fr: { title: "Astro Digger RPG", home: "Accueil", station: "Base de Surface", fuel: "CARBURANT:", cargo: "CARGAISON:", credits: "CRÉDITS:", depth: "PROF:", modalTitle: "Station de Surface", modalDesc: "Ravitaillez votre foreuse, vendez du minerai et améliorez votre équipement !", sell: "💰 Vendre Minerai", refuel: "⛽ Ravitaller", close: "Retourner Forer", upDrill: "Vitesse Foreuse", upFuel: "Réservoir Carburant", upCargo: "Soute Crate" },
+  de: { title: "Astro Digger RPG", home: "Startseite", station: "Oberflächenbasis", fuel: "TREIBSTOFF:", cargo: "FRACHT:", credits: "CREDITS:", depth: "TIEFE:", modalTitle: "Oberflächenstation", modalDesc: "Tanke auf, verkaufe Erze und verbessere deinen Bohrer!", sell: "💰 Erz Verkaufen", refuel: "⛽ Auftanken", close: "Zurück zum Bohren", upDrill: "Bohrgeschwindigkeit", upFuel: "Treibstofftank", upCargo: "Frachtraum" },
+  it: { title: "Astro Digger RPG", home: "Home", station: "Base Superficiale", fuel: "CARBURANTE:", cargo: "CARICO:", credits: "CREDITI:", depth: "PROF:", modalTitle: "Stazione Superficiale", modalDesc: "Rifornisci la trivella, vendi i minerali e migliora i componenti!", sell: "💰 Vendi Minerale", refuel: "⛽ Rifornisci", close: "Torna alla Trivella", upDrill: "Velocità Trivella", upFuel: "Serbatoio Carburante", upCargo: "Vano Carico" },
+  pt: { title: "Astro Digger RPG", home: "Início", station: "Base Superfície", fuel: "COMBUSTÍVEL:", cargo: "CARGA:", credits: "CRÉDITOS:", depth: "PROF:", modalTitle: "Estação Superfície", modalDesc: "Reabasteça, venda minérios e melhore sua perfuratriz!", sell: "💰 Vender Minério", refuel: "⛽ Reabastecer", close: "Voltar a Perfurar", upDrill: "Velocidade Broca", upFuel: "Tanque Combustível", upCargo: "Compartimento Carga" },
+  tr: { title: "Astro Digger RPG", home: "Ana Sayfa", station: "Yüzey Üssü", fuel: "YAKIT:", cargo: "KARGO:", credits: "KREDİ:", depth: "DERİNLİK:", modalTitle: "Yüzey İstasyonu", modalDesc: "Yakıt alın, cevher satın ve matkabınızı yükseltin!", sell: "💰 Cevher Sat", refuel: "⛽ Yakıt Al", close: "Kazıya Dön", upDrill: "Matkap Hızı", upFuel: "Yakıt Deposu", upCargo: "Kargo Bölümü" },
+  ja: { title: "アストロディガー RPG", home: "ホーム", station: "地表基地", fuel: "燃料:", cargo: "積載:", credits: "クレジット:", depth: "深度:", modalTitle: "地表ステーション", modalDesc: "燃料補給、鉱石売却、ドリル強化を行えます！", buy: "金", sell: "💰 鉱石売却", refuel: "⛽ 燃料補給", close: "掘削に戻る", upDrill: "ドリル速度", upFuel: "燃料タンク", upCargo: "カーゴ容量" },
+  zh: { title: "太空采矿者 RPG", home: "主页", station: "地表基地", fuel: "燃料:", cargo: "容量:", credits: "积分:", depth: "深度:", modalTitle: "地表空间站", modalDesc: "补充燃料，出售矿石并升级钻头！", sell: "💰 出售矿石", refuel: "⛽ 补充燃料", close: "返回钻探", upDrill: "钻头速度", upFuel: "燃料箱", upCargo: "货仓容量" }
+};
+
+const LANG_LIST = [
+  ["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"],
+  ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"],
+  ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]
+];
+
+let lang = localStorage.getItem("digger_lang") || "en";
+let sound = true;
+
+// Player Persistence State
+let state = JSON.parse(localStorage.getItem("digger_save") || '{"credits":0,"fuelLvl":1,"cargoLvl":1,"drillLvl":1}');
+function saveState() { localStorage.setItem("digger_save", JSON.stringify(state)); }
+
+// Canvas Setup
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 640, H = 640;
+
+function resizeCanvas() {
+  const maxDim = Math.min(window.innerWidth, window.innerHeight - 60);
+  canvas.width = maxDim;
+  canvas.height = maxDim;
+  W = canvas.width;
+  H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio synthesizer
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'dig') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.exponentialRampToValueAtTime(60, now + 0.08);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.08);
+  } else if (type === 'ore') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(450, now);
+    osc.frequency.exponentialRampToValueAtTime(900, now + 0.15);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.15);
+  }
+}
+
+// World Grid Simulation
+const GRID_COLS = 16;
+const GRID_ROWS = 40;
+const TILE_SIZE = 40;
+
+// Tile types: 0=Empty, 1=Dirt, 2=Copper Ore, 3=Gold Ore, 4=Diamond, 5=Hard Rock
+let grid = [];
+function generateWorld() {
+  grid = [];
+  for (let r = 0; r < GRID_ROWS; r++) {
+    let row = [];
+    for (let c = 0; c < GRID_COLS; c++) {
+      if (r === 0) row.push(0); // Surface row
+      else {
+        let rand = Math.random();
+        if (r > 25 && rand < 0.12) row.push(4); // Diamond deep
+        else if (r > 12 && rand < 0.2) row.push(3); // Gold
+        else if (rand < 0.25) row.push(2); // Copper
+        else if (rand < 0.08) row.push(5); // Hard rock
+        else row.push(1); // Dirt
+      }
+    }
+    grid.push(row);
+  }
+}
+generateWorld();
+
+// Player Rig
+let maxFuel = 100;
+let fuel = 100;
+let maxCargo = 20;
+let cargo = [];
+let px = 8, py = 0; // Grid coordinates
+
+function getMaxFuel() { return 100 + (state.fuelLvl - 1) * 50; }
+function getMaxCargo() { return 20 + (state.cargoLvl - 1) * 15; }
+
+let keys = {};
+window.addEventListener("keydown", (e) => {
+  keys[e.key.toLowerCase()] = true;
+  handleMove(e.key.toLowerCase());
+});
+
+function bindTouch(id, keyName) {
+  const btn = document.getElementById(id);
+  btn.addEventListener("touchstart", (e) => { e.preventDefault(); handleMove(keyName); });
+}
+bindTouch("btnUp", "arrowup");
+bindTouch("btnDown", "arrowdown");
+bindTouch("btnLeft", "arrowleft");
+bindTouch("btnRight", "arrowright");
+
+function handleMove(key) {
+  if (fuel <= 0) return;
+  let targetX = px;
+  let targetY = py;
+
+  if (key === "arrowleft" || key === "a") targetX--;
+  if (key === "arrowright" || key === "d") targetX++;
+  if (key === "arrowup" || key === "w") targetY--;
+  if (key === "arrowdown" || key === "s") targetY++;
+
+  if (targetX < 0 || targetX >= GRID_COLS || targetY < 0 || targetY >= GRID_ROWS) return;
+
+  let targetTile = grid[targetY][targetX];
+
+  if (targetTile === 0) {
+    px = targetX; py = targetY;
+    fuel = Math.max(0, fuel - 0.5);
+  } else if (targetTile !== 5) {
+    if (cargo.length < getMaxCargo()) {
+      fuel = Math.max(0, fuel - Math.max(1, 4 - state.drillLvl));
+      if (targetTile === 2) cargo.push("copper");
+      if (targetTile === 3) cargo.push("gold");
+      if (targetTile === 4) cargo.push("diamond");
+
+      playSound(targetTile === 1 ? 'dig' : 'ore');
+      grid[targetY][targetX] = 0;
+      px = targetX; py = targetY;
+    } else {
+      alert("Cargo bay full! Return to Surface Base.");
+    }
+  }
+}
+
+function updateGame() {
+  maxFuel = getMaxFuel();
+  maxCargo = getMaxCargo();
+
+  // Auto-open surface base when reaching surface
+  if (py === 0 && cargo.length > 0) {
+    document.getElementById("stationModal").style.display = "flex";
+    updateStationUI();
+  }
+
+  // HUD
+  document.getElementById("fuelVal").textContent = `${Math.floor(fuel)}/${maxFuel}`;
+  document.getElementById("cargoVal").textContent = `${cargo.length}/${maxCargo}`;
+  document.getElementById("creditsVal").textContent = `$${state.credits}`;
+  document.getElementById("depthVal").textContent = `${py * 10}m`;
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Camera scroll following Y
+  let camY = Math.max(0, Math.min((GRID_ROWS - 14) * TILE_SIZE, (py - 7) * TILE_SIZE));
+
+  ctx.save();
+  ctx.translate(0, -camY);
+
+  // Draw Sky & Surface Line
+  ctx.fillStyle = "#1e2952";
+  ctx.fillRect(0, -TILE_SIZE * 5, W, TILE_SIZE * 5);
+
+  for (let r = 0; r < GRID_ROWS; r++) {
+    for (let c = 0; c < GRID_COLS; c++) {
+      let x = c * TILE_SIZE;
+      let y = r * TILE_SIZE;
+      let t = grid[r][c];
+
+      if (t === 1) { ctx.fillStyle = "#5c3d2e"; ctx.fillRect(x, y, TILE_SIZE - 1, TILE_SIZE - 1); }
+      else if (t === 2) { ctx.fillStyle = "#b87333"; ctx.fillRect(x, y, TILE_SIZE - 1, TILE_SIZE - 1); } // Copper
+      else if (t === 3) { ctx.fillStyle = "#ffb703"; ctx.fillRect(x, y, TILE_SIZE - 1, TILE_SIZE - 1); } // Gold
+      else if (t === 4) { ctx.fillStyle = "#00f2fe"; ctx.fillRect(x, y, TILE_SIZE - 1, TILE_SIZE - 1); } // Diamond
+      else if (t === 5) { ctx.fillStyle = "#2b2d42"; ctx.fillRect(x, y, TILE_SIZE - 1, TILE_SIZE - 1); } // Hard rock
+    }
+  }
+
+  // Draw Player Rig
+  ctx.fillStyle = "#ff007f";
+  ctx.shadowColor = "#ff007f";
+  ctx.shadowBlur = 10;
+  ctx.fillRect(px * TILE_SIZE + 4, py * TILE_SIZE + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+
+  ctx.restore();
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+// Base Station Logic
+document.getElementById("stationBtn").onclick = () => {
+  document.getElementById("stationModal").style.display = "flex";
+  updateStationUI();
+};
+document.getElementById("closeModalBtn").onclick = () => {
+  document.getElementById("stationModal").style.display = "none";
+};
+
+function updateStationUI() {
+  document.getElementById("upDrillLvl").textContent = state.drillLvl;
+  document.getElementById("upFuelLvl").textContent = state.fuelLvl;
+  document.getElementById("upCargoLvl").textContent = state.cargoLvl;
+  document.getElementById("buyDrillBtn").textContent = `$${state.drillLvl * 200}`;
+  document.getElementById("buyFuelBtn").textContent = `$${state.fuelLvl * 300}`;
+  document.getElementById("buyCargoBtn").textContent = `$${state.cargoLvl * 250}`;
+}
+
+document.getElementById("sellOreBtn").onclick = () => {
+  let earned = 0;
+  cargo.forEach(c => {
+    if (c === "copper") earned += 25;
+    if (c === "gold") earned += 75;
+    if (c === "diamond") earned += 250;
+  });
+  state.credits += earned;
+  cargo = [];
+  saveState();
+  updateStationUI();
+};
+
+document.getElementById("refuelBtn").onclick = () => {
+  let cost = Math.floor((getMaxFuel() - fuel) * 0.5);
+  if (state.credits >= cost) {
+    state.credits -= cost;
+    fuel = getMaxFuel();
+    saveState();
+    updateStationUI();
+  } else alert("Not enough credits to refuel!");
+};
+
+document.getElementById("buyDrillBtn").onclick = () => {
+  let cost = state.drillLvl * 200;
+  if (state.credits >= cost) {
+    state.credits -= cost;
+    state.drillLvl++;
+    saveState();
+    updateStationUI();
+  } else alert("Not enough credits!");
+};
+
+document.getElementById("buyFuelBtn").onclick = () => {
+  let cost = state.fuelLvl * 300;
+  if (state.credits >= cost) {
+    state.credits -= cost;
+    state.fuelLvl++;
+    fuel = getMaxFuel();
+    saveState();
+    updateStationUI();
+  } else alert("Not enough credits!");
+};
+
+document.getElementById("buyCargoBtn").onclick = () => {
+  let cost = state.cargoLvl * 250;
+  if (state.credits >= cost) {
+    state.credits -= cost;
+    state.cargoLvl++;
+    saveState();
+    updateStationUI();
+  } else alert("Not enough credits!");
+};
+
+// Multi-language
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", (e) => {
+    lang = e.target.value;
+    localStorage.setItem("digger_lang", lang);
+    updateLang();
+  });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("stationTxt").textContent = dict.station;
+  document.getElementById("fuelLbl").textContent = dict.fuel;
+  document.getElementById("cargoLbl").textContent = dict.cargo;
+  document.getElementById("creditsLbl").textContent = dict.credits;
+  document.getElementById("depthLbl").textContent = dict.depth;
+  document.getElementById("modalTitle").textContent = dict.modalTitle;
+  document.getElementById("modalDesc").textContent = dict.modalDesc;
+  document.getElementById("sellOreBtn").textContent = dict.sell;
+  document.getElementById("refuelBtn").textContent = dict.refuel;
+  document.getElementById("closeModalBtn").textContent = dict.close;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang();
+updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
