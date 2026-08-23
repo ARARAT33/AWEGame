@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🎰 Cosmic Pinball FX — Cyberpunk Arcade</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎰</text></svg>">
+<style>
+:root {
+  --bg: #050512;
+  --panel: rgba(15, 18, 40, 0.88);
+  --border: rgba(0, 242, 254, 0.3);
+  --primary: #00f2fe;
+  --accent: #ff007f;
+  --gold: #ffb703;
+  --purple: #9d4edd;
+  --green: #39ff14;
+  --text: #e0f7fa;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 10, 24, 0.94);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+  z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 20px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px;
+  text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 242, 254, 0.22); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #4facfe; color: #000; }
+.btn-accent { background: var(--accent); color: #fff; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0f1330 0%, #03040c 100%);
+  box-shadow: 0 0 45px rgba(0, 242, 254, 0.15); display: block; touch-action: none;
+}
+
+/* UI Hud */
+.hud-panel {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 16px; background: var(--panel); border: 1px solid var(--border);
+  border-radius: 14px; padding: 6px 18px; backdrop-filter: blur(10px); z-index: 5;
+  font-weight: 700; font-size: 0.9rem;
+}
+.stat-item { display: flex; align-items: center; gap: 6px; }
+.stat-val { color: var(--gold); text-shadow: 0 0 8px var(--gold); }
+
+/* Touch Flipper Buttons for Mobile */
+.touch-bar {
+  position: absolute; bottom: 12px; left: 0; right: 0;
+  display: flex; justify-content: space-between; padding: 0 20px;
+  pointer-events: none; z-index: 5;
+}
+.touch-flipper {
+  width: 90px; height: 90px; border-radius: 50%; background: rgba(0, 242, 254, 0.15);
+  border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; color: #fff; pointer-events: auto; backdrop-filter: blur(8px);
+  user-select: none; -webkit-user-select: none;
+}
+.touch-flipper:active { background: rgba(0, 242, 254, 0.45); transform: scale(0.95); }
+
+/* Upgrade Shop Modal */
+.modal-overlay {
+  position: absolute; inset: 0; background: rgba(3, 4, 15, 0.88);
+  backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center;
+  z-index: 20;
+}
+.modal-card {
+  background: #0a0e26; border: 1px solid var(--primary); border-radius: 20px;
+  padding: 24px; width: 90%; max-width: 440px; text-align: center;
+  box-shadow: 0 0 50px rgba(0, 242, 254, 0.22); display: flex; flex-direction: column; gap: 12px;
+}
+.modal-card h2 { font-size: 1.6rem; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.shop-grid { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+.shop-item {
+  display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:22px;">🎰</span>
+    <h1 id="titleTxt">Cosmic Pinball FX</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <button id="shopBtn" class="btn btn-accent">⚡ <span id="shopTxt">Shop</span></button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="hud-panel">
+    <div class="stat-item"><span id="scoreLbl">SCORE:</span> <span class="stat-val" id="scoreVal">0</span></div>
+    <div class="stat-item"><span id="ballsLbl">BALLS:</span> <span class="stat-val" id="ballsVal">3</span></div>
+    <div class="stat-item"><span id="multLbl">MULT:</span> <span class="stat-val" id="multVal">1x</span></div>
+  </div>
+
+  <div class="touch-bar">
+    <div class="touch-flipper" id="leftFlipBtn">◄</div>
+    <div class="touch-flipper" id="launchBtn" style="width:70px; height:70px; border-color:var(--gold);">🚀</div>
+    <div class="touch-flipper" id="rightFlipBtn">►</div>
+  </div>
+
+  <div class="modal-overlay" id="shopModal" style="display:none;">
+    <div class="modal-card">
+      <h2 id="shopHead">Cosmic Upgrades</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="shopDesc">Use earned pinball credits to upgrade bumpers and frenzy multipliers!</p>
+
+      <div class="shop-grid">
+        <div class="shop-item">
+          <div style="text-align:left;">
+            <div style="font-weight:700;" id="upBumperTitle">Neon Bumpers (Lvl <span id="upBumperLvl">1</span>)</div>
+            <div style="font-size:0.75rem; color:#aaa;" id="upBumperDesc">+50% Score per Bumper Hit</div>
+          </div>
+          <button class="btn btn-primary" id="buyBumperBtn">10,000 pts</button>
+        </div>
+
+        <div class="shop-item">
+          <div style="text-align:left;">
+            <div style="font-weight:700;" id="upMultTitle">Gravity Field (Lvl <span id="upMultLvl">1</span>)</div>
+            <div style="font-size:0.75rem; color:#aaa;" id="upMultDesc">Increases base Multiplier cap</div>
+          </div>
+          <button class="btn btn-primary" id="buyMultBtn">25,000 pts</button>
+        </div>
+      </div>
+
+      <button class="btn btn-accent" style="justify-content:center; padding:10px;" id="closeShopBtn">Close Shop</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cosmic Pinball FX", home: "Home", shop: "Shop", score: "SCORE:", balls: "BALLS:", mult: "MULT:", shopHead: "Cosmic Upgrades", shopDesc: "Use earned pinball credits to boost score bonuses!", buy: "pts", close: "Close Shop", upBumper: "Neon Bumpers", upBumperDesc: "+50% Bumper Hit Points", upMult: "Gravity Field", upMultDesc: "+1 Permanent Multiplier" },
+  hy: { title: "Կոսմիկ Փինբոլ FX", home: "Գլխավոր", shop: "Խանութ", score: "ՄԻԱՎՈՐ:", balls: "ԳՆԴԱԿՆԵՐ:", mult: "ԲԱԶՄԱՊԱՏԻԿ:", shopHead: "Տիեզերական Թարմացումներ", shopDesc: "Օգտագործեք միավորները հզորացումներ գնելու համար!", buy: "միավոր", close: "Փակել", upBumper: "Նեոնային Բամպերներ", upBumperDesc: "+50% Բամպերի Միավորներ", upMult: "Գրավիտացիոն Դաշտ", upMultDesc: "+1 Մշտական Բազմապատկիչ" },
+  ru: { title: "Космический Пинбол FX", home: "Главная", shop: "Магазин", score: "ОЧКИ:", balls: "ШАРЫ:", mult: "МНОЖ:", shopHead: "Космические Улучшения", shopDesc: "Улучшайте бамперы и множители очков!", buy: "очков", close: "Закрыть", upBumper: "Неоновые Бамперы", upBumperDesc: "+50% Очков за бампер", upMult: "Гравитационное Поле", upMultDesc: "+1 К множителю" },
+  es: { title: "Cosmic Pinball FX", home: "Inicio", shop: "Tienda", score: "PUNTOS:", balls: "BOLAS:", mult: "MULT:", shopHead: "Mejoras Cósmicas", shopDesc: "¡Aumenta tus puntos con mejoras!", buy: "pts", close: "Cerrar", upBumper: "Bumpers Neón", upBumperDesc: "+50% Puntos por Bumper", upMult: "Campo Gravitatorio", upMultDesc: "+1 Multiplicador Base" },
+  fr: { title: "Cosmic Pinball FX", home: "Accueil", shop: "Boutique", score: "SCORE:", balls: "BILLES:", mult: "MULT:", shopHead: "Améliorations", shopDesc: "Boostez vos points avec les améliorations !", buy: "pts", close: "Fermer", upBumper: "Bumpers Neon", upBumperDesc: "+50% Points par Bumper", upMult: "Champ Gravitationnel", upMultDesc: "+1 Multiplicateur Base" },
+  de: { title: "Cosmic Pinball FX", home: "Startseite", shop: "Shop", score: "PUNKTE:", balls: "BÄLLE:", mult: "MULT:", shopHead: "Kosmische Upgrades", shopDesc: "Erhöhe deine Punkte mit Upgrades!", buy: "Pkt", close: "Schließen", upBumper: "Neon Bumper", upBumperDesc: "+50% Bumper Punkte", upMult: "Gravitationsfeld", upMultDesc: "+1 Basis-Multiplikator" },
+  it: { title: "Cosmic Pinball FX", home: "Home", shop: "Negozio", score: "PUNTI:", balls: "BIGLIE:", mult: "MULT:", shopHead: "Potenziamenti", shopDesc: "Aumenta i punti con i potenziamenti!", buy: "pti", close: "Chiudi", upBumper: "Bumper Neon", upBumperDesc: "+50% Punti Bumper", upMult: "Campo Gravitazionale", upMultDesc: "+1 Moltiplicatore Base" },
+  pt: { title: "Cosmic Pinball FX", home: "Início", shop: "Loja", score: "PONTOS:", balls: "BOLAS:", mult: "MULT:", shopHead: "Melhorias Cósmicas", shopDesc: "Aumente seus pontos com melhorias!", buy: "pts", close: "Fechar", upBumper: "Bumpers Neon", upBumperDesc: "+50% Pontos por Bumper", upMult: "Campo Gravitacional", upMultDesc: "+1 Multiplicador Base" },
+  tr: { title: "Cosmic Pinball FX", home: "Ana Sayfa", shop: "Mağaza", score: "SKOR:", balls: "TOP:", mult: "ÇARPAN:", shopHead: "Kozmik Yükseltmeler", shopDesc: "Skorunuzu artırmak için yükseltin!", buy: "puan", close: "Kapat", upBumper: "Neon Tamponlar", upBumperDesc: "+50% Tampon Puanı", upMult: "Yerçekimi Alanı", upMultDesc: "+1 Temel Çarpan" },
+  ja: { title: "コズミックピンボール FX", home: "ホーム", shop: "ショップ", score: "スコア:", balls: "ボール:", mult: "倍率:", shopHead: "コズミックアップグレード", shopDesc: "獲得ポイントでバンパーや倍率を強化！", buy: "pt", close: "閉じる", upBumper: "ネオンバンパー", upBumperDesc: "バンパー得点 +50%", upMult: "重力フィールド", upMultDesc: "基本倍率 +1" },
+  zh: { title: "宇宙弹珠 FX", home: "主页", shop: "商店", score: "得分:", balls: "弹珠:", mult: "倍率:", shopHead: "宇宙升级", shopDesc: "使用得分升级缓冲器和倍率！", buy: "分", close: "关闭", upBumper: "霓虹缓冲器", upBumperDesc: "缓冲器得分 +50%", upMult: "引力场", upMultDesc: "基础倍率 +1" }
+};
+
+const LANG_LIST = [
+  ["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"],
+  ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"],
+  ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]
+];
+
+let lang = localStorage.getItem("pinball_lang") || "en";
+let sound = true;
+
+// Persistence
+let state = JSON.parse(localStorage.getItem("pinball_save") || '{"score":0,"highScore":0,"bumperLvl":1,"multLvl":1}');
+function saveState() { localStorage.setItem("pinball_save", JSON.stringify(state)); }
+
+// Canvas
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 480, H = 720;
+
+function resizeCanvas() {
+  const maxH = window.innerHeight - 60;
+  let aspect = 2 / 3;
+  let h = maxH;
+  let w = h * aspect;
+  if (w > window.innerWidth) { w = window.innerWidth; h = w / aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width;
+  H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Sound synthesizer
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'bumper') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(400, now);
+    osc.frequency.exponentialRampToValueAtTime(800, now + 0.12);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.12);
+  } else if (type === 'flipper') {
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(150, now);
+    osc.frequency.exponentialRampToValueAtTime(300, now + 0.08);
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.08);
+  } else if (type === 'launch') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(120, now);
+    osc.frequency.exponentialRampToValueAtTime(600, now + 0.25);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.25);
+  }
+}
+
+// Game Physics Objects
+let ballsRemaining = 3;
+let currentScore = 0;
+let baseMultiplier = 1;
+
+class Ball {
+  constructor(x, y) {
+    this.x = x; this.y = y;
+    this.vx = 0; this.vy = 0;
+    this.radius = 9;
+    this.color = "#00f2fe";
+  }
+  update() {
+    this.vy += 0.22; // Gravity
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vx *= 0.992;
+    this.vy *= 0.992;
+
+    // Outer wall boundaries
+    if (this.x < this.radius + 15) { this.x = this.radius + 15; this.vx *= -0.75; }
+    if (this.x > W - this.radius - 15) { this.x = W - this.radius - 15; this.vx *= -0.75; }
+    if (this.y < this.radius + 15) { this.y = this.radius + 15; this.vy *= -0.75; }
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 12;
+    ctx.fill();
+  }
+}
+
+class Bumper {
+  constructor(x, y, radius, color, points) {
+    this.x = x; this.y = y;
+    this.radius = radius;
+    this.color = color;
+    this.points = points;
+    this.pulse = 0;
+  }
+  update() { if (this.pulse > 0) this.pulse -= 0.05; }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius + this.pulse * 6, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 15 + this.pulse * 20;
+    ctx.fill();
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+  checkHit(ball) {
+    let dist = Math.hypot(ball.x - this.x, ball.y - this.y);
+    if (dist < ball.radius + this.radius) {
+      let angle = Math.atan2(ball.y - this.y, ball.x - this.x);
+      let force = 9;
+      ball.vx = Math.cos(angle) * force;
+      ball.vy = Math.sin(angle) * force;
+      this.pulse = 1.0;
+      playSound('bumper');
+
+      let pts = Math.floor(this.points * (1 + (state.bumperLvl - 1) * 0.5) * (baseMultiplier + state.multLvl - 1));
+      currentScore += pts;
+      state.score += pts;
+      saveState();
+    }
+  }
+}
+
+class Flipper {
+  constructor(x, y, length, isLeft) {
+    this.x = x; this.y = y;
+    this.length = length;
+    this.isLeft = isLeft;
+    this.angle = isLeft ? 0.3 : Math.PI - 0.3;
+    this.targetAngle = this.angle;
+    this.restAngle = this.angle;
+    this.upAngle = isLeft ? -0.5 : Math.PI + 0.5;
+  }
+  setUp(active) {
+    this.targetAngle = active ? this.upAngle : this.restAngle;
+  }
+  update() {
+    this.angle += (this.targetAngle - this.angle) * 0.35;
+  }
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle);
+    ctx.beginPath();
+    ctx.roundRect(0, -6, this.length, 12, 6);
+    ctx.fillStyle = "var(--primary)";
+    ctx.shadowColor = "var(--primary)";
+    ctx.shadowBlur = 10;
+    ctx.fill();
+    ctx.restore();
+  }
+  checkHit(ball) {
+    // Basic flipper impulse approximation
+    let tipX = this.x + Math.cos(this.angle) * this.length;
+    let tipY = this.y + Math.sin(this.angle) * this.length;
+    let distToPivot = Math.hypot(ball.x - this.x, ball.y - this.y);
+
+    if (distToPivot < this.length && ball.y > this.y - 15 && ball.y < this.y + 15) {
+      if ((this.isLeft && ball.x > this.x && ball.x < tipX) || (!this.isLeft && ball.x < this.x && ball.x > tipX)) {
+        ball.vy = -11;
+        ball.vx += this.isLeft ? 3 : -3;
+        playSound('flipper');
+      }
+    }
+  }
+}
+
+let ball = new Ball(W - 25, H - 80);
+let bumpers = [
+  new Bumper(W * 0.35, H * 0.28, 22, "#ff007f", 500),
+  new Bumper(W * 0.65, H * 0.28, 22, "#00f2fe", 500),
+  new Bumper(W * 0.5, H * 0.42, 26, "#ffb703", 1000)
+];
+let leftFlipper = new Flipper(W * 0.22, H - 90, 80, true);
+let rightFlipper = new Flipper(W * 0.78, H - 90, 80, false);
+
+let keys = {};
+window.addEventListener("keydown", (e) => {
+  keys[e.key.toLowerCase()] = true;
+  if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') leftFlipper.setUp(true);
+  if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') rightFlipper.setUp(true);
+  if (e.key === ' ' || e.key === 'ArrowDown') launchBall();
+});
+window.addEventListener("keyup", (e) => {
+  keys[e.key.toLowerCase()] = false;
+  if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') leftFlipper.setUp(false);
+  if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') rightFlipper.setUp(false);
+});
+
+// Touch controls
+const lBtn = document.getElementById("leftFlipBtn");
+const rBtn = document.getElementById("rightFlipBtn");
+const launchBtn = document.getElementById("launchBtn");
+
+lBtn.addEventListener("touchstart", (e) => { e.preventDefault(); leftFlipper.setUp(true); });
+lBtn.addEventListener("touchend", (e) => { e.preventDefault(); leftFlipper.setUp(false); });
+rBtn.addEventListener("touchstart", (e) => { e.preventDefault(); rightFlipper.setUp(true); });
+rBtn.addEventListener("touchend", (e) => { e.preventDefault(); rightFlipper.setUp(false); });
+launchBtn.addEventListener("touchstart", (e) => { e.preventDefault(); launchBall(); });
+
+function launchBall() {
+  if (ball.y > H - 120 && ball.x > W - 40) {
+    ball.vy = -16 - Math.random() * 3;
+    ball.vx = -1.5;
+    playSound('launch');
+  }
+}
+
+function updateGame() {
+  ball.update();
+  bumpers.forEach(b => { b.update(); b.checkHit(ball); });
+  leftFlipper.update(); leftFlipper.checkHit(ball);
+  rightFlipper.update(); rightFlipper.checkHit(ball);
+
+  // Ball drain bottom reset
+  if (ball.y > H + 20) {
+    ballsRemaining--;
+    if (ballsRemaining > 0) {
+      ball.x = W - 25; ball.y = H - 80;
+      ball.vx = 0; ball.vy = 0;
+    } else {
+      // Game over reset
+      ballsRemaining = 3;
+      currentScore = 0;
+      ball.x = W - 25; ball.y = H - 80;
+      ball.vx = 0; ball.vy = 0;
+    }
+  }
+
+  // Update UI Stats
+  document.getElementById("scoreVal").textContent = currentScore.toLocaleString();
+  document.getElementById("ballsVal").textContent = ballsRemaining;
+  document.getElementById("multVal").textContent = `${baseMultiplier + state.multLvl - 1}x`;
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Pinball Table Outer Border
+  ctx.strokeStyle = "rgba(0, 242, 254, 0.4)";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(10, 10, W - 20, H - 20);
+
+  // Plunger lane divider
+  ctx.beginPath();
+  ctx.moveTo(W - 40, H * 0.3);
+  ctx.lineTo(W - 40, H - 10);
+  ctx.strokeStyle = "rgba(255, 183, 3, 0.3)";
+  ctx.stroke();
+
+  bumpers.forEach(b => b.draw());
+  leftFlipper.draw();
+  rightFlipper.draw();
+  ball.draw();
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+// Shop logic
+document.getElementById("shopBtn").onclick = () => {
+  document.getElementById("shopModal").style.display = "flex";
+  updateShopUI();
+};
+document.getElementById("closeShopBtn").onclick = () => {
+  document.getElementById("shopModal").style.display = "none";
+};
+
+function updateShopUI() {
+  document.getElementById("upBumperLvl").textContent = state.bumperLvl;
+  document.getElementById("upMultLvl").textContent = state.multLvl;
+  document.getElementById("buyBumperBtn").textContent = `${(state.bumperLvl * 10000).toLocaleString()} ${(I18N[lang]||I18N.en).buy}`;
+  document.getElementById("buyMultBtn").textContent = `${(state.multLvl * 25000).toLocaleString()} ${(I18N[lang]||I18N.en).buy}`;
+}
+
+document.getElementById("buyBumperBtn").onclick = () => {
+  let cost = state.bumperLvl * 10000;
+  if (state.score >= cost) {
+    state.score -= cost;
+    state.bumperLvl++;
+    saveState();
+    updateShopUI();
+  } else alert("Not enough score points!");
+};
+
+document.getElementById("buyMultBtn").onclick = () => {
+  let cost = state.multLvl * 25000;
+  if (state.score >= cost) {
+    state.score -= cost;
+    state.multLvl++;
+    saveState();
+    updateShopUI();
+  } else alert("Not enough score points!");
+};
+
+// Multi-language
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", (e) => {
+    lang = e.target.value;
+    localStorage.setItem("pinball_lang", lang);
+    updateLang();
+  });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("shopTxt").textContent = dict.shop;
+  document.getElementById("scoreLbl").textContent = dict.score;
+  document.getElementById("ballsLbl").textContent = dict.balls;
+  document.getElementById("multLbl").textContent = dict.mult;
+  document.getElementById("shopHead").textContent = dict.shopHead;
+  document.getElementById("shopDesc").textContent = dict.shopDesc;
+  document.getElementById("closeShopBtn").textContent = dict.close;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang();
+updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>

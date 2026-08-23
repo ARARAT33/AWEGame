@@ -15,7 +15,10 @@ const games = [
   {title:"🏎️ Cyber Drift Turbo",folder:"cyberdrift.html",description:"High-speed retro synthwave racer with time-warp nitro boosts, incoming traffic dodging, credits collection, high score saving, sound effects, and 11-language support!",developer:"AWEGames",icon:"🏎️⚡"},
   {title:"⌛ Chronos TD: Time Defense",folder:"chronostd.html",description:"Tactical time manipulation Tower Defense! Place Chrono, Laser, and Warp towers, defend your time core across intense waves, collect stars, and play in 11 languages!",developer:"AWEGames",icon:"⌛🛡️"},
   {title:"🪐 Stellar Forge",folder:"stellarforge.html",description:"Build galaxy systems in Stellar Forge! Launch planets, moons, and black holes into orbital equilibrium, harness gravity physics, earn stellar energy, and explore 11 languages.",developer:"AWEGames",icon:"🪐✨"},
-  {title:"🃏 Rune Realms",folder:"runerealms.html",description:"A rogue-like elemental card deckbuilder RPG. Channel Fire, Water, Earth, and Air runes, overcome realm guardians, unlock powerful combos, and play across 11 languages.",developer:"AWEGames",icon:"🃏🔥"}
+  {title:"🃏 Rune Realms",folder:"runerealms.html",description:"A rogue-like elemental card deckbuilder RPG. Channel Fire, Water, Earth, and Air runes, overcome realm guardians, unlock powerful combos, and play across 11 languages.",developer:"AWEGames",icon:"🃏🔥"},
+  {title:"🚀 Starship Duel P2P",folder:"starshipduel.html",description:"Sci-fi 2D space dogfight arena featuring WebRTC P2P sync, live text chat, P2P voice chat, AI bot mode, local storage stats, sound synthesis, and 11-language support!",developer:"AWEGames",icon:"🚀🎙️"},
+  {title:"🎰 Cosmic Pinball FX",folder:"cosmicpinball.html",description:"Cyberpunk neon arcade pinball with flippers, bumpers, score multiplier upgrades shop, Web Audio sound synthesis, persistent local storage, and 11-language support!",developer:"AWEGames",icon:"🎰✨"},
+  {title:"⛏️ Astro Digger RPG",folder:"astrominer.html",description:"Subterranean asteroid drilling and mining RPG with procedural terrain generation, ore selling, surface base upgrades, local storage save system, and 11-language support!",developer:"AWEGames",icon:"⛏️🚀"}
 ];
 (function injectAWEHubNav(){
   if(document.querySelector('#aweHubNav'))return;
