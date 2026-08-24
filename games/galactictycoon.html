@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Galactic Tycoon — Space Empire & Planet Mining</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪐</text></svg>">
+<style>
+:root {
+  --bg: #030712;
+  --card: #0f172a;
+  --border: rgba(99, 102, 241, 0.25);
+  --primary: #818cf8;
+  --accent: #c084fc;
+  --gold: #fbbf24;
+  --green: #34d399;
+  --text: #f8fafc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow-x: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px var(--primary); }
+.controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;
+  text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(99, 102, 241, 0.2); border-color: var(--primary); transform: translateY(-1px); }
+.btn-gold { background: var(--gold); color: #000; border: none; font-weight: 700; }
+.btn-gold:hover { background: #f59e0b; }
+select.btn { outline: none; appearance: none; padding-right: 24px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+select option { background: #0f172a; color: #fff; }
+
+/* Dashboard Grid */
+main { flex: 1; padding: 16px; max-width: 1200px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; gap: 16px; }
+
+.res-bar {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;
+}
+.res-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 12px; display: flex; flex-direction: column; gap: 4px; backdrop-filter: blur(8px);
+}
+.res-card span { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; }
+.res-card strong { font-size: 1.2rem; color: var(--gold); }
+
+/* Main Grid */
+.grid-layout {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+
+@media (max-width: 800px) {
+  .grid-layout { grid-template-columns: 1fr; }
+}
+
+.panel {
+  background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+  padding: 16px; display: flex; flex-direction: column; gap: 12px; backdrop-filter: blur(8px);
+}
+.panel h2 { font-size: 1.1rem; color: #fff; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+
+/* Planet selector */
+.planet-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+.tab-btn {
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #ccc;
+  padding: 8px 14px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: 0.2s;
+}
+.tab-btn.active { background: var(--primary); color: #0f172a; font-weight: 700; border-color: var(--primary); }
+
+/* Upgrades List */
+.upgrade-list { display: flex; flex-direction: column; gap: 10px; }
+.item-card {
+  background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px;
+  padding: 12px; display: flex; justify-content: space-between; align-items: center; gap: 12px; transition: 0.2s;
+}
+.item-card:hover { border-color: var(--primary); background: rgba(99, 102, 241, 0.05); }
+.item-info { display: flex; flex-direction: column; gap: 2px; }
+.item-info strong { font-size: 0.95rem; color: #fff; }
+.item-info small { font-size: 0.78rem; color: #94a3b8; }
+
+.clicker-box {
+  background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
+  border: 1px solid var(--primary); border-radius: 16px; height: 180px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer; transition: 0.15s; position: relative; overflow: hidden;
+}
+.clicker-box:active { transform: scale(0.98); }
+.clicker-planet { font-size: 5rem; animation: floatPlanet 4s ease-in-out infinite; }
+@keyframes floatPlanet { 0%,100%{transform:translateY(0) rotate(0deg);} 50%{transform:translateY(-8px) rotate(4deg);} }
+
+.floating-num {
+  position: absolute; font-weight: 800; color: var(--gold); font-size: 1.2rem;
+  pointer-events: none; animation: floatUp 0.8s ease-out forwards;
+}
+@keyframes floatUp { 0%{opacity:1; transform:translateY(0);} 100%{opacity:0; transform:translateY(-40px);} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:22px;">🪐</span>
+    <h1 id="titleTxt">Galactic Tycoon</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <button id="resetBtn" class="btn" style="color:var(--accent);">🗑️ Reset</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <!-- Resources HUD -->
+  <div class="res-bar">
+    <div class="res-card">
+      <span id="lblCredits">💳 Credits</span>
+      <strong id="valCredits">0</strong>
+    </div>
+    <div class="res-card">
+      <span id="lblOre">💎 Plasma Ore</span>
+      <strong id="valOre">0</strong>
+    </div>
+    <div class="res-card">
+      <span id="lblCrystals">✨ Crystals</span>
+      <strong id="valCrystals">0</strong>
+    </div>
+    <div class="res-card">
+      <span id="lblIncome">⚡ Income/sec</span>
+      <strong id="valIncome">+0</strong>
+    </div>
+  </div>
+
+  <div class="grid-layout">
+    <!-- Left Panel: Interactive Mining Planet -->
+    <div class="panel">
+      <h2 id="lblPlanets">🪐 Planetary Operations</h2>
+      <div class="planet-tabs" id="planetTabs"></div>
+
+      <div class="clicker-box" id="clickerBox">
+        <div class="clicker-planet" id="planetIcon">🪐</div>
+        <div style="font-weight:700; color:#cbd5e1; margin-top:8px;" id="tapDesc">Tap to mine resources!</div>
+      </div>
+
+      <div class="item-card">
+        <div class="item-info">
+          <strong id="lblMarket">🏛️ Space Market Exchange</strong>
+          <small id="lblMarketDesc">Sell 100 Plasma Ore for Credits</small>
+        </div>
+        <button class="btn btn-gold" id="sellOreBtn">Sell Ore (+<span id="orePrice">50</span> 💳)</button>
+      </div>
+
+      <div class="item-card">
+        <div class="item-info">
+          <strong id="lblCrystalMarket">✨ Quantum Exchange</strong>
+          <small id="lblCrystalDesc">Sell 50 Crystals for Credits</small>
+        </div>
+        <button class="btn btn-gold" id="sellCrystalBtn">Sell Crystals (+<span id="crystalPrice">200</span> 💳)</button>
+      </div>
+    </div>
+
+    <!-- Right Panel: Upgrades & Tech Tree -->
+    <div class="panel">
+      <h2 id="lblUpgrades">🔬 Base Infrastructure & Tech</h2>
+      <div class="upgrade-list" id="upgradeList"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Galactic Tycoon", home: "Home", credits: "💳 Credits", ore: "💎 Plasma Ore", crystals: "✨ Crystals", income: "⚡ Income/sec", planets: "🪐 Planetary Operations", upgrades: "🔬 Base Infrastructure & Tech", tapDesc: "Tap planet to harvest!", market: "🏛️ Space Market Exchange", marketDesc: "Sell 100 Plasma Ore", crystalMarket: "✨ Quantum Exchange", crystalDesc: "Sell 50 Crystals", sellBtn: "Sell", buyBtn: "Buy", lvl: "Lvl", cost: "Cost: " },
+  hy: { title: "Գալակտիկ Տայկուն", home: "Գլխավոր", credits: "💳 Կրեդիտներ", ore: "💎 Պլազմա Հանքաքար", crystals: "✨ Բյուրեղներ", income: "⚡ Եկամուտ/վրկ", planets: "🪐 Մոլորակային Գործողություններ", upgrades: "🔬 Բազայի Ենթակառուցվածք", tapDesc: "Սեղմեք մոլորակին հանքարդյունահանման համար!", market: "🏛️ Տիեզերական Շուկա", marketDesc: "Վաճառել 100 Հանքաքար", crystalMarket: "✨ Քվանտային Փոխանակում", crystalDesc: "Վաճառել 50 Բյուրեղ", sellBtn: "Վաճառել", buyBtn: "Գնել", lvl: "Մակ.", cost: "Արժեք: " },
+  ru: { title: "Галактический Тайкун", home: "Главная", credits: "💳 Кредиты", ore: "💎 Плазменная Руда", crystals: "✨ Кристаллы", income: "⚡ Доход/сек", planets: "🪐 Операции на Планетах", upgrades: "🔬 Инфраструктура и Технологии", tapDesc: "Нажмите на планету для добычи!", market: "🏛️ Космический Рынок", marketDesc: "Продать 100 Руды", crystalMarket: "✨ Квантовый Обмен", crystalDesc: "Продать 50 Кристаллов", sellBtn: "Продать", buyBtn: "Купить", lvl: "Ур.", cost: "Цена: " },
+  es: { title: "Galactic Tycoon", home: "Inicio", credits: "💳 Créditos", ore: "💎 Mineral Plasma", crystals: "✨ Cristales", income: "⚡ Ingreso/seg", planets: "🪐 Operaciones Planetarias", upgrades: "🔬 Infraestructura y Tecnologías", tapDesc: "¡Toca para extraer recursos!", market: "🏛️ Mercado Espacial", marketDesc: "Vender 100 Minerales", crystalMarket: "✨ Intercambio Cuántico", crystalDesc: "Vender 50 Cristales", sellBtn: "Vender", buyBtn: "Comprar", lvl: "Niv", cost: "Costo: " },
+  fr: { title: "Galactic Tycoon", home: "Accueil", credits: "💳 Crédits", ore: "💎 Minerai Plasma", crystals: "✨ Cristaux", income: "⚡ Revenu/sec", planets: "🪐 Opérations Planétaires", upgrades: "🔬 Infrastructure & Technologies", tapDesc: "Appuyez pour miner des ressources !", market: "🏛️ Marché Spatial", marketDesc: "Vendre 100 Minerais", crystalMarket: "✨ Échange Quantique", crystalDesc: "Vendre 50 Cristaux", sellBtn: "Vendre", buyBtn: "Acheter", lvl: "Niv", cost: "Coût: " },
+  de: { title: "Galactic Tycoon", home: "Startseite", credits: "💳 Credits", ore: "💎 Plasma-Erz", crystals: "✨ Kristall", income: "⚡ Einkommen/Sek", planets: "🪐 Planetare Operationen", upgrades: "🔬 Infrastruktur & Forschung", tapDesc: "Tippe zum Abbauen von Ressourcen!", market: "🏛️ Weltraummarkt", marketDesc: "100 Erz verkaufen", crystalMarket: "✨ Quantenbörse", crystalDesc: "50 Kristalle verkaufen", sellBtn: "Verkaufen", buyBtn: "Kaufen", lvl: "Stufen", cost: "Kosten: " },
+  it: { title: "Galactic Tycoon", home: "Home", credits: "💳 Crediti", ore: "💎 Minerale Plasma", crystals: "✨ Cristalli", income: "⚡ Entrate/sec", planets: "🪐 Operazioni Planetarie", upgrades: "🔬 Infrastruttura & Tecnologie", tapDesc: "Tocca per estrarre risorse!", market: "🏛️ Mercato Spaziale", marketDesc: "Vendi 100 Minerali", crystalMarket: "✨ Scambio Quantistico", crystalDesc: "Vendi 50 Cristalli", sellBtn: "Vendi", buyBtn: "Acquista", lvl: "Liv", cost: "Costo: " },
+  pt: { title: "Galactic Tycoon", home: "Início", credits: "💳 Créditos", ore: "💎 Minério Plasma", crystals: "✨ Cristais", income: "⚡ Renda/seg", planets: "🪐 Operações Planetárias", upgrades: "🔬 Infraestrutura e Tecnologia", tapDesc: "Toque para minerar recursos!", market: "🏛️ Mercado Espacial", marketDesc: "Vender 100 Minérios", crystalMarket: "✨ Troca Quântica", crystalDesc: "Vender 50 Cristais", sellBtn: "Vender", buyBtn: "Comprar", lvl: "Nív", cost: "Custo: " },
+  tr: { title: "Galactic Tycoon", home: "Ana Sayfa", credits: "💳 Kredi", ore: "💎 Plazma Cevheri", crystals: "✨ Kristaller", income: "⚡ Gelir/sn", planets: "🪐 Gezegen Operasyonları", upgrades: "🔬 Altyapı ve Teknoloji", tapDesc: "Kaynak madenciliği için dokunun!", market: "🏛️ Uzay Pazarı", marketDesc: "100 Cevher Sat", crystalMarket: "✨ Kuantum Borsa", crystalDesc: "50 Kristal Sat", sellBtn: "Sat", buyBtn: "Satın Al", lvl: "Sev", cost: "Maliyet: " },
+  ja: { title: "ギャラクティックタイクーン", home: "ホーム", credits: "💳 クレジット", ore: "💎 プラズマ鉱石", crystals: "✨ クリスタル", income: "⚡ 収入/秒", planets: "🪐 惑星採掘オペレーション", upgrades: "🔬 基地インフラ & 研究", tapDesc: "タップして資源を採掘！", market: "🏛️ 宇宙取引所", marketDesc: "鉱石100個を売却", crystalMarket: "✨ 量子交換所", crystalDesc: "クリスタル50個を売却", sellBtn: "売却", buyBtn: "購入", lvl: "Lv", cost: "費用: " },
+  zh: { title: "银河大亨", home: "主页", credits: "💳 积分", ore: "💎 等离子矿石", crystals: "✨ 水晶", income: "⚡ 产出/秒", planets: "🪐 星球采矿", upgrades: "🔬 基地设施与科技", tapDesc: "点击星球开采资源！", market: "🏛️ 宇宙交易所", marketDesc: "出售100矿石", crystalMarket: "✨ 量子兑换", crystalDesc: "出售50水晶", sellBtn: "出售", buyBtn: "购买", lvl: "等级", cost: "费用: " }
+};
+
+const LANG_LIST = [
+  ["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"],
+  ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"],
+  ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]
+];
+
+let lang = "en";
+let sound = true;
+
+// Audio
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'mine') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+    gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+  } else if (type === 'buy') {
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+    gain.gain.setValueAtTime(0.12, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+  } else if (type === 'sell') {
+    osc.type = 'square'; osc.frequency.setValueAtTime(523.25, now); osc.frequency.setValueAtTime(659.25, now + 0.08);
+    gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.2);
+}
+
+// Planets definition
+const PLANETS = [
+  { id: "nova", name: "Nova Prime", icon: "🪐", oreMult: 1, crystalMult: 1 },
+  { id: "ares", name: "Ares-IV", icon: "🔴", oreMult: 2.5, crystalMult: 1.5 },
+  { id: "cryo", name: "Cryo Delta", icon: "❄️", oreMult: 5, crystalMult: 4 },
+  { id: "vulcan", name: "Vulcanus", icon: "🌋", oreMult: 12, crystalMult: 10 },
+  { id: "nebula", name: "Nebula IX", icon: "🌌", oreMult: 30, crystalMult: 25 }
+];
+
+// Upgrades definition
+const UPGRADES = [
+  { id: "driller", name: "Auto Drill Rig", icon: "⛏️", baseCost: 50, cps: 2, count: 0 },
+  { id: "solar", name: "Solar Collector Array", icon: "☀️", baseCost: 200, cps: 10, count: 0 },
+  { id: "refinery", name: "Orbital Refinery", icon: "🏭", baseCost: 1000, cps: 50, count: 0 },
+  { id: "freighter", name: "Quantum Freighter", icon: "🛸", baseCost: 5000, cps: 250, count: 0 },
+  { id: "dyson", name: "Dyson Swarm Core", icon: "🌐", baseCost: 25000, cps: 1500, count: 0 }
+];
+
+// Game State
+let activePlanetIdx = 0;
+let credits = 0;
+let ore = 0;
+let crystals = 0;
+
+function loadSave() {
+  const saved = localStorage.getItem("galactic_tycoon_save");
+  if (saved) {
+    try {
+      const data = JSON.parse(saved);
+      credits = data.credits || 0;
+      ore = data.ore || 0;
+      crystals = data.crystals || 0;
+      activePlanetIdx = data.activePlanetIdx || 0;
+      if (data.upgrades) {
+        UPGRADES.forEach(u => { if (data.upgrades[u.id]) u.count = data.upgrades[u.id]; });
+      }
+    } catch(e) {}
+  }
+}
+
+function saveGame() {
+  const upObj = {};
+  UPGRADES.forEach(u => upObj[u.id] = u.count);
+  localStorage.setItem("galactic_tycoon_save", JSON.stringify({
+    credits, ore, crystals, activePlanetIdx, upgrades: upObj
+  }));
+}
+
+function calcTotalCPS() {
+  let total = 0;
+  UPGRADES.forEach(u => total += u.count * u.cps);
+  return total;
+}
+
+function renderUI() {
+  document.getElementById("valCredits").textContent = Math.floor(credits).toLocaleString();
+  document.getElementById("valOre").textContent = Math.floor(ore).toLocaleString();
+  document.getElementById("valCrystals").textContent = Math.floor(crystals).toLocaleString();
+  document.getElementById("valIncome").textContent = `+${Math.floor(calcTotalCPS()).toLocaleString()}`;
+
+  // Render planet tabs
+  const tabs = document.getElementById("planetTabs");
+  tabs.innerHTML = PLANETS.map((p, idx) => `
+    <button class="tab-btn ${idx === activePlanetIdx ? 'active' : ''}" onclick="selectPlanet(${idx})">
+      ${p.icon} ${p.name}
+    </button>
+  `).join('');
+
+  document.getElementById("planetIcon").textContent = PLANETS[activePlanetIdx].icon;
+
+  // Render upgrade list
+  const list = document.getElementById("upgradeList");
+  const dict = I18N[lang] || I18N.en;
+  list.innerHTML = UPGRADES.map(u => {
+    const cost = Math.floor(u.baseCost * Math.pow(1.18, u.count));
+    const canBuy = credits >= cost;
+    return `
+      <div class="item-card">
+        <div class="item-info">
+          <strong>${u.icon} ${u.name} <span style="color:var(--primary); font-size:0.85rem;">[${dict.lvl} ${u.count}]</span></strong>
+          <small>+${u.cps} Credits/sec · ${dict.cost} ${cost.toLocaleString()} 💳</small>
+        </div>
+        <button class="btn btn-gold" ${canBuy ? '' : 'disabled style="opacity:0.4;"'} onclick="buyUpgrade('${u.id}')">${dict.buyBtn}</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectPlanet(idx) {
+  activePlanetIdx = idx;
+  playSound('mine');
+  renderUI();
+  saveGame();
+}
+
+function buyUpgrade(id) {
+  const u = UPGRADES.find(x => x.id === id);
+  if (!u) return;
+  const cost = Math.floor(u.baseCost * Math.pow(1.18, u.count));
+  if (credits >= cost) {
+    credits -= cost;
+    u.count++;
+    playSound('buy');
+    renderUI();
+    saveGame();
+  }
+}
+
+// Click Planet Action
+const clickerBox = document.getElementById("clickerBox");
+clickerBox.addEventListener("click", (e) => {
+  const p = PLANETS[activePlanetIdx];
+  let gainedOre = Math.floor(1 * p.oreMult);
+  let gainedCrystals = Math.floor(1 * p.crystalMult);
+
+  ore += gainedOre;
+  crystals += gainedCrystals;
+  playSound('mine');
+
+  // Spawn floating number
+  const rect = clickerBox.getBoundingClientRect();
+  const num = document.createElement("div");
+  num.className = "floating-num";
+  num.textContent = `+${gainedOre} 💎  +${gainedCrystals} ✨`;
+  num.style.left = `${e.clientX - rect.left - 30}px`;
+  num.style.top = `${e.clientY - rect.top - 20}px`;
+  clickerBox.appendChild(num);
+  setTimeout(() => num.remove(), 800);
+
+  renderUI();
+  saveGame();
+});
+
+// Sell Resources
+document.getElementById("sellOreBtn").onclick = () => {
+  if (ore >= 100) {
+    ore -= 100;
+    credits += 50;
+    playSound('sell');
+    renderUI(); saveGame();
+  }
+};
+
+document.getElementById("sellCrystalBtn").onclick = () => {
+  if (crystals >= 50) {
+    crystals -= 50;
+    credits += 200;
+    playSound('sell');
+    renderUI(); saveGame();
+  }
+};
+
+// Game Loop for passive income
+setInterval(() => {
+  const cps = calcTotalCPS();
+  if (cps > 0) {
+    credits += cps / 10;
+    renderUI();
+  }
+}, 100);
+
+// Auto save
+setInterval(saveGame, 5000);
+
+// Multi-language system
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", (e) => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("lblCredits").textContent = dict.credits;
+  document.getElementById("lblOre").textContent = dict.ore;
+  document.getElementById("lblCrystals").textContent = dict.crystals;
+  document.getElementById("lblIncome").textContent = dict.income;
+  document.getElementById("lblPlanets").textContent = dict.planets;
+  document.getElementById("lblUpgrades").textContent = dict.upgrades;
+  document.getElementById("tapDesc").textContent = dict.tapDesc;
+  document.getElementById("lblMarket").textContent = dict.market;
+  document.getElementById("lblMarketDesc").textContent = dict.marketDesc;
+  document.getElementById("lblCrystalMarket").textContent = dict.crystalMarket;
+  document.getElementById("lblCrystalDesc").textContent = dict.crystalDesc;
+  renderUI();
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+document.getElementById("resetBtn").onclick = () => {
+  if (confirm("Reset all game progress?")) {
+    localStorage.removeItem("galactic_tycoon_save");
+    credits = 0; ore = 0; crystals = 0; activePlanetIdx = 0;
+    UPGRADES.forEach(u => u.count = 0);
+    renderUI();
+  }
+};
+
+loadSave();
+initLang();
+updateLang();
+renderUI();
+</script>
+</body>
+</html>
