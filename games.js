@@ -18,7 +18,10 @@ const games = [
   {title:"🃏 Rune Realms",folder:"runerealms.html",description:"A rogue-like elemental card deckbuilder RPG. Channel Fire, Water, Earth, and Air runes, overcome realm guardians, unlock powerful combos, and play across 11 languages.",developer:"AWEGames",icon:"🃏🔥"},
   {title:"🚀 Starship Duel P2P",folder:"starshipduel.html",description:"Sci-fi 2D space dogfight arena featuring WebRTC P2P sync, live text chat, P2P voice chat, AI bot mode, local storage stats, sound synthesis, and 11-language support!",developer:"AWEGames",icon:"🚀🎙️"},
   {title:"🎰 Cosmic Pinball FX",folder:"cosmicpinball.html",description:"Cyberpunk neon arcade pinball with flippers, bumpers, score multiplier upgrades shop, Web Audio sound synthesis, persistent local storage, and 11-language support!",developer:"AWEGames",icon:"🎰✨"},
-  {title:"⛏️ Astro Digger RPG",folder:"astrominer.html",description:"Subterranean asteroid drilling and mining RPG with procedural terrain generation, ore selling, surface base upgrades, local storage save system, and 11-language support!",developer:"AWEGames",icon:"⛏️🚀"}
+  {title:"⛏️ Astro Digger RPG",folder:"astrominer.html",description:"Subterranean asteroid drilling and mining RPG with procedural terrain generation, ore selling, surface base upgrades, local storage save system, and 11-language support!",developer:"AWEGames",icon:"⛏️🚀"},
+  {title:"🚀 Cosmic Armada P2P",folder:"cosmicarmada.html",description:"Tactical WebRTC P2P fleet arena battle featuring real-time state sync, live text chat, voice chat with mic visualizer, AI bot practice mode, LocalStorage stats, and 11-language support!",developer:"AWEGames",icon:"🚀🎙️"},
+  {title:"🪐 Galactic Tycoon",folder:"galactictycoon.html",description:"Sci-Fi planetary mining, refinery building, market trade exchange, base tech research, Web Audio sounds, LocalStorage auto-save, and 11-language support!",developer:"AWEGames",icon:"🪐⚡"},
+  {title:"🥷 Shadow Blade Ninja",folder:"shadowblade.html",description:"Action precision platformer featuring katana slashes, shuriken throwing, dojo upgrades shop, enemy ninjas, LocalStorage save system, dynamic touch controls, and 11-language support!",developer:"AWEGames",icon:"🥷🗡️"}
 ];
 (function injectAWEHubNav(){
   if(document.querySelector('#aweHubNav'))return;
