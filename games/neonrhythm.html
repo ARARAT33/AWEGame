@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Neon Rhythm Turbo — Synthwave Beat Runner</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎵</text></svg>">
+<style>
+:root {
+  --bg: #070014;
+  --panel: rgba(22, 10, 45, 0.88);
+  --border: rgba(255, 0, 128, 0.35);
+  --primary: #ff007f;
+  --cyan: #00f2fe;
+  --gold: #ffb703;
+  --green: #39ff14;
+  --text: #f3e8ff;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 18px; background: rgba(15, 5, 30, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.25rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(255, 0, 128, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #fff; border: none; font-weight: 700; box-shadow: 0 0 12px rgba(255, 0, 128, 0.4); }
+.btn-primary:hover { background: #ff3399; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #140528; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #1b0336 0%, #070014 100%);
+  box-shadow: 0 0 35px rgba(255, 0, 128, 0.2); display: block; touch-action: none;
+}
+
+.hud-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 14px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 900px; margin: 0 auto; pointer-events: auto; }
+.badge { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 6px 14px; font-weight: 700; font-size: 0.9rem; backdrop-filter: blur(8px); display: flex; align-items: center; gap: 8px; }
+
+/* Touch Controls */
+.touch-lanes { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: none; gap: 12px; pointer-events: auto; }
+.touch-lane-btn { width: 70px; height: 50px; background: rgba(255,255,255,0.12); border: 1px solid var(--border); border-radius: 12px; color: #fff; font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+.touch-lane-btn:active { background: rgba(255,0,128,0.4); }
+
+/* Start Modal */
+.modal-overlay { position: absolute; inset: 0; background: rgba(7, 0, 20, 0.88); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #140528; border: 1px solid var(--primary); border-radius: 20px; padding: 26px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 0 40px rgba(255, 0, 128, 0.3); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.6rem; color: #fff; text-shadow: 0 0 10px var(--primary); }
+
+@media (max-width: 768px) {
+  .touch-lanes { display: flex; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🎵</span>
+    <h1 id="titleTxt">Neon Rhythm Turbo</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="hud-overlay">
+    <div class="hud-top">
+      <div class="badge"><span id="scoreLbl">Score</span>: <span id="scoreVal" style="color:var(--cyan);">0</span></div>
+      <div class="badge"><span id="comboLbl">Combo</span>: <span id="comboVal" style="color:var(--gold);">x1</span></div>
+      <div class="badge">🪙 <span id="notesVal" style="color:var(--green);">0</span></div>
+    </div>
+
+    <div class="touch-lanes">
+      <div class="touch-lane-btn" id="lane0">L1</div>
+      <div class="touch-lane-btn" id="lane1">L2</div>
+      <div class="touch-lane-btn" id="lane2">L3</div>
+      <div class="touch-lane-btn" id="lane3">L4</div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="startModal">
+    <div class="modal-card">
+      <h2 id="modalHead">Neon Rhythm Turbo</h2>
+      <p style="color:#bbb; font-size:0.88rem;" id="modalDesc">Catch synth beats in rhythm across 4 neon tracks!</p>
+      <div style="font-size:0.85rem; color:var(--gold); margin:4px 0;" id="highScoreTxt">High Score: 0</div>
+      <button class="btn btn-primary" style="justify-content:center; padding:12px;" id="startBtn">▶ Play Game</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Neon Rhythm Turbo", home: "Home", play: "▶ Play Game", score: "Score", combo: "Combo", highScore: "High Score: ", desc: "Catch synth beats in rhythm across 4 neon tracks!" },
+  hy: { title: "Նեոն Ռիթմ Տուրբո", home: "Գլխավոր", play: "▶ Սկսել Խաղը", score: "Միավոր", combo: "Կոմբո", highScore: "Բարձր Գնահատական: ", desc: "Որսացեք նեոնային ռիթմերը 4 ուղիների վրա!" },
+  ru: { title: "Неон Ритм Турбо", home: "Главная", play: "▶ Играть", score: "Счет", combo: "Комбо", highScore: "Рекорд: ", desc: "Ловите синтвейв-биты на 4 неоновых дорожках!" },
+  es: { title: "Neon Rhythm Turbo", home: "Inicio", play: "▶ Jugar", score: "Puntos", combo: "Combo", highScore: "Récord: ", desc: "¡Atrapa notas de ritmo en 4 pistas de neón!" },
+  fr: { title: "Neon Rhythm Turbo", home: "Accueil", play: "▶ Jouer", score: "Score", combo: "Combo", highScore: "Meilleur Score: ", desc: "Attrapez les notes de rythme sur 4 pistes néon !" },
+  de: { title: "Neon Rhythm Turbo", home: "Startseite", play: "▶ Spielen", score: "Punkte", combo: "Kombo", highScore: "Highscore: ", desc: "Fange Synthwave-Beats auf 4 Neon-Spuren!" },
+  it: { title: "Neon Rhythm Turbo", home: "Home", play: "▶ Gioca", score: "Punteggio", combo: "Combo", highScore: "Miglior Punteggio: ", desc: "Cattura le note ritmiche su 4 tracce neon!" },
+  pt: { title: "Neon Rhythm Turbo", home: "Início", play: "▶ Jogar", score: "Pontos", combo: "Combo", highScore: "Recorde: ", desc: "Capture notas de ritmo em 4 pistas de neon!" },
+  tr: { title: "Neon Rhythm Turbo", home: "Ana Sayfa", play: "▶ Oyna", score: "Skor", combo: "Kombo", highScore: "En Yüksek Skor: ", desc: "4 neon kulvarda ritim notalarını yakalayın!" },
+  ja: { title: "ネオンリズムターボ", home: "ホーム", play: "▶ プレイ", score: "スコア", combo: "コンボ", highScore: "ハイスコア: ", desc: "4つのネオンレーンでリズムノートをキャッチ！" },
+  zh: { title: "霓虹节奏风暴", home: "主页", play: "▶ 开始游戏", score: "得分", combo: "连击", highScore: "最高得分: ", desc: "在4条霓虹轨道上捕捉电子合成器音符！" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+let isPlaying = false;
+let score = 0, combo = 1, notesCollected = 0;
+let highScore = parseInt(localStorage.getItem("nr_highscore") || "0");
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 800, H = 550;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 10;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Sound synthesizer
+let audioCtx = null;
+const laneFreqs = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+
+function playBeat(lane) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(laneFreqs[lane], now);
+  gain.gain.setValueAtTime(0.15, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.18);
+}
+
+// Game State
+class BeatNote {
+  constructor(lane) {
+    this.lane = lane;
+    this.y = -20;
+    this.speed = 4.5 + Math.random() * 1.5;
+    this.hit = false;
+  }
+  update() { this.y += this.speed; }
+}
+
+let notes = [];
+let spawnTimer = 0;
+const laneKeys = ["d", "f", "j", "k"];
+
+window.addEventListener("keydown", e => {
+  if (!isPlaying) return;
+  let k = e.key.toLowerCase();
+  let idx = laneKeys.indexOf(k);
+  if (idx !== -1) triggerLane(idx);
+});
+
+function bindTouchLane(id, laneIdx) {
+  document.getElementById(id).addEventListener("touchstart", e => {
+    e.preventDefault();
+    if (isPlaying) triggerLane(laneIdx);
+  });
+}
+bindTouchLane("lane0", 0); bindTouchLane("lane1", 1);
+bindTouchLane("lane2", 2); bindTouchLane("lane3", 3);
+
+function triggerLane(lane) {
+  let hitTarget = false;
+  let targetY = H - 70;
+  for (let i = 0; i < notes.length; i++) {
+    let n = notes[i];
+    if (n.lane === lane && !n.hit && Math.abs(n.y - targetY) < 45) {
+      n.hit = true;
+      hitTarget = true;
+      playBeat(lane);
+      combo++;
+      score += 10 * combo;
+      notesCollected++;
+      break;
+    }
+  }
+  if (!hitTarget) {
+    combo = 1;
+  }
+  updateHud();
+}
+
+function updateHud() {
+  document.getElementById("scoreVal").textContent = score;
+  document.getElementById("comboVal").textContent = `x${combo}`;
+  document.getElementById("notesVal").textContent = notesCollected;
+}
+
+function updateGame() {
+  if (!isPlaying) return;
+
+  spawnTimer++;
+  if (spawnTimer > 28) {
+    spawnTimer = 0;
+    notes.push(new BeatNote(Math.floor(Math.random() * 4)));
+  }
+
+  let targetY = H - 70;
+  for (let i = notes.length - 1; i >= 0; i--) {
+    let n = notes[i];
+    n.update();
+    if (n.y > targetY + 50 && !n.hit) {
+      combo = 1;
+      updateHud();
+      notes.splice(i, 1);
+    } else if (n.hit) {
+      notes.splice(i, 1);
+    }
+  }
+
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem("nr_highscore", highScore);
+  }
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Perspective lane tracks
+  let laneWidth = W / 4;
+  for (let i = 0; i < 4; i++) {
+    ctx.strokeStyle = "rgba(255, 0, 128, 0.25)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(i * laneWidth + 10, 0, laneWidth - 20, H);
+  }
+
+  // Target Hit Line
+  ctx.strokeStyle = "var(--cyan)";
+  ctx.lineWidth = 4;
+  ctx.shadowColor = "var(--cyan)";
+  ctx.shadowBlur = 12;
+  ctx.beginPath();
+  ctx.moveTo(0, H - 70);
+  ctx.lineTo(W, H - 70);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Draw Beat Notes
+  notes.forEach(n => {
+    let x = n.lane * laneWidth + laneWidth / 2;
+    ctx.beginPath();
+    ctx.arc(x, n.y, 16, 0, Math.PI * 2);
+    ctx.fillStyle = "var(--primary)";
+    ctx.shadowColor = "var(--primary)";
+    ctx.shadowBlur = 10;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+document.getElementById("startBtn").onclick = () => {
+  score = 0; combo = 1; notesCollected = 0; notes = [];
+  isPlaying = true;
+  updateHud();
+  document.getElementById("startModal").style.display = "none";
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("modalHead").textContent = dict.title;
+  document.getElementById("modalDesc").textContent = dict.desc;
+  document.getElementById("startBtn").textContent = dict.play;
+  document.getElementById("scoreLbl").textContent = dict.score;
+  document.getElementById("comboLbl").textContent = dict.combo;
+  document.getElementById("highScoreTxt").textContent = dict.highScore + highScore;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang();
+updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
