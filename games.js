@@ -21,7 +21,10 @@ const games = [
   {title:"⛏️ Astro Digger RPG",folder:"astrominer.html",description:"Subterranean asteroid drilling and mining RPG with procedural terrain generation, ore selling, surface base upgrades, local storage save system, and 11-language support!",developer:"AWEGames",icon:"⛏️🚀"},
   {title:"🚀 Cosmic Armada P2P",folder:"cosmicarmada.html",description:"Tactical WebRTC P2P fleet arena battle featuring real-time state sync, live text chat, voice chat with mic visualizer, AI bot practice mode, LocalStorage stats, and 11-language support!",developer:"AWEGames",icon:"🚀🎙️"},
   {title:"🪐 Galactic Tycoon",folder:"galactictycoon.html",description:"Sci-Fi planetary mining, refinery building, market trade exchange, base tech research, Web Audio sounds, LocalStorage auto-save, and 11-language support!",developer:"AWEGames",icon:"🪐⚡"},
-  {title:"🥷 Shadow Blade Ninja",folder:"shadowblade.html",description:"Action precision platformer featuring katana slashes, shuriken throwing, dojo upgrades shop, enemy ninjas, LocalStorage save system, dynamic touch controls, and 11-language support!",developer:"AWEGames",icon:"🥷🗡️"}
+  {title:"🥷 Shadow Blade Ninja",folder:"shadowblade.html",description:"Action precision platformer featuring katana slashes, shuriken throwing, dojo upgrades shop, enemy ninjas, LocalStorage save system, dynamic touch controls, and 11-language support!",developer:"AWEGames",icon:"🥷🗡️"},
+  {title:"🥊 Cyber Brawlers P2P",folder:"cyberbrawlers.html",description:"Action 2D cyberpunk platform brawler arena featuring real-time WebRTC P2P sync, live text chat, P2P voice chat with mic visualizer, AI bot mode, LocalStorage coins saving, and 11-language support!",developer:"AWEGames",icon:"🥊🎙️"},
+  {title:"🎵 Neon Rhythm Turbo",folder:"neonrhythm.html",description:"Synthwave rhythm beat action runner with procedural dynamic audio, combo multipliers, high score local storage saving, touch control overlays, and 11-language support!",developer:"AWEGames",icon:"🎵⚡"},
+  {title:"🌀 Quantum Maze Hacking",folder:"quantummaze.html",description:"Stealth quantum hacking puzzle game featuring security node extraction, laser sentries, local storage level saving, touch overlays, and 11-language support!",developer:"AWEGames",icon:"🌀🔑"}
 ];
 (function injectAWEHubNav(){
   if(document.querySelector('#aweHubNav'))return;

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Quantum Maze Hacking — Stealth Cyber Puzzle</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌀</text></svg>">
+<style>
+:root {
+  --bg: #030814;
+  --panel: rgba(10, 25, 50, 0.88);
+  --border: rgba(0, 255, 204, 0.35);
+  --primary: #00ffcc;
+  --accent: #ff0055;
+  --gold: #ffd700;
+  --purple: #9d4edd;
+  --text: #e0fbfc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 18px; background: rgba(5, 15, 32, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.25rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 255, 204, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #38ef7d; color: #000; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #050f20; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0a1b38 0%, #030814 100%);
+  box-shadow: 0 0 35px rgba(0, 255, 204, 0.18); display: block; touch-action: none;
+}
+
+.hud-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 14px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 900px; margin: 0 auto; pointer-events: auto; }
+.badge { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 6px 14px; font-weight: 700; font-size: 0.88rem; backdrop-filter: blur(8px); display: flex; align-items: center; gap: 8px; }
+
+/* Touch D-Pad Controls */
+.touch-controls { position: absolute; bottom: 16px; right: 16px; display: none; grid-template-columns: repeat(3, 46px); gap: 4px; pointer-events: auto; }
+.touch-btn { width: 46px; height: 46px; background: rgba(255,255,255,0.12); border: 1px solid var(--border); border-radius: 10px; color: #fff; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
+.touch-btn:active { background: rgba(0, 255, 204, 0.4); }
+
+/* Start Modal */
+.modal-overlay { position: absolute; inset: 0; background: rgba(3, 8, 20, 0.88); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #081328; border: 1px solid var(--primary); border-radius: 20px; padding: 26px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 0 40px rgba(0, 255, 204, 0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.6rem; color: #fff; text-shadow: 0 0 10px var(--primary); }
+
+@media (max-width: 768px) {
+  .touch-controls { display: grid; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🌀</span>
+    <h1 id="titleTxt">Quantum Maze Hacking</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="hud-overlay">
+    <div class="hud-top">
+      <div class="badge"><span id="levelLbl">Level</span>: <span id="levelVal" style="color:var(--primary);">1</span></div>
+      <div class="badge"><span id="nodesLbl">Data Cores</span>: <span id="nodesVal" style="color:var(--gold);">0 / 3</span></div>
+      <div class="badge">💾 <span id="savedVal" style="color:var(--purple);">0</span></div>
+    </div>
+
+    <div class="touch-controls">
+      <div></div><div class="touch-btn" id="btnUp">▲</div><div></div>
+      <div class="touch-btn" id="btnLeft">◄</div><div></div><div class="touch-btn" id="btnRight">►</div>
+      <div></div><div class="touch-btn" id="btnDown">▼</div><div></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="startModal">
+    <div class="modal-card">
+      <h2 id="modalHead">Quantum Maze Hacking</h2>
+      <p style="color:#bbb; font-size:0.88rem;" id="modalDesc">Infiltrate security nodes, dodge laser sentries, and extract quantum data cores!</p>
+      <div style="font-size:0.85rem; color:var(--purple); margin:4px 0;" id="progressTxt">Max Level Reached: 1</div>
+      <button class="btn btn-primary" style="justify-content:center; padding:12px;" id="startBtn">▶ Start Hack</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Quantum Maze Hacking", home: "Home", play: "▶ Start Hack", level: "Level", nodes: "Data Cores", desc: "Infiltrate security nodes, dodge laser sentries, and extract quantum data cores!", progress: "Max Level Reached: " },
+  hy: { title: "Քվանտային Մազե Հեքինգ", home: "Գլխավոր", play: "▶ Սկսել Հեքը", level: "Մակարդակ", nodes: "Տվյալների Միջուկ", desc: "Ներթափանցեք անվտանգության համակարգեր, խուսափեք լազերներից!", progress: "Առավելագույն Մակարդակ: " },
+  ru: { title: "Квантовый Лабиринт", home: "Главная", play: "▶ Начать Взлом", level: "Уровень", nodes: "Ядра Данных", desc: "Взламывайте узлы безопасности, избегайте лазеров!", progress: "Макс. Уровень: " },
+  es: { title: "Quantum Maze Hacking", home: "Inicio", play: "▶ Iniciar Hack", level: "Nivel", nodes: "Núcleos", desc: "¡Infiltra nodos de seguridad y esquiva lásers!", progress: "Nivel Máximo: " },
+  fr: { title: "Quantum Maze Hacking", home: "Accueil", play: "▶ Démarrer Hack", level: "Niveau", nodes: "Cœurs", desc: "Infiltrez les nœuds de sécurité et évitez les lasers !", progress: "Niveau Max : " },
+  de: { title: "Quantum Maze Hacking", home: "Startseite", play: "▶ Hack Starten", level: "Level", nodes: "Datenkerne", desc: "Infiltriere Sicherheitsknoten und weiche Lasern aus!", progress: "Max. Level: " },
+  it: { title: "Quantum Maze Hacking", home: "Home", play: "▶ Avvia Hack", level: "Livello", nodes: "Nuclei Dati", desc: "Infiltra nodi di sicurezza ed evita i laser!", progress: "Livello Max: " },
+  pt: { title: "Quantum Maze Hacking", home: "Início", play: "▶ Iniciar Hack", level: "Nível", nodes: "Núcleos", desc: "Infiltre nós de segurança e desvie de lasers!", progress: "Nível Máximo: " },
+  tr: { title: "Kuantum Labirent Hack", home: "Ana Sayfa", play: "▶ Hack Başlat", level: "Seviye", nodes: "Veri Çekirdeği", desc: "Güvenlik düğümlerine sızın ve lazerlerden kaçının!", progress: "Maks Seviye: " },
+  ja: { title: "クアンタムメイズハッキング", home: "ホーム", play: "▶ ハック開始", level: "レベル", nodes: "データコア", desc: "セキュリティノードに侵入し、レーザーを回避せよ！", progress: "最高到達レベル: " },
+  zh: { title: "量子迷宫黑客", home: "主页", play: "▶ 开始黑客攻击", level: "关卡", nodes: "数据核心", desc: "入侵安全节点，躲避激光哨兵并提取量子核心！", progress: "最高关卡: " }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+let isPlaying = false;
+let level = 1;
+let collectedCores = 0, totalCores = 3;
+let maxLevel = parseInt(localStorage.getItem("qm_maxlevel") || "1");
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 800, H = 550;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 10;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio
+let audioCtx = null;
+function playAudio(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'core') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.exponentialRampToValueAtTime(880, now + 0.2);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+  } else if (type === 'hit') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, now);
+    osc.frequency.exponentialRampToValueAtTime(60, now + 0.25);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.25);
+}
+
+// Player and Maze Objects
+let player = { x: 50, y: 50, radius: 12, vx: 0, vy: 0 };
+let cores = [];
+let sentries = [];
+let walls = [
+  { x: 150, y: 0, w: 20, h: 380 },
+  { x: 300, y: 150, w: 20, h: 400 },
+  { x: 450, y: 0, w: 20, h: 350 },
+  { x: 600, y: 200, w: 20, h: 350 }
+];
+
+let keys = {};
+window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+function bindTouch(id, k) {
+  const btn = document.getElementById(id);
+  btn.addEventListener("touchstart", e => { e.preventDefault(); keys[k] = true; });
+  btn.addEventListener("touchend", e => { e.preventDefault(); keys[k] = false; });
+}
+bindTouch("btnUp", "w"); bindTouch("btnDown", "s");
+bindTouch("btnLeft", "a"); bindTouch("btnRight", "d");
+
+function initLevel() {
+  player.x = 50; player.y = 50; player.vx = 0; player.vy = 0;
+  collectedCores = 0;
+  cores = [
+    { x: 220, y: 100, collected: false },
+    { x: 380, y: 450, collected: false },
+    { x: 680, y: 100, collected: false }
+  ];
+  sentries = [
+    { x: 220, y: 250, vy: 3 + level * 0.5, radius: 10 },
+    { x: 520, y: 100, vy: -3 - level * 0.5, radius: 10 }
+  ];
+  updateHud();
+}
+
+function updateHud() {
+  document.getElementById("levelVal").textContent = level;
+  document.getElementById("nodesVal").textContent = `${collectedCores} / ${totalCores}`;
+  document.getElementById("savedVal").textContent = maxLevel;
+}
+
+function updateGame() {
+  if (!isPlaying) return;
+
+  let speed = 3;
+  if (keys["w"] || keys["arrowup"]) player.y -= speed;
+  if (keys["s"] || keys["arrowdown"]) player.y += speed;
+  if (keys["a"] || keys["arrowleft"]) player.x -= speed;
+  if (keys["d"] || keys["arrowright"]) player.x += speed;
+
+  // Bounds
+  if (player.x < player.radius) player.x = player.radius;
+  if (player.x > W - player.radius) player.x = W - player.radius;
+  if (player.y < player.radius) player.y = player.radius;
+  if (player.y > H - player.radius) player.y = H - player.radius;
+
+  // Wall collisions
+  walls.forEach(w => {
+    if (player.x + player.radius > w.x && player.x - player.radius < w.x + w.w &&
+        player.y + player.radius > w.y && player.y - player.radius < w.y + w.h) {
+      player.x -= (keys["d"] || keys["arrowright"]) ? speed : (keys["a"] || keys["arrowleft"]) ? -speed : 0;
+      player.y -= (keys["s"] || keys["arrowdown"]) ? speed : (keys["w"] || keys["arrowup"]) ? -speed : 0;
+    }
+  });
+
+  // Cores collection
+  cores.forEach(c => {
+    if (!c.collected && Math.hypot(player.x - c.x, player.y - c.y) < player.radius + 12) {
+      c.collected = true;
+      collectedCores++;
+      playAudio('core');
+      updateHud();
+      if (collectedCores >= totalCores) {
+        level++;
+        if (level > maxLevel) {
+          maxLevel = level;
+          localStorage.setItem("qm_maxlevel", maxLevel);
+        }
+        initLevel();
+      }
+    }
+  });
+
+  // Sentries
+  sentries.forEach(s => {
+    s.y += s.vy;
+    if (s.y < 30 || s.y > H - 30) s.vy *= -1;
+
+    if (Math.hypot(player.x - s.x, player.y - s.y) < player.radius + s.radius) {
+      playAudio('hit');
+      initLevel();
+    }
+  });
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw Walls
+  ctx.fillStyle = "rgba(0, 255, 204, 0.2)";
+  ctx.strokeStyle = "var(--primary)";
+  ctx.lineWidth = 2;
+  walls.forEach(w => {
+    ctx.fillRect(w.x, w.y, w.w, w.h);
+    ctx.strokeRect(w.x, w.y, w.w, w.h);
+  });
+
+  // Draw Data Cores
+  cores.forEach(c => {
+    if (!c.collected) {
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 10, 0, Math.PI * 2);
+      ctx.fillStyle = "var(--gold)";
+      ctx.shadowColor = "var(--gold)";
+      ctx.shadowBlur = 10;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  });
+
+  // Draw Sentries
+  sentries.forEach(s => {
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+    ctx.fillStyle = "var(--accent)";
+    ctx.shadowColor = "var(--accent)";
+    ctx.shadowBlur = 12;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+
+  // Draw Player
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+  ctx.fillStyle = "var(--primary)";
+  ctx.shadowColor = "var(--primary)";
+  ctx.shadowBlur = 15;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+document.getElementById("startBtn").onclick = () => {
+  isPlaying = true;
+  initLevel();
+  document.getElementById("startModal").style.display = "none";
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("modalHead").textContent = dict.title;
+  document.getElementById("modalDesc").textContent = dict.desc;
+  document.getElementById("startBtn").textContent = dict.play;
+  document.getElementById("levelLbl").textContent = dict.level;
+  document.getElementById("nodesLbl").textContent = dict.nodes;
+  document.getElementById("progressTxt").textContent = dict.progress + maxLevel;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang();
+updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
