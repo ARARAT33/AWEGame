@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Chrono Tactics RPG — Tactical Grid Battle</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+<style>
+:root {
+  --bg: #090a16;
+  --panel: rgba(18, 22, 48, 0.92);
+  --border: rgba(120, 90, 255, 0.35);
+  --primary: #9d4edd;
+  --accent: #ff007f;
+  --gold: #ffcc00;
+  --text: #e0f2fe;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(12, 16, 36, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(157, 78, 221, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #fff; border: none; font-weight: 700; }
+.btn-primary:hover { background: #c77dff; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; padding: 10px; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #141838 0%, #090a16 100%);
+  box-shadow: 0 0 30px rgba(157, 78, 221, 0.2); display: block; touch-action: none;
+  border-radius: 12px;
+}
+
+.hud-bar {
+  position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--panel); border: 1px solid var(--border); border-radius: 30px;
+  padding: 8px 20px; display: flex; gap: 20px; align-items: center; backdrop-filter: blur(8px);
+}
+
+.action-bar {
+  position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--panel); border: 1px solid var(--border); border-radius: 20px;
+  padding: 10px 18px; display: flex; gap: 10px; backdrop-filter: blur(8px);
+}
+
+@media (max-width: 600px) {
+  .hud-bar { font-size: 0.8rem; padding: 6px 12px; gap: 10px; }
+  .action-bar { padding: 6px 10px; gap: 6px; }
+  .btn { padding: 5px 8px; font-size: 0.75rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🛡️</span>
+    <h1 id="titleTxt">Chrono Tactics RPG</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="hud-bar">
+    <span>Stage: <strong id="stageVal" style="color:var(--primary);">1</strong></span>
+    <span>Hero HP: <strong id="heroHpVal" style="color:#00ff88;">100</strong></span>
+    <span>Time Gems: <strong id="gemsVal" style="color:var(--gold);">0</strong></span>
+  </div>
+
+  <div class="action-bar">
+    <button class="btn btn-primary" id="btnSlash">⚔️ Slash</button>
+    <button class="btn" id="btnHeal" style="background:rgba(0,255,136,0.15);">💖 Chrono Heal</button>
+    <button class="btn" id="btnBlast" style="background:rgba(255,0,127,0.15);">⚡ Time Blast</button>
+    <button class="btn" id="btnEndTurn" style="background:rgba(255,204,0,0.15);">⏳ End Turn</button>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Chrono Tactics RPG", home: "Home", slash: "⚔️ Slash", heal: "💖 Heal", blast: "⚡ Blast", endTurn: "⏳ End Turn", victory: "Stage Cleared!", defeat: "Defeated!" },
+  hy: { title: "Քրոնո Տակտիկս RPG", home: "Գլխավոր", slash: "⚔️ Հարված", heal: "💖 Բուժում", blast: "⚡ Պայթյուն", endTurn: "⏳ Վերջ", victory: "Փուլն անցած է!", defeat: "Պարտություն!" },
+  ru: { title: "Хроно Тактикс RPG", home: "Главная", slash: "⚔️ Удар", heal: "💖 Лечение", blast: "⚡ Взрыв", endTurn: "⏳ Конец хода", victory: "Уровень пройден!", defeat: "Поражение!" },
+  es: { title: "Chrono Tactics RPG", home: "Inicio", slash: "⚔️ Ataque", heal: "💖 Curar", blast: "⚡ Rayo", endTurn: "⏳ Pasar Turno", victory: "¡Victoria!", defeat: "¡Derrota!" },
+  fr: { title: "Chrono Tactics RPG", home: "Accueil", slash: "⚔️ Attaque", heal: "💖 Soin", blast: "⚡ Éclair", endTurn: "⏳ Fin du Tour", victory: "Victoire !", defeat: "Défaite !" },
+  de: { title: "Chrono Tactics RPG", home: "Startseite", slash: "⚔️ Angriff", heal: "💖 Heilung", blast: "⚡ Blitz", endTurn: "⏳ Zug Beenden", victory: "Sieg!", defeat: "Niederlage!" },
+  it: { title: "Chrono Tactics RPG", home: "Home", slash: "⚔️ Attacco", heal: "💖 Cura", blast: "⚡ Saetta", endTurn: "⏳ Fine Turno", victory: "Vittoria!", defeat: "Sconfitta!" },
+  pt: { title: "Chrono Tactics RPG", home: "Início", slash: "⚔️ Ataque", heal: "💖 Cura", blast: "⚡ Raio", endTurn: "⏳ Fim de Turno", victory: "Vitória!", defeat: "Derrota!" },
+  tr: { title: "Chrono Tactics RPG", home: "Ana Sayfa", slash: "⚔️ Saldırı", heal: "💖 İyileş", blast: "⚡ Patlama", endTurn: "⏳ Tur Bitir", victory: "Zafer!", defeat: "Yenilgi!" },
+  ja: { title: "クロノタクティクス RPG", home: "ホーム", slash: "⚔️ 斬撃", heal: "💖 回復", blast: "⚡ 雷光", endTurn: "⏳ ターン終了", victory: "ステージクリア！", defeat: "敗北..." },
+  zh: { title: "时光战术 RPG", home: "主页", slash: "⚔️ 斩击", heal: "💖 治疗", blast: "⚡ 爆裂", endTurn: "⏳ 结束回合", victory: "关卡完成！", defeat: "战败！" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+let stage = parseInt(localStorage.getItem("ct_stage") || "1");
+let gems = parseInt(localStorage.getItem("ct_gems") || "0");
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 700, H = 500;
+const GRID_SIZE = 6;
+let tileSize = 60;
+let offsetX = 0, offsetY = 0;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth - 20;
+  const maxH = window.innerHeight - 130;
+  let aspect = 7 / 5;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+
+  tileSize = Math.floor(Math.min(W, H) / (GRID_SIZE + 2));
+  offsetX = Math.floor((W - tileSize * GRID_SIZE) / 2);
+  offsetY = Math.floor((H - tileSize * GRID_SIZE) / 2);
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'slash') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(400, now);
+    osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+  } else if (type === 'heal') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.exponentialRampToValueAtTime(600, now + 0.25);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.3);
+}
+
+// Game Entities
+let hero = { gx: 1, gy: 4, hp: 100, maxHp: 100, ap: 3 };
+let enemies = [];
+
+function spawnEnemies() {
+  enemies = [];
+  let count = Math.min( stage + 1, 4);
+  for (let i = 0; i < count; i++) {
+    enemies.push({
+      gx: 4 + (i % 2),
+      gy: 1 + Math.floor(i / 2) * 2,
+      hp: 30 + stage * 10,
+      maxHp: 30 + stage * 10
+    });
+  }
+}
+spawnEnemies();
+
+canvas.addEventListener("click", e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  const gx = Math.floor((mx - offsetX) / tileSize);
+  const gy = Math.floor((my - offsetY) / tileSize);
+
+  if (gx >= 0 && gx < GRID_SIZE && gy >= 0 && gy < GRID_SIZE) {
+    if (Math.abs(hero.gx - gx) + Math.abs(hero.gy - gy) === 1 && hero.ap > 0) {
+      hero.gx = gx; hero.gy = gy;
+      hero.ap--;
+      playSound('slash');
+    }
+  }
+});
+
+function enemyTurn() {
+  enemies.forEach(en => {
+    if (en.hp <= 0) return;
+    let dist = Math.abs(hero.gx - en.gx) + Math.abs(hero.gy - en.gy);
+    if (dist === 1) {
+      hero.hp = Math.max(0, hero.hp - 12);
+      playSound('slash');
+    } else {
+      if (en.gx > hero.gx) en.gx--;
+      else if (en.gx < hero.gx) en.gx++;
+      else if (en.gy > hero.gy) en.gy--;
+      else if (en.gy < hero.gy) en.gy++;
+    }
+  });
+  hero.ap = 3;
+}
+
+document.getElementById("btnSlash").onclick = () => {
+  if (hero.ap <= 0) return;
+  enemies.forEach(en => {
+    if (en.hp > 0 && Math.abs(hero.gx - en.gx) + Math.abs(hero.gy - en.gy) === 1) {
+      en.hp = Math.max(0, en.hp - 25);
+      playSound('slash');
+    }
+  });
+  hero.ap--;
+  checkBattle();
+};
+
+document.getElementById("btnHeal").onclick = () => {
+  if (hero.ap <= 0) return;
+  hero.hp = Math.min(hero.maxHp, hero.hp + 30);
+  playSound('heal');
+  hero.ap--;
+};
+
+document.getElementById("btnBlast").onclick = () => {
+  if (hero.ap < 2) return;
+  enemies.forEach(en => {
+    if (en.hp > 0 && Math.abs(hero.gx - en.gx) <= 2 && Math.abs(hero.gy - en.gy) <= 2) {
+      en.hp = Math.max(0, en.hp - 35);
+      playSound('slash');
+    }
+  });
+  hero.ap -= 2;
+  checkBattle();
+};
+
+document.getElementById("btnEndTurn").onclick = () => {
+  enemyTurn();
+  checkBattle();
+};
+
+function checkBattle() {
+  let aliveEnemies = enemies.filter(e => e.hp > 0);
+  if (aliveEnemies.length === 0) {
+    stage++;
+    gems += 20;
+    localStorage.setItem("ct_stage", stage);
+    localStorage.setItem("ct_gems", gems);
+    hero.hp = hero.maxHp;
+    spawnEnemies();
+  } else if (hero.hp <= 0) {
+    hero.hp = hero.maxHp;
+    spawnEnemies();
+  }
+}
+
+function updateHUD() {
+  document.getElementById("stageVal").textContent = stage;
+  document.getElementById("heroHpVal").textContent = hero.hp;
+  document.getElementById("gemsVal").textContent = gems;
+}
+
+function drawGrid() {
+  ctx.clearRect(0, 0, W, H);
+
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      let x = offsetX + c * tileSize;
+      let y = offsetY + r * tileSize;
+      ctx.strokeStyle = "rgba(120, 90, 255, 0.3)";
+      ctx.fillStyle = (r + c) % 2 === 0 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.06)";
+      ctx.fillRect(x, y, tileSize, tileSize);
+      ctx.strokeRect(x, y, tileSize, tileSize);
+    }
+  }
+
+  // Draw Hero
+  let hx = offsetX + hero.gx * tileSize + tileSize / 2;
+  let hy = offsetY + hero.gy * tileSize + tileSize / 2;
+  ctx.beginPath();
+  ctx.arc(hx, hy, tileSize * 0.35, 0, Math.PI * 2);
+  ctx.fillStyle = "var(--primary)";
+  ctx.shadowColor = "var(--primary)";
+  ctx.shadowBlur = 10;
+  ctx.fill();
+
+  // Draw Enemies
+  enemies.forEach(en => {
+    if (en.hp <= 0) return;
+    let ex = offsetX + en.gx * tileSize + tileSize / 2;
+    let ey = offsetY + en.gy * tileSize + tileSize / 2;
+    ctx.beginPath();
+    ctx.arc(ex, ey, tileSize * 0.35, 0, Math.PI * 2);
+    ctx.fillStyle = "var(--accent)";
+    ctx.shadowColor = "var(--accent)";
+    ctx.shadowBlur = 10;
+    ctx.fill();
+  });
+}
+
+function gameLoop() {
+  updateHUD();
+  drawGrid();
+  requestAnimationFrame(gameLoop);
+}
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("btnSlash").textContent = dict.slash;
+  document.getElementById("btnHeal").textContent = dict.heal;
+  document.getElementById("btnBlast").textContent = dict.blast;
+  document.getElementById("btnEndTurn").textContent = dict.endTurn;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang();
+updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
