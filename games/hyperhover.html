@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Hyper Hover P2P — Arena Racing & Voice Chat</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏎️</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root {
+  --bg: #070914;
+  --panel: rgba(16, 22, 48, 0.88);
+  --border: rgba(0, 229, 255, 0.35);
+  --primary: #00e5ff;
+  --accent: #ff007f;
+  --gold: #ffcc00;
+  --green: #00ff88;
+  --text: #e0f2fe;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(10, 15, 32, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 229, 255, 0.2); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #38ef7d; color: #000; }
+.btn-accent { background: var(--accent); color: #fff; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0f1938 0%, #050714 100%);
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.18); display: block; touch-action: none;
+}
+
+/* UI Overlay */
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; }
+.player-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(8px); }
+.hp-bar-bg { width: 90px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
+.hp-bar-fill { height: 100%; width: 100%; transition: width 0.2s; }
+.hp-p1 { background: var(--primary); box-shadow: 0 0 8px var(--primary); }
+.hp-p2 { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+.stats-bar { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 6px 14px; font-weight: 700; color: var(--gold); display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
+
+/* Chat Box */
+.chat-box { position: absolute; bottom: 16px; left: 16px; width: 270px; height: 170px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; pointer-events: auto; backdrop-filter: blur(8px); z-index: 5; }
+.chat-messages { flex: 1; padding: 8px; overflow-y: auto; font-size: 0.78rem; display: flex; flex-direction: column; gap: 4px; scrollbar-width: thin; }
+.chat-msg { word-break: break-word; }
+.chat-msg.system { color: var(--gold); font-style: italic; }
+.chat-msg.me { color: var(--primary); }
+.chat-msg.peer { color: var(--accent); }
+.chat-input-row { display: flex; border-top: 1px solid var(--border); }
+.chat-input { flex: 1; background: transparent; border: none; color: #fff; padding: 6px 8px; font-size: 0.8rem; outline: none; }
+
+/* Touch Controls */
+.touch-controls { position: absolute; bottom: 16px; right: 16px; display: none; gap: 10px; pointer-events: auto; }
+.touch-pad { display: grid; grid-template-columns: repeat(3, 42px); gap: 4px; }
+.touch-actions { display: flex; gap: 6px; align-items: flex-end; }
+.touch-btn { width: 42px; height: 42px; background: rgba(255,255,255,0.12); border: 1px solid var(--border); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1rem; }
+.touch-btn:active { background: rgba(0, 229, 255, 0.4); }
+
+/* Modal */
+.modal-overlay { position: absolute; inset: 0; background: rgba(5, 7, 20, 0.88); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #0b1026; border: 1px solid var(--primary); border-radius: 20px; padding: 24px; width: 90%; max-width: 440px; text-align: center; box-shadow: 0 0 35px rgba(0,229,255,0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.5rem; color: #fff; text-shadow: 0 0 10px var(--primary); }
+.input-field { background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; color: #fff; font-size: 0.95rem; text-align: center; font-weight: 700; outline: none; letter-spacing: 2px; }
+
+@media (max-width: 768px) {
+  .chat-box { width: 200px; height: 130px; }
+  .touch-controls { display: flex; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🏎️</span>
+    <h1 id="titleTxt">Hyper Hover P2P</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <button id="micBtn" class="btn">🎙️ <span id="micTxt">Mic Off</span></button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="player-card">
+        <span style="color:var(--primary); font-weight:800;">P1</span>
+        <div class="hp-bar-bg"><div class="hp-bar-fill hp-p1" id="p1Hp"></div></div>
+        <span id="p1Laps" style="font-weight:800; color:var(--primary);">Lap 0</span>
+      </div>
+
+      <div class="stats-bar">
+        <span id="modeLbl">MODE: AI BOT</span>
+        <span>🪙 <span id="creditsVal">0</span></span>
+        <span style="display:flex; align-items:center; gap:4px;">
+          <span class="mic-wave" id="micWave" style="width:8px; height:8px; border-radius:50%; background:#555;"></span>
+          <span id="voiceStatus" style="font-size:0.75rem; color:#aaa;">P2P Voice</span>
+        </span>
+      </div>
+
+      <div class="player-card">
+        <span style="color:var(--accent); font-weight:800;" id="p2Name">P2 (AI)</span>
+        <div class="hp-bar-bg"><div class="hp-bar-fill hp-p2" id="p2Hp"></div></div>
+        <span id="p2Laps" style="font-weight:800; color:var(--accent);">Lap 0</span>
+      </div>
+    </div>
+
+    <div class="chat-box" id="chatBox">
+      <div class="chat-messages" id="chatMsgs">
+        <div class="chat-msg system" id="welcomeChatMsg">Welcome to Hyper Hover Arena!</div>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." maxlength="80">
+        <button class="btn btn-primary" style="border-radius:0 11px 11px 0;" id="sendChatBtn">Send</button>
+      </div>
+    </div>
+
+    <div class="touch-controls">
+      <div class="touch-pad">
+        <div></div><div class="touch-btn" id="btnGas">▲</div><div></div>
+        <div class="touch-btn" id="btnLeft">◄</div><div class="touch-btn" id="btnBrake">▼</div><div class="touch-btn" id="btnRight">►</div>
+      </div>
+      <div class="touch-actions">
+        <div class="touch-btn" id="btnShoot" style="background:rgba(255,0,127,0.3);">⚡</div>
+        <div class="touch-btn" id="btnBoost" style="background:rgba(0,229,255,0.3);">🚀</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="lobbyModal">
+    <div class="modal-card">
+      <h2 id="modalHead">Hyper Hover Arena</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Race hovercrafts & blast rivals in P2P multiplayer or solo AI practice!</p>
+
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <button class="btn btn-primary" style="justify-content:center; padding:10px;" id="startAiBtn">🤖 Play vs AI Bot</button>
+        <button class="btn btn-accent" style="justify-content:center; padding:10px;" id="hostRoomBtn">🌐 Host Room (P2P)</button>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="roomCodeInput" class="input-field" placeholder="CODE" style="width:110px; text-transform:uppercase;">
+          <button class="btn" style="flex:1; justify-content:center; background:rgba(0,229,255,0.15);" id="joinRoomBtn">🔗 Join Room</button>
+        </div>
+      </div>
+
+      <div id="connectionStatus" style="font-size:0.8rem; color:var(--gold); display:none;">Initializing...</div>
+    </div>
+  </div>
+</main>
+
+<audio id="remoteAudio" autoplay></audio>
+
+<script>
+const I18N = {
+  en: { title: "Hyper Hover P2P", home: "Home", playAi: "🤖 Play vs AI Bot", hostRoom: "🌐 Host Room (P2P)", joinRoom: "🔗 Join Room", micOff: "Mic Off", micOn: "Mic On", welcomeMsg: "Welcome to Hyper Hover Arena!", modeAi: "MODE: AI BOT", modeHost: "MODE: HOST (P2P)", modePeer: "MODE: CLIENT (P2P)", copyCode: "Room Code: ", connected: "Peer Connected!", connecting: "Connecting...", win: "VICTORY!", lose: "DEFEAT!", typeMsg: "Type a message..." },
+  hy: { title: "Հայպեր Հովեր P2P", home: "Գլխավոր", playAi: "🤖 Խաղալ AI Բոտի դեմ", hostRoom: "🌐 Ստեղծել Սենյակ (P2P)", joinRoom: "🔗 Միանալ Սենյակին", micOff: "Միկ. Անջատ", micOn: "Միկ. Միացված", welcomeMsg: "Բարի գալուստ Հայպեր Հովեր!", modeAi: "ՌԵԺԻՄ: AI ԲՈՏ", modeHost: "ՌԵԺԻՄ: ՀՈՍԹ (P2P)", modePeer: "ՌԵԺԻՄ: ԿԼԻԵՆՏ (P2P)", copyCode: "Սենյակի Կոդ: ", connected: "Միացված է!", connecting: "Միանում է...", win: "ՀԱՂԹԱՆԱԿ!", lose: "ՊԱՐՏՈՒԹՅՈՒՆ!", typeMsg: "Գրեք հաղորդագրություն..." },
+  ru: { title: "Хайпер Ховер P2P", home: "Главная", playAi: "🤖 Игра против ИИ", hostRoom: "🌐 Создать Комнату (P2P)", joinRoom: "🔗 Войти в Комнату", micOff: "Мик Выкл", micOn: "Мик Вкл", welcomeMsg: "Добро пожаловать в Hyper Hover!", modeAi: "РЕЖИМ: ИИ БОТ", modeHost: "РЕЖИМ: ХОСТ (P2P)", modePeer: "РЕЖИМ: КЛИЕНТ (P2P)", copyCode: "Код комнаты: ", connected: "Подключено!", connecting: "Подключение...", win: "ПОБЕДА!", lose: "ПОРАЖЕНИЕ!", typeMsg: "Сообщение..." },
+  es: { title: "Hyper Hover P2P", home: "Inicio", playAi: "🤖 Jugar vs IA", hostRoom: "🌐 Crear Sala (P2P)", joinRoom: "🔗 Unirse a Sala", micOff: "Mic Apagado", micOn: "Mic Encendido", welcomeMsg: "¡Bienvenido a Hyper Hover!", modeAi: "MODO: IA BOT", modeHost: "MODO: HOST (P2P)", modePeer: "MODO: CLIENTE (P2P)", copyCode: "Código de Sala: ", connected: "¡Conectado!", connecting: "Conectando...", win: "¡VICTORIA!", lose: "¡DERROTA!", typeMsg: "Escribe..." },
+  fr: { title: "Hyper Hover P2P", home: "Accueil", playAi: "🤖 Jouer vs IA", hostRoom: "🌐 Créer Salon (P2P)", joinRoom: "🔗 Rejoindre Salon", micOff: "Micro Off", micOn: "Micro On", welcomeMsg: "Bienvenue sur Hyper Hover !", modeAi: "MODE : IA BOT", modeHost: "MODE : HÔTE (P2P)", modePeer: "MODE : CLIENT (P2P)", copyCode: "Code Salon : ", connected: "Connecté !", connecting: "Connexion...", win: "VICTOIRE !", lose: "DÉFAITE !", typeMsg: "Message..." },
+  de: { title: "Hyper Hover P2P", home: "Startseite", playAi: "🤖 Gegen KI spielen", hostRoom: "🌐 Raum Erstellen (P2P)", joinRoom: "🔗 Raum Beitreten", micOff: "Mikro Aus", micOn: "Mikro An", welcomeMsg: "Willkommen bei Hyper Hover!", modeAi: "MODUS: KI BOT", modeHost: "MODUS: HOST (P2P)", modePeer: "MODUS: CLIENT (P2P)", copyCode: "Raumcode: ", connected: "Verbunden!", connecting: "Verbinde...", win: "SIEG!", lose: "NIEDERLAGE!", typeMsg: "Nachricht..." },
+  it: { title: "Hyper Hover P2P", home: "Home", playAi: "🤖 Gioca vs IA", hostRoom: "🌐 Crea Stanza (P2P)", joinRoom: "🔗 Unisciti alla Stanza", micOff: "Mic Off", micOn: "Mic On", welcomeMsg: "Benvenuto in Hyper Hover!", modeAi: "MODALITÀ: IA BOT", modeHost: "MODALITÀ: HOST (P2P)", modePeer: "MODALITÀ: CLIENT (P2P)", copyCode: "Codice Stanza: ", connected: "Connesso!", connecting: "Connessione...", win: "VITTORIA!", lose: "SCONFITTA!", typeMsg: "Messaggio..." },
+  pt: { title: "Hyper Hover P2P", home: "Início", playAi: "🤖 Jogar vs IA", hostRoom: "🌐 Criar Sala (P2P)", joinRoom: "🔗 Entrar na Sala", micOff: "Mic Off", micOn: "Mic On", welcomeMsg: "Bem-vindo ao Hyper Hover!", modeAi: "MODO: IA BOT", modeHost: "MODO: HOST (P2P)", modePeer: "MODO: CLIENTE (P2P)", copyCode: "Código da Sala: ", connected: "Conectado!", connecting: "Conectando...", win: "VITÓRIA!", lose: "DERROTA!", typeMsg: "Mensagem..." },
+  tr: { title: "Hyper Hover P2P", home: "Ana Sayfa", playAi: "🤖 Yapay Zekaya Karşı", hostRoom: "🌐 Oda Kur (P2P)", joinRoom: "🔗 Odaya Katıl", micOff: "Mik Kapalı", micOn: "Mik Açık", welcomeMsg: "Hyper Hover Arena'ya Hoş Geldiniz!", modeAi: "MOD: YAPAY ZEKA", modeHost: "MOD: KURUCU (P2P)", modePeer: "MOD: KATILIMCI (P2P)", copyCode: "Oda Kodu: ", connected: "Bağlandı!", connecting: "Bağlanıyor...", win: "ZAFER!", lose: "YENİLGİ!", typeMsg: "Mesaj..." },
+  ja: { title: "ハイパーホバー P2P", home: "ホーム", playAi: "🤖 AIボットと対戦", hostRoom: "🌐 ルーム作成 (P2P)", joinRoom: "🔗 ルーム参加", micOff: "マイクOFF", micOn: "マイクON", welcomeMsg: "ハイパーホバーへようこそ！", modeAi: "モード: AIボット", modeHost: "モード: ホスト (P2P)", modePeer: "モード: クライアント (P2P)", copyCode: "ルームコード: ", connected: "接続完了！", connecting: "接続中...", win: "勝利！", lose: "敗北...", typeMsg: "メッセージ..." },
+  zh: { title: "超级悬浮 P2P", home: "主页", playAi: "🤖 个人人机对战", hostRoom: "🌐 创建房间 (P2P)", joinRoom: "🔗 加入房间", micOff: "麦克风关", micOn: "麦克风开", welcomeMsg: "欢迎来到超级悬浮 P2P！", modeAi: "模式: 人机对战", modeHost: "模式: 主机 (P2P)", modePeer: "模式: 客服端 (P2P)", copyCode: "房间代码: ", connected: "连接成功！", connecting: "连接中...", win: "胜利！", lose: "失败！", typeMsg: "输入消息..." }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+let micEnabled = false;
+let localStream = null;
+let peer = null, dataConn = null, audioCall = null;
+let mode = "ai";
+let credits = parseInt(localStorage.getItem("hh_credits") || "0");
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 900, H = 550;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Audio
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'engine') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(140, now);
+    osc.frequency.exponentialRampToValueAtTime(300, now + 0.15);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+  } else if (type === 'laser') {
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(700, now);
+    osc.frequency.exponentialRampToValueAtTime(150, now + 0.1);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+  } else if (type === 'hit') {
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(120, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.12);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.2);
+}
+
+// Track Waypoints for Racing
+const trackPath = [
+  { x: 150, y: 120 }, { x: 750, y: 120 },
+  { x: 750, y: 430 }, { x: 150, y: 430 }
+];
+
+class Hovercraft {
+  constructor(x, y, angle, color, isAi = false) {
+    this.x = x; this.y = y;
+    this.angle = angle;
+    this.speed = 0;
+    this.maxSpeed = 6;
+    this.color = color;
+    this.hp = 100;
+    this.laps = 0;
+    this.nextWaypoint = 1;
+    this.isAi = isAi;
+    this.shootCooldown = 0;
+    this.boostTimer = 0;
+  }
+  update() {
+    if (this.hp <= 0) return;
+
+    if (this.boostTimer > 0) {
+      this.speed = this.maxSpeed * 1.5;
+      this.boostTimer--;
+    }
+
+    this.x += Math.cos(this.angle) * this.speed;
+    this.y += Math.sin(this.angle) * this.speed;
+    this.speed *= 0.96; // drag
+
+    // Boundaries
+    if (this.x < 30) { this.x = 30; this.speed *= -0.5; }
+    if (this.x > W - 30) { this.x = W - 30; this.speed *= -0.5; }
+    if (this.y < 30) { this.y = 30; this.speed *= -0.5; }
+    if (this.y > H - 30) { this.y = H - 30; this.speed *= -0.5; }
+
+    // Checkpoint system
+    let targetWP = trackPath[this.nextWaypoint];
+    let distWP = Math.hypot(this.x - targetWP.x, this.y - targetWP.y);
+    if (distWP < 70) {
+      this.nextWaypoint = (this.nextWaypoint + 1) % trackPath.length;
+      if (this.nextWaypoint === 1) {
+        this.laps++;
+        addCredits(25);
+      }
+    }
+
+    if (this.shootCooldown > 0) this.shootCooldown--;
+  }
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle);
+
+    // Hovercraft Body
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 12;
+
+    ctx.beginPath();
+    ctx.moveTo(18, 0);
+    ctx.lineTo(-14, -12);
+    ctx.lineTo(-8, 0);
+    ctx.lineTo(-14, 12);
+    ctx.closePath();
+    ctx.fill();
+
+    // Thruster glow
+    if (this.speed > 0.5) {
+      ctx.fillStyle = "#00e5ff";
+      ctx.beginPath();
+      ctx.arc(-16, 0, 4 + Math.random() * 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+}
+
+class Projectile {
+  constructor(x, y, angle, owner) {
+    this.x = x; this.y = y;
+    this.vx = Math.cos(angle) * 12;
+    this.vy = Math.sin(angle) * 12;
+    this.owner = owner;
+    this.alive = true;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.alive = false;
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = this.owner === 1 ? "var(--primary)" : "var(--accent)";
+    ctx.shadowColor = ctx.fillStyle;
+    ctx.shadowBlur = 8;
+    ctx.fill();
+  }
+}
+
+let p1 = new Hovercraft(150, 120, 0, "#00e5ff");
+let p2 = new Hovercraft(150, 150, 0, "#ff007f", true);
+let projectiles = [];
+let keys = {};
+
+window.addEventListener("keydown", e => {
+  keys[e.key.toLowerCase()] = true;
+  if (e.key.toLowerCase() === "j" || e.key === " ") shootLaser(p1, 1);
+  if (e.key.toLowerCase() === "k") boostHover(p1);
+});
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+function shootLaser(craft, ownerId) {
+  if (craft.shootCooldown <= 0 && craft.hp > 0) {
+    projectiles.push(new Projectile(craft.x, craft.y, craft.angle, ownerId));
+    craft.shootCooldown = 15;
+    playSound('laser');
+  }
+}
+
+function boostHover(craft) {
+  if (craft.boostTimer <= 0 && craft.hp > 0) {
+    craft.boostTimer = 40;
+    playSound('engine');
+  }
+}
+
+function addCredits(amount) {
+  credits += amount;
+  localStorage.setItem("hh_credits", credits);
+  document.getElementById("creditsVal").textContent = credits;
+}
+
+// Touch control bindings
+function bindTouch(id, action) {
+  const el = document.getElementById(id);
+  el.addEventListener("touchstart", (e) => { e.preventDefault(); action(); });
+}
+bindTouch("btnGas", () => keys["w"] = true);
+bindTouch("btnBrake", () => keys["s"] = true);
+bindTouch("btnLeft", () => keys["a"] = true);
+bindTouch("btnRight", () => keys["d"] = true);
+bindTouch("btnShoot", () => shootLaser(p1, 1));
+bindTouch("btnBoost", () => boostHover(p1));
+
+document.getElementById("btnGas").addEventListener("touchend", () => keys["w"] = false);
+document.getElementById("btnBrake").addEventListener("touchend", () => keys["s"] = false);
+document.getElementById("btnLeft").addEventListener("touchend", () => keys["a"] = false);
+document.getElementById("btnRight").addEventListener("touchend", () => keys["d"] = false);
+
+function updateAi() {
+  if (p2.hp <= 0) return;
+  let targetWP = trackPath[p2.nextWaypoint];
+  let targetAngle = Math.atan2(targetWP.y - p2.y, targetWP.x - p2.x);
+  let diff = targetAngle - p2.angle;
+  while (diff < -Math.PI) diff += Math.PI * 2;
+  while (diff > Math.PI) diff -= Math.PI * 2;
+
+  p2.angle += Math.sign(diff) * Math.min(Math.abs(diff), 0.08);
+  p2.speed = Math.min(p2.speed + 0.15, p2.maxSpeed);
+
+  let distToP1 = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+  if (distToP1 < 220 && Math.random() < 0.05) shootLaser(p2, 2);
+}
+
+function updateGame() {
+  if (keys['w'] || keys['arrowup']) { p1.speed = Math.min(p1.speed + 0.2, p1.maxSpeed); playSound('engine'); }
+  if (keys['s'] || keys['arrowdown']) { p1.speed = Math.max(p1.speed - 0.2, -p1.maxSpeed * 0.5); }
+  if (keys['a'] || keys['arrowleft']) { p1.angle -= 0.07; }
+  if (keys['d'] || keys['arrowright']) { p1.angle += 0.07; }
+
+  p1.update();
+  p2.update();
+
+  if (mode === "ai") updateAi();
+
+  // Projectile collisions
+  for (let i = projectiles.length - 1; i >= 0; i--) {
+    let pr = projectiles[i];
+    pr.update();
+    let target = pr.owner === 1 ? p2 : p1;
+    if (target.hp > 0 && Math.hypot(pr.x - target.x, pr.y - target.y) < 18) {
+      pr.alive = false;
+      target.hp = Math.max(0, target.hp - 15);
+      playSound('hit');
+    }
+    if (!pr.alive) projectiles.splice(i, 1);
+  }
+
+  // Sync P2P
+  if (mode === "host" && dataConn && dataConn.open) {
+    dataConn.send({
+      type: 'sync',
+      p1: { x: p1.x, y: p1.y, angle: p1.angle, speed: p1.speed, hp: p1.hp, laps: p1.laps },
+      p2: { x: p2.x, y: p2.y, angle: p2.angle, speed: p2.speed, hp: p2.hp, laps: p2.laps }
+    });
+  } else if (mode === "client" && dataConn && dataConn.open) {
+    dataConn.send({
+      type: 'clientPos',
+      x: p1.x, y: p1.y, angle: p1.angle, speed: p1.speed, hp: p1.hp
+    });
+  }
+
+  // Update HUD
+  document.getElementById("p1Hp").style.width = `${p1.hp}%`;
+  document.getElementById("p2Hp").style.width = `${p2.hp}%`;
+  document.getElementById("p1Laps").textContent = `Lap ${p1.laps}`;
+  document.getElementById("p2Laps").textContent = `Lap ${p2.laps}`;
+
+  // Respawn on destruction
+  if (p1.hp <= 0 || p2.hp <= 0) {
+    setTimeout(() => {
+      if (p1.hp <= 0) { p1.x = 150; p1.y = 120; p1.hp = 100; p1.speed = 0; }
+      if (p2.hp <= 0) { p2.x = 150; p2.y = 150; p2.hp = 100; p2.speed = 0; }
+    }, 1500);
+  }
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw Track Path & Checkpoints
+  ctx.strokeStyle = "rgba(0, 229, 255, 0.25)";
+  ctx.lineWidth = 40;
+  ctx.beginPath();
+  trackPath.forEach((pt, i) => {
+    if (i === 0) ctx.moveTo(pt.x, pt.y);
+    else ctx.lineTo(pt.x, pt.y);
+  });
+  ctx.closePath();
+  ctx.stroke();
+
+  // Waypoint indicators
+  trackPath.forEach((pt, i) => {
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, 14, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(0, 229, 255, 0.4)";
+    ctx.fill();
+  });
+
+  p1.draw();
+  p2.draw();
+  projectiles.forEach(pr => pr.draw());
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+// PeerJS Networking
+function initPeer(customId = null) {
+  const statusEl = document.getElementById("connectionStatus");
+  statusEl.style.display = "block";
+  statusEl.textContent = (I18N[lang] || I18N.en).connecting;
+
+  peer = customId ? new Peer(customId) : new Peer();
+
+  peer.on('open', (id) => {
+    statusEl.textContent = (I18N[lang] || I18N.en).copyCode + id;
+    addChatMessage('system', `Room created! Code: ${id}`);
+  });
+
+  peer.on('connection', (conn) => {
+    dataConn = conn;
+    setupDataConn();
+  });
+
+  peer.on('call', (call) => {
+    audioCall = call;
+    if (localStream) call.answer(localStream);
+    else call.answer();
+    call.on('stream', (remoteStream) => {
+      document.getElementById("remoteAudio").srcObject = remoteStream;
+      document.getElementById("micWave").style.background = "var(--green)";
+    });
+  });
+}
+
+function setupDataConn() {
+  dataConn.on('open', () => {
+    addChatMessage('system', (I18N[lang] || I18N.en).connected);
+    document.getElementById("lobbyModal").style.display = "none";
+  });
+  dataConn.on('data', (data) => {
+    if (data.type === 'chat') {
+      addChatMessage('peer', data.msg);
+    } else if (data.type === 'sync') {
+      p2.x = data.p1.x; p2.y = data.p1.y; p2.angle = data.p1.angle; p2.hp = data.p1.hp; p2.laps = data.p1.laps;
+      p1.hp = data.p2.hp; p1.laps = data.p2.laps;
+    } else if (data.type === 'clientPos') {
+      p2.x = data.x; p2.y = data.y; p2.angle = data.angle; p2.hp = data.hp;
+    }
+  });
+}
+
+function addChatMessage(sender, text) {
+  const msgs = document.getElementById("chatMsgs");
+  const div = document.createElement("div");
+  div.className = `chat-msg ${sender}`;
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+document.getElementById("sendChatBtn").onclick = () => {
+  const input = document.getElementById("chatInput");
+  const text = input.value.trim();
+  if (text) {
+    addChatMessage('me', text);
+    if (dataConn && dataConn.open) dataConn.send({ type: 'chat', msg: text });
+    input.value = "";
+  }
+};
+
+document.getElementById("micBtn").onclick = async () => {
+  if (!micEnabled) {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micEnabled = true;
+      document.getElementById("micTxt").textContent = (I18N[lang] || I18N.en).micOn;
+      document.getElementById("micWave").style.background = "var(--green)";
+      if (dataConn && dataConn.peer) {
+        audioCall = peer.call(dataConn.peer, localStream);
+        audioCall.on('stream', s => document.getElementById("remoteAudio").srcObject = s);
+      }
+    } catch (e) { alert("Microphone access failed."); }
+  } else {
+    if (localStream) localStream.getTracks().forEach(t => t.stop());
+    micEnabled = false;
+    document.getElementById("micTxt").textContent = (I18N[lang] || I18N.en).micOff;
+    document.getElementById("micWave").style.background = "#555";
+  }
+};
+
+document.getElementById("startAiBtn").onclick = () => {
+  mode = "ai";
+  document.getElementById("lobbyModal").style.display = "none";
+};
+
+document.getElementById("hostRoomBtn").onclick = () => {
+  mode = "host";
+  initPeer("HOVER-" + Math.floor(1000 + Math.random() * 9000));
+};
+
+document.getElementById("joinRoomBtn").onclick = () => {
+  let code = document.getElementById("roomCodeInput").value.trim().toUpperCase();
+  if (!code) return;
+  mode = "client";
+  initPeer();
+  peer.on('open', () => {
+    dataConn = peer.connect(code);
+    setupDataConn();
+  });
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("startAiBtn").textContent = dict.playAi;
+  document.getElementById("hostRoomBtn").textContent = dict.hostRoom;
+  document.getElementById("joinRoomBtn").textContent = dict.joinRoom;
+  document.getElementById("micTxt").textContent = micEnabled ? dict.micOn : dict.micOff;
+  document.getElementById("chatInput").placeholder = dict.typeMsg;
+  document.getElementById("welcomeChatMsg").textContent = dict.welcomeMsg;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+document.getElementById("creditsVal").textContent = credits;
+initLang();
+updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
