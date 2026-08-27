@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Cyber Citadel Defense — Action Base Defense</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏰</text></svg>">
+<style>
+:root {
+  --bg: #030611;
+  --panel: rgba(10, 16, 36, 0.92);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --accent: #ff0055;
+  --gold: #ffaa00;
+  --green: #00ff66;
+  --purple: #b800ff;
+  --text: #e0f7fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(6, 10, 24, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.2); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #38ef7d; color: #000; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0a122a 0%, #02030a 100%);
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.15); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 900px; margin: 0 auto; pointer-events: auto; }
+.hud-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 6px 14px; display: flex; align-items: center; gap: 10px; backdrop-filter: blur(8px); font-weight: 700; }
+
+.hp-bar-bg { width: 110px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
+.hp-bar-fill { height: 100%; width: 100%; background: var(--primary); box-shadow: 0 0 8px var(--primary); transition: width 0.2s; }
+
+.action-bar { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; pointer-events: auto; }
+
+.modal-overlay { position: absolute; inset: 0; background: rgba(3, 5, 14, 0.88); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #070d20; border: 1px solid var(--primary); border-radius: 20px; padding: 24px; width: 90%; max-width: 440px; text-align: center; box-shadow: 0 0 35px rgba(0,240,255,0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.5rem; color: #fff; text-shadow: 0 0 10px var(--primary); }
+
+.upgrade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.upg-card { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🏰</span>
+    <h1 id="titleTxt">Cyber Citadel Defense</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="hud-card">
+        <span style="color:var(--primary);">CITADEL HP:</span>
+        <div class="hp-bar-bg"><div class="hp-bar-fill" id="citadelHp"></div></div>
+      </div>
+      <div class="hud-card">
+        <span style="color:var(--gold);">WAVE: <span id="waveVal">1</span></span>
+      </div>
+      <div class="hud-card">
+        <span style="color:var(--green);">💎 <span id="crystalVal">0</span></span>
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn btn-primary" id="btnEmp">⚡ <span id="empTxt">EMP Blast</span></button>
+      <button class="btn" style="background:rgba(184,0,255,0.3);" id="btnShield">🛡️ <span id="shieldTxt">Nova Shield</span></button>
+      <button class="btn btn-accent" id="btnShop">🛒 <span id="shopTxt">Upgrades</span></button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="startModal">
+    <div class="modal-card">
+      <h2 id="modalTitle">Cyber Citadel Defense</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Defend the central Cyber Citadel against endless waves of alien siege bots and titan dreadnoughts!</p>
+      <button class="btn btn-primary" style="justify-content:center; padding:12px; font-size:1rem;" id="startBtn">⚔️ Defend Citadel</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="shopModal" style="display:none;">
+    <div class="modal-card">
+      <h2 id="shopTitle">Citadel Tech Upgrades</h2>
+      <p style="color:var(--green); font-weight:700;">💎 Crystals: <span id="shopCrystals">0</span></p>
+
+      <div class="upgrade-grid">
+        <div class="upg-card">
+          <span>🏰 <strong id="uHpTxt">Max Health</strong></span>
+          <button class="btn btn-primary" style="justify-content:center;" id="buyHp">💎 50</button>
+        </div>
+        <div class="upg-card">
+          <span>⚡ <strong id="uDmgTxt">Beam Power</strong></span>
+          <button class="btn btn-primary" style="justify-content:center;" id="buyDmg">💎 50</button>
+        </div>
+      </div>
+
+      <button class="btn btn-accent" style="justify-content:center; padding:8px; margin-top:10px;" id="closeShop">✕ Close</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Citadel Defense", home: "Home", start: "⚔️ Defend Citadel", desc: "Defend your central Cyber Citadel against endless waves of invading dreadnoughts!", emp: "EMP Blast", shield: "Nova Shield", shop: "Upgrades", gameOver: "Citadel Overrun!", score: "Wave Reached: " },
+  hy: { title: "Կիբեռ Ամրոցի Պաշտպանություն", home: "Գլխավոր", start: "⚔️ Պաշտպանել Ամրոցը", desc: "Պաշտպանեք կենտրոնական Կիբեռ Ամրոցը անվերջանալի ալիքներով հարձակվող ռոբոտներից!", emp: "ԷՄՊ Պայթյուն", shield: "Վահան", shop: "Խանութ", gameOver: "Ամրոցն Ընկավ!", score: "Հասած Ալիք: " },
+  ru: { title: "Защита Кибер Цитадели", home: "Главная", start: "⚔️ Защищать Цитадель", desc: "Защищайте центральную Цитадель от бесконечных волн космических роботов!", emp: "ЭМП Взрыв", shield: "Щит", shop: "Улучшения", gameOver: "Цитадель Пала!", score: "Волна: " },
+  es: { title: "Defensa de la Ciudadela", home: "Inicio", start: "⚔️ Defender Ciudadela", desc: "¡Defiende tu Ciudadela contra olas de invasores cibernéticos!", emp: "Explosión EMP", shield: "Escudo Nova", shop: "Mejoras", gameOver: "¡Ciudadela Caída!", score: "Oleada: " },
+  fr: { title: "Défense de la Citadelle", home: "Accueil", start: "⚔️ Défendre la Citadelle", desc: "Défendez la Citadelle contre des vagues de robots Cyber !", emp: "Explosion EMP", shield: "Bouclier Nova", shop: "Améliorations", gameOver: "Citadelle Détruite !", score: "Vague : " },
+  de: { title: "Cyber Zitadelle Verteidigung", home: "Startseite", start: "⚔️ Zitadelle Verteidigen", desc: "Verteidige deine zentrale Zitadelle gegen endlose Wellen von Cyber-Bots!", emp: "EMP-Schock", shield: "Nova Schild", shop: "Upgrades", gameOver: "Zitadelle Gefallen!", score: "Welle: " },
+  it: { title: "Difesa della Cittadella", home: "Home", start: "⚔️ Difendi Cittadella", desc: "Difendi la Cittadella contro ondate di invasori cibernetici!", emp: "Esplosione EMP", shield: "Scudo Nova", shop: "Potenziamenti", gameOver: "Cittadella Caduta!", score: "Ondata: " },
+  pt: { title: "Defesa da Cidadela", home: "Início", start: "⚔️ Defender Cidadela", desc: "Defenda sua Cidadela contra ondas de robôs cibernéticos!", emp: "Explosão EMP", shield: "Escudo Nova", shop: "Melhorias", gameOver: "Cidadela Destruída!", score: "Onda: " },
+  tr: { title: "Siber Kale Savunması", home: "Ana Sayfa", start: "⚔️ Kaleyi Savun", desc: "Merkezi Siber Kalenizi dalga dalga gelen istilacı robotlara karşı savunun!", emp: "EMP Patlaması", shield: "Kalkan", shop: "Geliştirmeler", gameOver: "Kale Düştü!", score: "Dalga: " },
+  ja: { title: "サイバーシタデル防衛", home: "ホーム", start: "⚔️ 要塞を防衛", desc: "中央のサイバー要塞を侵略ロボットの波から防衛しよう！", blast: "EMPブラスト", shield: "ノアシールド", shop: "強化ショップ", gameOver: "要塞陥落！", score: "到達ウェーブ: " },
+  zh: { title: "赛博城堡防御", home: "主页", start: "⚔️ 保卫城堡", desc: "保卫中央赛博城堡，抵御一波又一波的敌方机甲！", emp: "EMP 冲击波", shield: "星云护盾", shop: "科技升级", gameOver: "城堡沦陷！", score: "到达波次: " }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+let wave = 1;
+let crystals = parseInt(localStorage.getItem("cc_crystals") || "0");
+let maxHp = parseInt(localStorage.getItem("cc_maxhp") || "100");
+let hp = maxHp;
+let dmgMult = parseFloat(localStorage.getItem("cc_dmg") || "1.0");
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 800, H = 600;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 4 / 3;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'beam') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
+    gain.gain.setValueAtTime(0.12, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+  } else if (type === 'emp') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.3);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+  } else if (type === 'hit') {
+    osc.type = 'square'; osc.frequency.setValueAtTime(100, now); osc.frequency.exponentialRampToValueAtTime(30, now + 0.12);
+    gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.3);
+}
+
+class Enemy {
+  constructor() {
+    let angle = Math.random() * Math.PI * 2;
+    let dist = Math.max(W, H) / 2 + 50;
+    this.x = W / 2 + Math.cos(angle) * dist;
+    this.y = H / 2 + Math.sin(angle) * dist;
+    this.speed = 1.2 + Math.random() * 0.8;
+    this.hp = 20 + wave * 5;
+    this.maxHp = this.hp;
+    this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+  }
+  update() {
+    let angle = Math.atan2(H / 2 - this.y, W / 2 - this.x);
+    this.x += Math.cos(angle) * this.speed;
+    this.y += Math.sin(angle) * this.speed;
+
+    let distToCore = Math.hypot(W / 2 - this.x, H / 2 - this.y);
+    if (distToCore < 45) {
+      hp = Math.max(0, hp - 10);
+      playSound('hit');
+      return true; // remove
+    }
+    return false;
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 10, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 8;
+    ctx.fill();
+  }
+}
+
+class Beam {
+  constructor(targetX, targetY) {
+    this.x1 = W / 2; this.y1 = H / 2;
+    this.x2 = targetX; this.y2 = targetY;
+    this.life = 10;
+  }
+  draw() {
+    ctx.strokeStyle = "var(--primary)";
+    ctx.lineWidth = 4;
+    ctx.shadowColor = "var(--primary)";
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.moveTo(this.x1, this.y1);
+    ctx.lineTo(this.x2, this.y2);
+    ctx.stroke();
+  }
+}
+
+const COLORS = ["#00f0ff", "#ff0055", "#ffaa00", "#b800ff"];
+let enemies = [];
+let beams = [];
+let shieldActive = false;
+let shieldTimer = 0;
+
+canvas.addEventListener("pointerdown", (e) => {
+  let rect = canvas.getBoundingClientRect();
+  let mx = (e.clientX - rect.left) * (W / rect.width);
+  let my = (e.clientY - rect.top) * (H / rect.height);
+
+  beams.push(new Beam(mx, my));
+  playSound('beam');
+
+  enemies.forEach(en => {
+    if (Math.hypot(en.x - mx, en.y - my) < 30) {
+      en.hp -= 20 * dmgMult;
+      if (en.hp <= 0) {
+        crystals += 5;
+        localStorage.setItem("cc_crystals", crystals);
+        document.getElementById("crystalVal").textContent = crystals;
+      }
+    }
+  });
+});
+
+document.getElementById("btnEmp").onclick = () => {
+  playSound('emp');
+  enemies.forEach(en => en.hp -= 50 * dmgMult);
+};
+
+document.getElementById("btnShield").onclick = () => {
+  shieldActive = true;
+  shieldTimer = 300;
+};
+
+document.getElementById("btnShop").onclick = () => {
+  document.getElementById("shopCrystals").textContent = crystals;
+  document.getElementById("shopModal").style.display = "flex";
+};
+
+document.getElementById("closeShop").onclick = () => {
+  document.getElementById("shopModal").style.display = "none";
+};
+
+document.getElementById("buyHp").onclick = () => {
+  if (crystals >= 50) {
+    crystals -= 50;
+    maxHp += 30;
+    hp = maxHp;
+    localStorage.setItem("cc_crystals", crystals);
+    localStorage.setItem("cc_maxhp", maxHp);
+    document.getElementById("crystalVal").textContent = crystals;
+    document.getElementById("shopCrystals").textContent = crystals;
+  }
+};
+
+document.getElementById("buyDmg").onclick = () => {
+  if (crystals >= 50) {
+    crystals -= 50;
+    dmgMult += 0.3;
+    localStorage.setItem("cc_crystals", crystals);
+    localStorage.setItem("cc_dmg", dmgMult);
+    document.getElementById("crystalVal").textContent = crystals;
+    document.getElementById("shopCrystals").textContent = crystals;
+  }
+};
+
+function updateGame() {
+  if (Math.random() < 0.03 + wave * 0.005) {
+    enemies.push(new Enemy());
+  }
+
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    if (enemies[i].update() || enemies[i].hp <= 0) {
+      enemies.splice(i, 1);
+    }
+  }
+
+  for (let i = beams.length - 1; i >= 0; i--) {
+    beams[i].life--;
+    if (beams[i].life <= 0) beams.splice(i, 1);
+  }
+
+  if (shieldActive) {
+    shieldTimer--;
+    if (shieldTimer <= 0) shieldActive = false;
+  }
+
+  document.getElementById("citadelHp").style.width = `${(hp / maxHp) * 100}%`;
+
+  if (enemies.length === 0 && Math.random() < 0.01) {
+    wave++;
+    document.getElementById("waveVal").textContent = wave;
+  }
+
+  if (hp <= 0) {
+    alert((I18N[lang] || I18N.en).gameOver + " Wave: " + wave);
+    hp = maxHp;
+    wave = 1;
+    enemies = [];
+    document.getElementById("waveVal").textContent = wave;
+  }
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Background Grid
+  ctx.strokeStyle = "rgba(0, 240, 255, 0.06)";
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+  // Citadel Core
+  ctx.fillStyle = "var(--primary)";
+  ctx.shadowColor = "var(--primary)";
+  ctx.shadowBlur = 20;
+  ctx.beginPath();
+  ctx.arc(W / 2, H / 2, 35, 0, Math.PI * 2);
+  ctx.fill();
+
+  if (shieldActive) {
+    ctx.strokeStyle = "var(--purple)";
+    ctx.lineWidth = 4;
+    ctx.shadowColor = "var(--purple)";
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.arc(W / 2, H / 2, 55, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  enemies.forEach(en => en.draw());
+  beams.forEach(bm => bm.draw());
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+document.getElementById("startBtn").onclick = () => {
+  document.getElementById("startModal").style.display = "none";
+  requestAnimationFrame(gameLoop);
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("startBtn").textContent = dict.start;
+  document.getElementById("empTxt").textContent = dict.emp;
+  document.getElementById("shieldTxt").textContent = dict.shield;
+  document.getElementById("shopTxt").textContent = dict.shop;
+  document.getElementById("modalTitle").textContent = dict.title;
+  document.getElementById("modalDesc").textContent = dict.desc;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+document.getElementById("crystalVal").textContent = crystals;
+initLang();
+updateLang();
+resizeCanvas();
+</script>
+</body>
+</html>

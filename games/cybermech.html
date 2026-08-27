@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Cyber Mech Duel P2P — Mech Arena & Voice Chat</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root {
+  --bg: #050811;
+  --panel: rgba(12, 18, 38, 0.9);
+  --border: rgba(0, 240, 255, 0.3);
+  --primary: #00f0ff;
+  --accent: #ff0055;
+  --gold: #ffaa00;
+  --green: #00ff66;
+  --text: #e0f7fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 28, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.2); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #38ef7d; color: #000; }
+.btn-accent { background: var(--accent); color: #fff; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0d152c 0%, #04060d 100%);
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.15); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; }
+.player-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(8px); }
+.bar-group { display: flex; flex-direction: column; gap: 3px; }
+.hp-bar-bg { width: 90px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
+.hp-bar-fill { height: 100%; width: 100%; transition: width 0.2s; }
+.hp-p1 { background: var(--primary); box-shadow: 0 0 8px var(--primary); }
+.hp-p2 { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+.sh-bar-bg { width: 90px; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+.sh-bar-fill { height: 100%; width: 100%; background: var(--gold); transition: width 0.2s; }
+
+.stats-bar { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 6px 14px; font-weight: 700; color: var(--gold); display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
+
+/* Chat Box */
+.chat-box { position: absolute; bottom: 16px; left: 16px; width: 270px; height: 170px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; pointer-events: auto; backdrop-filter: blur(8px); z-index: 5; }
+.chat-messages { flex: 1; padding: 8px; overflow-y: auto; font-size: 0.78rem; display: flex; flex-direction: column; gap: 4px; scrollbar-width: thin; }
+.chat-msg { word-break: break-word; }
+.chat-msg.system { color: var(--gold); font-style: italic; }
+.chat-msg.me { color: var(--primary); }
+.chat-msg.peer { color: var(--accent); }
+.chat-input-row { display: flex; border-top: 1px solid var(--border); }
+.chat-input { flex: 1; background: transparent; border: none; color: #fff; padding: 6px 8px; font-size: 0.8rem; outline: none; }
+
+/* Touch Controls */
+.touch-controls { position: absolute; bottom: 16px; right: 16px; display: none; gap: 10px; pointer-events: auto; }
+.touch-pad { display: grid; grid-template-columns: repeat(3, 42px); gap: 4px; }
+.touch-actions { display: flex; gap: 6px; align-items: flex-end; }
+.touch-btn { width: 42px; height: 42px; background: rgba(255,255,255,0.12); border: 1px solid var(--border); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1rem; }
+.touch-btn:active { background: rgba(0, 240, 255, 0.4); }
+
+/* Modal */
+.modal-overlay { position: absolute; inset: 0; background: rgba(4, 6, 16, 0.88); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #080f24; border: 1px solid var(--primary); border-radius: 20px; padding: 24px; width: 90%; max-width: 440px; text-align: center; box-shadow: 0 0 35px rgba(0,240,255,0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.5rem; color: #fff; text-shadow: 0 0 10px var(--primary); }
+.input-field { background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; color: #fff; font-size: 0.95rem; text-align: center; font-weight: 700; outline: none; letter-spacing: 2px; }
+
+@media (max-width: 768px) {
+  .chat-box { width: 200px; height: 130px; }
+  .touch-controls { display: flex; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🤖</span>
+    <h1 id="titleTxt">Cyber Mech Duel P2P</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <button id="micBtn" class="btn">🎙️ <span id="micTxt">Mic Off</span></button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="player-card">
+        <span style="color:var(--primary); font-weight:800;">MECH 1</span>
+        <div class="bar-group">
+          <div class="hp-bar-bg"><div class="hp-bar-fill hp-p1" id="p1Hp"></div></div>
+          <div class="sh-bar-bg"><div class="sh-bar-fill" id="p1Sh"></div></div>
+        </div>
+        <span id="p1Score" style="font-weight:800; color:var(--primary);">0</span>
+      </div>
+
+      <div class="stats-bar">
+        <span id="modeLbl">MODE: AI BOT</span>
+        <span>🪙 <span id="creditsVal">0</span></span>
+        <span style="display:flex; align-items:center; gap:4px;">
+          <span class="mic-wave" id="micWave" style="width:8px; height:8px; border-radius:50%; background:#555;"></span>
+          <span id="voiceStatus" style="font-size:0.75rem; color:#aaa;">P2P Voice</span>
+        </span>
+      </div>
+
+      <div class="player-card">
+        <span style="color:var(--accent); font-weight:800;" id="p2Name">MECH 2 (AI)</span>
+        <div class="bar-group">
+          <div class="hp-bar-bg"><div class="hp-bar-fill hp-p2" id="p2Hp"></div></div>
+          <div class="sh-bar-bg"><div class="sh-bar-fill" id="p2Sh"></div></div>
+        </div>
+        <span id="p2Score" style="font-weight:800; color:var(--accent);">0</span>
+      </div>
+    </div>
+
+    <div class="chat-box" id="chatBox">
+      <div class="chat-messages" id="chatMsgs">
+        <div class="chat-msg system" id="welcomeChatMsg">Welcome to Cyber Mech Arena!</div>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." maxlength="80">
+        <button class="btn btn-primary" style="border-radius:0 11px 11px 0;" id="sendChatBtn">Send</button>
+      </div>
+    </div>
+
+    <div class="touch-controls">
+      <div class="touch-pad">
+        <div></div><div class="touch-btn" id="btnUp">▲</div><div></div>
+        <div class="touch-btn" id="btnLeft">◄</div><div class="touch-btn" id="btnDown">▼</div><div class="touch-btn" id="btnRight">►</div>
+      </div>
+      <div class="touch-actions">
+        <div class="touch-btn" id="btnShoot" style="background:rgba(0,240,255,0.3);">⚡</div>
+        <div class="touch-btn" id="btnMissile" style="background:rgba(255,0,85,0.3);">🚀</div>
+        <div class="touch-btn" id="btnShield" style="background:rgba(255,170,0,0.3);">🛡️</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="lobbyModal">
+    <div class="modal-card">
+      <h2 id="modalHead">Cyber Mech Arena</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Battle customizable mechs with lasers, missiles & shields in real-time P2P or solo AI practice!</p>
+
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <button class="btn btn-primary" style="justify-content:center; padding:10px;" id="startAiBtn">🤖 Play vs AI Bot</button>
+        <button class="btn btn-accent" style="justify-content:center; padding:10px;" id="hostRoomBtn">🌐 Host Room (P2P)</button>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="roomCodeInput" class="input-field" placeholder="CODE" style="width:110px; text-transform:uppercase;">
+          <button class="btn" style="flex:1; justify-content:center; background:rgba(0,240,255,0.15);" id="joinRoomBtn">🔗 Join Room</button>
+        </div>
+      </div>
+
+      <div id="connectionStatus" style="font-size:0.8rem; color:var(--gold); display:none;">Initializing...</div>
+    </div>
+  </div>
+</main>
+
+<audio id="remoteAudio" autoplay></audio>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Mech Duel P2P", home: "Home", playAi: "🤖 Play vs AI Bot", hostRoom: "🌐 Host Room (P2P)", joinRoom: "🔗 Join Room", micOff: "Mic Off", micOn: "Mic On", welcomeMsg: "Welcome to Cyber Mech Arena!", modeAi: "MODE: AI BOT", modeHost: "MODE: HOST (P2P)", modePeer: "MODE: CLIENT (P2P)", copyCode: "Room Code: ", connected: "Peer Connected!", connecting: "Connecting...", win: "VICTORY!", lose: "DEFEAT!", typeMsg: "Type a message..." },
+  hy: { title: "Կիբեռ Մեխ P2P", home: "Գլխավոր", playAi: "🤖 Խաղալ AI Բոտի դեմ", hostRoom: "🌐 Ստեղծել Սենյակ (P2P)", joinRoom: "🔗 Միանալ Սենյակին", micOff: "Միկ. Անջատ", micOn: "Միկ. Միացված", welcomeMsg: "Բարի գալուստ Կիբեռ Մեխ Արենա!", modeAi: "ՌԵԺԻՄ: AI ԲՈՏ", modeHost: "ՌԵԺԻՄ: ՀՈՍԹ (P2P)", modePeer: "ՌԵԺԻՄ: ԿԼԻԵՆՏ (P2P)", copyCode: "Սենյակի Կոդ: ", connected: "Միացված է!", connecting: "Միանում է...", win: "ՀԱՂԹԱՆԱԿ!", lose: "ՊԱՐՏՈՒԹՅՈՒՆ!", typeMsg: "Գրեք հաղորդագրություն..." },
+  ru: { title: "Кибер Мех P2P", home: "Главная", playAi: "🤖 Игра против ИИ", hostRoom: "🌐 Создать Комнату (P2P)", joinRoom: "🔗 Войти в Комнату", micOff: "Мик Выкл", micOn: "Мик Вкл", welcomeMsg: "Добро пожаловать в Кибер Мех Арену!", modeAi: "РЕЖИМ: ИИ БОТ", modeHost: "РЕЖИМ: ХОСТ (P2P)", modePeer: "РЕЖИМ: КЛИЕНТ (P2P)", copyCode: "Код комнаты: ", connected: "Подключено!", connecting: "Подключение...", win: "ПОБЕДА!", lose: "ПОРАЖЕНИЕ!", typeMsg: "Сообщение..." },
+  es: { title: "Cyber Mech Duel P2P", home: "Inicio", playAi: "🤖 Jugar vs IA", hostRoom: "🌐 Crear Sala (P2P)", joinRoom: "🔗 Unirse a Sala", micOff: "Mic Apagado", micOn: "Mic Encendido", welcomeMsg: "¡Bienvenido a Cyber Mech Arena!", modeAi: "MODO: IA BOT", modeHost: "MODO: HOST (P2P)", modePeer: "MODO: CLIENTE (P2P)", copyCode: "Código de Sala: ", connected: "¡Conectado!", connecting: "Conectando...", win: "¡VICTORIA!", lose: "¡DERROTA!", typeMsg: "Escribe..." },
+  fr: { title: "Cyber Mech Duel P2P", home: "Accueil", playAi: "🤖 Jouer vs IA", hostRoom: "🌐 Créer Salon (P2P)", joinRoom: "🔗 Rejoindre Salon", micOff: "Micro Off", micOn: "Micro On", welcomeMsg: "Bienvenue sur Cyber Mech Arena !", modeAi: "MODE : IA BOT", modeHost: "MODE : HÔTE (P2P)", modePeer: "MODE : CLIENT (P2P)", copyCode: "Code Salon : ", connected: "Connecté !", connecting: "Connexion...", win: "VICTOIRE !", lose: "DÉFAITE !", typeMsg: "Message..." },
+  de: { title: "Cyber Mech Duel P2P", home: "Startseite", playAi: "🤖 Gegen KI spielen", hostRoom: "🌐 Raum Erstellen (P2P)", joinRoom: "🔗 Raum Beitreten", micOff: "Mikro Aus", micOn: "Mikro An", welcomeMsg: "Willkommen in der Mech Arena!", modeAi: "MODUS: KI BOT", modeHost: "MODUS: HOST (P2P)", modePeer: "MODUS: CLIENT (P2P)", copyCode: "Raumcode: ", connected: "Verbunden!", connecting: "Verbinde...", win: "SIEG!", lose: "NIEDERLAGE!", typeMsg: "Nachricht..." },
+  it: { title: "Cyber Mech Duel P2P", home: "Home", playAi: "🤖 Gioca vs IA", hostRoom: "🌐 Crea Stanza (P2P)", joinRoom: "🔗 Unisciti alla Stanza", micOff: "Mic Off", micOn: "Mic On", welcomeMsg: "Benvenuto in Cyber Mech Arena!", modeAi: "MODALITÀ: IA BOT", modeHost: "MODALITÀ: HOST (P2P)", modePeer: "MODALITÀ: CLIENT (P2P)", copyCode: "Codice Stanza: ", connected: "Connesso!", connecting: "Connessione...", win: "VITTORIA!", lose: "SCONFITTA!", typeMsg: "Messaggio..." },
+  pt: { title: "Cyber Mech Duel P2P", home: "Início", playAi: "🤖 Jogar vs IA", hostRoom: "🌐 Criar Sala (P2P)", joinRoom: "🔗 Entrar na Sala", micOff: "Mic Off", micOn: "Mic On", welcomeMsg: "Bem-vindo ao Cyber Mech Arena!", modeAi: "MODO: IA BOT", modeHost: "MODO: HOST (P2P)", modePeer: "MODO: CLIENTE (P2P)", copyCode: "Código da Sala: ", connected: "Conectado!", connecting: "Conectando...", win: "VITÓRIA!", lose: "DERROTA!", typeMsg: "Mensagem..." },
+  tr: { title: "Cyber Mech Duel P2P", home: "Ana Sayfa", playAi: "🤖 Yapay Zekaya Karşı", hostRoom: "🌐 Oda Kur (P2P)", joinRoom: "🔗 Odaya Katıl", micOff: "Mik Kapalı", micOn: "Mik Açık", welcomeMsg: "Cyber Mech Arena'ya Hoş Geldiniz!", modeAi: "MOD: YAPAY ZEKA", modeHost: "MOD: KURUCU (P2P)", modePeer: "MOD: KATILIMCI (P2P)", copyCode: "Oda Kodu: ", connected: "Bağlandı!", connecting: "Bağlanıyor...", win: "ZAFER!", lose: "YENİLGİ!", typeMsg: "Mesaj..." },
+  ja: { title: "サイバーメック P2P", home: "ホーム", playAi: "🤖 AIボットと対戦", hostRoom: "🌐 ルーム作成 (P2P)", joinRoom: "🔗 ルーム参加", micOff: "マイクOFF", micOn: "マイクON", welcomeMsg: "サイバーメックアリーナへようこそ！", modeAi: "モード: AIボット", modeHost: "モード: ホスト (P2P)", modePeer: "モード: クライアント (P2P)", copyCode: "ルームコード: ", connected: "接続完了！", connecting: "接続中...", win: "勝利！", lose: "敗北...", typeMsg: "メッセージ..." },
+  zh: { title: "赛博机甲 P2P", home: "主页", playAi: "🤖 个人人机对战", hostRoom: "🌐 创建房间 (P2P)", joinRoom: "🔗 加入房间", micOff: "麦克风关", micOn: "麦克风开", welcomeMsg: "欢迎来到赛博机甲竞技场！", modeAi: "模式: 人机对战", modeHost: "模式: 主机 (P2P)", modePeer: "模式: 客服端 (P2P)", copyCode: "房间代码: ", connected: "连接成功！", connecting: "连接中...", win: "胜利！", lose: "失败！", typeMsg: "输入消息..." }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+let micEnabled = false;
+let localStream = null;
+let peer = null, dataConn = null, audioCall = null;
+let mode = "ai";
+let credits = parseInt(localStorage.getItem("cm_credits") || "0");
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 900, H = 550;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Audio Synthesis
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'laser') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+  } else if (type === 'missile') {
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.exponentialRampToValueAtTime(600, now + 0.2);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+  } else if (type === 'shield') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(400, now);
+    osc.frequency.exponentialRampToValueAtTime(800, now + 0.25);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+  } else if (type === 'hit') {
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(150, now);
+    osc.frequency.exponentialRampToValueAtTime(50, now + 0.15);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.3);
+}
+
+class Mech {
+  constructor(x, y, color, isAi = false) {
+    this.x = x; this.y = y;
+    this.angle = 0;
+    this.speed = 3.5;
+    this.color = color;
+    this.hp = 100;
+    this.shield = 100;
+    this.score = 0;
+    this.isAi = isAi;
+    this.laserCooldown = 0;
+    this.missileCooldown = 0;
+    this.shieldActive = false;
+  }
+  update() {
+    if (this.hp <= 0) return;
+
+    // Shield regeneration
+    if (!this.shieldActive && this.shield < 100) {
+      this.shield = Math.min(100, this.shield + 0.15);
+    }
+
+    if (this.shieldActive) {
+      this.shield = Math.max(0, this.shield - 0.5);
+      if (this.shield <= 0) this.shieldActive = false;
+    }
+
+    // Keep inside bounds
+    this.x = Math.max(25, Math.min(W - 25, this.x));
+    this.y = Math.max(25, Math.min(H - 25, this.y));
+
+    if (this.laserCooldown > 0) this.laserCooldown--;
+    if (this.missileCooldown > 0) this.missileCooldown--;
+  }
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle);
+
+    // Mech Body
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 10;
+
+    // Chassis
+    ctx.fillRect(-16, -16, 32, 32);
+
+    // Cannons
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(12, -12, 12, 6);
+    ctx.fillRect(12, 6, 12, 6);
+
+    // Shield Dome
+    if (this.shieldActive) {
+      ctx.strokeStyle = "var(--gold)";
+      ctx.lineWidth = 3;
+      ctx.shadowColor = "var(--gold)";
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(0, 0, 26, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+}
+
+class Laser {
+  constructor(x, y, angle, owner) {
+    this.x = x; this.y = y;
+    this.vx = Math.cos(angle) * 12;
+    this.vy = Math.sin(angle) * 12;
+    this.owner = owner;
+    this.alive = true;
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.alive = false;
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = this.owner === 1 ? "var(--primary)" : "var(--accent)";
+    ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 10;
+    ctx.fill();
+  }
+}
+
+class Missile {
+  constructor(x, y, target, owner) {
+    this.x = x; this.y = y;
+    this.target = target;
+    this.angle = 0;
+    this.speed = 6;
+    this.owner = owner;
+    this.alive = true;
+  }
+  update() {
+    if (this.target) {
+      let targetAngle = Math.atan2(this.target.y - this.y, this.target.x - this.x);
+      this.angle = targetAngle;
+    }
+    this.x += Math.cos(this.angle) * this.speed;
+    this.y += Math.sin(this.angle) * this.speed;
+    if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.alive = false;
+  }
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle);
+    ctx.fillStyle = "var(--gold)";
+    ctx.fillRect(-6, -3, 12, 6);
+    ctx.restore();
+  }
+}
+
+let m1 = new Mech(150, H / 2, "#00f0ff");
+let m2 = new Mech(W - 150, H / 2, "#ff0055", true);
+let lasers = [];
+let missiles = [];
+let keys = {};
+
+window.addEventListener("keydown", e => {
+  keys[e.key.toLowerCase()] = true;
+  if (e.key === " ") shootLaser(m1, 1);
+  if (e.key.toLowerCase() === "e") shootMissile(m1, m2, 1);
+  if (e.key.toLowerCase() === "q") toggleShield(m1);
+});
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+function shootLaser(mech, ownerId) {
+  if (mech.laserCooldown <= 0 && mech.hp > 0) {
+    lasers.push(new Laser(mech.x, mech.y, mech.angle, ownerId));
+    mech.laserCooldown = 12;
+    playSound('laser');
+  }
+}
+
+function shootMissile(mech, target, ownerId) {
+  if (mech.missileCooldown <= 0 && mech.hp > 0) {
+    missiles.push(new Missile(mech.x, mech.y, target, ownerId));
+    mech.missileCooldown = 60;
+    playSound('missile');
+  }
+}
+
+function toggleShield(mech) {
+  if (mech.shield > 20 && mech.hp > 0) {
+    mech.shieldActive = !mech.shieldActive;
+    playSound('shield');
+  }
+}
+
+function addCredits(amount) {
+  credits += amount;
+  localStorage.setItem("cm_credits", credits);
+  document.getElementById("creditsVal").textContent = credits;
+}
+
+// Touch control bindings
+function bindTouch(id, startAction, endAction = null) {
+  const el = document.getElementById(id);
+  el.addEventListener("touchstart", (e) => { e.preventDefault(); startAction(); });
+  if (endAction) el.addEventListener("touchend", (e) => { e.preventDefault(); endAction(); });
+}
+bindTouch("btnUp", () => keys["w"] = true, () => keys["w"] = false);
+bindTouch("btnDown", () => keys["s"] = true, () => keys["s"] = false);
+bindTouch("btnLeft", () => keys["a"] = true, () => keys["a"] = false);
+bindTouch("btnRight", () => keys["d"] = true, () => keys["d"] = false);
+bindTouch("btnShoot", () => shootLaser(m1, 1));
+bindTouch("btnMissile", () => shootMissile(m1, m2, 1));
+bindTouch("btnShield", () => toggleShield(m1));
+
+function updateAi() {
+  if (m2.hp <= 0) return;
+  let targetAngle = Math.atan2(m1.y - m2.y, m1.x - m2.x);
+  m2.angle = targetAngle;
+
+  let dist = Math.hypot(m1.x - m2.x, m1.y - m2.y);
+  if (dist > 180) {
+    m2.x += Math.cos(m2.angle) * (m2.speed * 0.7);
+    m2.y += Math.sin(m2.angle) * (m2.speed * 0.7);
+  }
+
+  if (Math.random() < 0.04) shootLaser(m2, 2);
+  if (dist < 300 && Math.random() < 0.01) shootMissile(m2, m1, 2);
+  if (lasers.some(l => l.owner === 1 && Math.hypot(l.x - m2.x, l.y - m2.y) < 60)) {
+    if (m2.shield > 30) m2.shieldActive = true;
+  } else {
+    m2.shieldActive = false;
+  }
+}
+
+function updateGame() {
+  let dx = 0, dy = 0;
+  if (keys['w'] || keys['arrowup']) dy -= 1;
+  if (keys['s'] || keys['arrowdown']) dy += 1;
+  if (keys['a'] || keys['arrowleft']) dx -= 1;
+  if (keys['d'] || keys['arrowright']) dx += 1;
+
+  if (dx !== 0 || dy !== 0) {
+    m1.angle = Math.atan2(dy, dx);
+    m1.x += Math.cos(m1.angle) * m1.speed;
+    m1.y += Math.sin(m1.angle) * m1.speed;
+  }
+
+  m1.update();
+  m2.update();
+
+  if (mode === "ai") updateAi();
+
+  // Lasers logic
+  for (let i = lasers.length - 1; i >= 0; i--) {
+    let l = lasers[i];
+    l.update();
+    let target = l.owner === 1 ? m2 : m1;
+    if (target.hp > 0 && Math.hypot(l.x - target.x, l.y - target.y) < 22) {
+      l.alive = false;
+      let dmg = 12;
+      if (target.shieldActive && target.shield > 0) {
+        target.shield = Math.max(0, target.shield - dmg * 1.5);
+      } else {
+        target.hp = Math.max(0, target.hp - dmg);
+      }
+      playSound('hit');
+    }
+    if (!l.alive) lasers.splice(i, 1);
+  }
+
+  // Missiles logic
+  for (let i = missiles.length - 1; i >= 0; i--) {
+    let ms = missiles[i];
+    ms.update();
+    let target = ms.owner === 1 ? m2 : m1;
+    if (target.hp > 0 && Math.hypot(ms.x - target.x, ms.y - target.y) < 25) {
+      ms.alive = false;
+      let dmg = 25;
+      if (target.shieldActive && target.shield > 0) {
+        target.shield = Math.max(0, target.shield - dmg * 1.5);
+      } else {
+        target.hp = Math.max(0, target.hp - dmg);
+      }
+      playSound('hit');
+    }
+    if (!ms.alive) missiles.splice(i, 1);
+  }
+
+  // Sync P2P
+  if (mode === "host" && dataConn && dataConn.open) {
+    dataConn.send({
+      type: 'sync',
+      m1: { x: m1.x, y: m1.y, angle: m1.angle, hp: m1.hp, shield: m1.shield, score: m1.score, shieldActive: m1.shieldActive },
+      m2: { x: m2.x, y: m2.y, angle: m2.angle, hp: m2.hp, shield: m2.shield, score: m2.score, shieldActive: m2.shieldActive }
+    });
+  } else if (mode === "client" && dataConn && dataConn.open) {
+    dataConn.send({
+      type: 'clientPos',
+      x: m1.x, y: m1.y, angle: m1.angle, hp: m1.hp, shield: m1.shield, shieldActive: m1.shieldActive
+    });
+  }
+
+  // HUD
+  document.getElementById("p1Hp").style.width = `${m1.hp}%`;
+  document.getElementById("p1Sh").style.width = `${m1.shield}%`;
+  document.getElementById("p2Hp").style.width = `${m2.hp}%`;
+  document.getElementById("p2Sh").style.width = `${m2.shield}%`;
+
+  // Check Round Loss / Win
+  if (m1.hp <= 0 || m2.hp <= 0) {
+    if (m1.hp <= 0) m2.score++;
+    if (m2.hp <= 0) { m1.score++; addCredits(50); }
+    m1.x = 150; m1.y = H / 2; m1.hp = 100; m1.shield = 100;
+    m2.x = W - 150; m2.y = H / 2; m2.hp = 100; m2.shield = 100;
+    document.getElementById("p1Score").textContent = m1.score;
+    document.getElementById("p2Score").textContent = m2.score;
+  }
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Arena Grid Lines
+  ctx.strokeStyle = "rgba(0, 240, 255, 0.08)";
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = 0; y < H; y += 40) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  m1.draw();
+  m2.draw();
+  lasers.forEach(l => l.draw());
+  missiles.forEach(m => m.draw());
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+// PeerJS Networking
+function initPeer(customId = null) {
+  const statusEl = document.getElementById("connectionStatus");
+  statusEl.style.display = "block";
+  statusEl.textContent = (I18N[lang] || I18N.en).connecting;
+
+  peer = customId ? new Peer(customId) : new Peer();
+
+  peer.on('open', (id) => {
+    statusEl.textContent = (I18N[lang] || I18N.en).copyCode + id;
+    addChatMessage('system', `Room created! Code: ${id}`);
+  });
+
+  peer.on('connection', (conn) => {
+    dataConn = conn;
+    setupDataConn();
+  });
+
+  peer.on('call', (call) => {
+    audioCall = call;
+    if (localStream) call.answer(localStream);
+    else call.answer();
+    call.on('stream', (remoteStream) => {
+      document.getElementById("remoteAudio").srcObject = remoteStream;
+      document.getElementById("micWave").style.background = "var(--green)";
+    });
+  });
+}
+
+function setupDataConn() {
+  dataConn.on('open', () => {
+    addChatMessage('system', (I18N[lang] || I18N.en).connected);
+    document.getElementById("lobbyModal").style.display = "none";
+  });
+  dataConn.on('data', (data) => {
+    if (data.type === 'chat') {
+      addChatMessage('peer', data.msg);
+    } else if (data.type === 'sync') {
+      m2.x = data.m1.x; m2.y = data.m1.y; m2.angle = data.m1.angle; m2.hp = data.m1.hp; m2.shield = data.m1.shield; m2.shieldActive = data.m1.shieldActive;
+      m1.hp = data.m2.hp; m1.shield = data.m2.shield;
+    } else if (data.type === 'clientPos') {
+      m2.x = data.x; m2.y = data.y; m2.angle = data.angle; m2.hp = data.hp; m2.shield = data.shield; m2.shieldActive = data.shieldActive;
+    }
+  });
+}
+
+function addChatMessage(sender, text) {
+  const msgs = document.getElementById("chatMsgs");
+  const div = document.createElement("div");
+  div.className = `chat-msg ${sender}`;
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+document.getElementById("sendChatBtn").onclick = () => {
+  const input = document.getElementById("chatInput");
+  const text = input.value.trim();
+  if (text) {
+    addChatMessage('me', text);
+    if (dataConn && dataConn.open) dataConn.send({ type: 'chat', msg: text });
+    input.value = "";
+  }
+};
+
+document.getElementById("micBtn").onclick = async () => {
+  if (!micEnabled) {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micEnabled = true;
+      document.getElementById("micTxt").textContent = (I18N[lang] || I18N.en).micOn;
+      document.getElementById("micWave").style.background = "var(--green)";
+      if (dataConn && dataConn.peer) {
+        audioCall = peer.call(dataConn.peer, localStream);
+        audioCall.on('stream', s => document.getElementById("remoteAudio").srcObject = s);
+      }
+    } catch (e) { alert("Microphone access failed."); }
+  } else {
+    if (localStream) localStream.getTracks().forEach(t => t.stop());
+    micEnabled = false;
+    document.getElementById("micTxt").textContent = (I18N[lang] || I18N.en).micOff;
+    document.getElementById("micWave").style.background = "#555";
+  }
+};
+
+document.getElementById("startAiBtn").onclick = () => {
+  mode = "ai";
+  document.getElementById("lobbyModal").style.display = "none";
+};
+
+document.getElementById("hostRoomBtn").onclick = () => {
+  mode = "host";
+  initPeer("MECH-" + Math.floor(1000 + Math.random() * 9000));
+};
+
+document.getElementById("joinRoomBtn").onclick = () => {
+  let code = document.getElementById("roomCodeInput").value.trim().toUpperCase();
+  if (!code) return;
+  mode = "client";
+  initPeer();
+  peer.on('open', () => {
+    dataConn = peer.connect(code);
+    setupDataConn();
+  });
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("startAiBtn").textContent = dict.playAi;
+  document.getElementById("hostRoomBtn").textContent = dict.hostRoom;
+  document.getElementById("joinRoomBtn").textContent = dict.joinRoom;
+  document.getElementById("micTxt").textContent = micEnabled ? dict.micOn : dict.micOff;
+  document.getElementById("chatInput").placeholder = dict.typeMsg;
+  document.getElementById("welcomeChatMsg").textContent = dict.welcomeMsg;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+document.getElementById("creditsVal").textContent = credits;
+initLang();
+updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>

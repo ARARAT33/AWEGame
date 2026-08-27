@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Quantum Gravity Blocks — Spatial Physics Puzzle</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧩</text></svg>">
+<style>
+:root {
+  --bg: #070914;
+  --panel: rgba(16, 22, 48, 0.88);
+  --border: rgba(0, 229, 255, 0.35);
+  --primary: #00e5ff;
+  --accent: #ff007f;
+  --gold: #ffcc00;
+  --green: #00ff88;
+  --text: #e0f2fe;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(10, 15, 32, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 229, 255, 0.2); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #38ef7d; color: #000; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0f1938 0%, #050714 100%);
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.18); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 900px; margin: 0 auto; pointer-events: auto; }
+.hud-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 6px 14px; display: flex; align-items: center; gap: 10px; backdrop-filter: blur(8px); font-weight: 700; }
+
+.gravity-controls { position: absolute; bottom: 16px; right: 16px; display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: auto; }
+.grav-row { display: flex; gap: 6px; }
+.grav-btn { width: 44px; height: 44px; background: rgba(255,255,255,0.1); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; cursor: pointer; transition: 0.2s; }
+.grav-btn:hover, .grav-btn:active { background: rgba(0, 229, 255, 0.3); border-color: var(--primary); }
+
+.power-bar { position: absolute; bottom: 16px; left: 16px; display: flex; gap: 8px; pointer-events: auto; }
+
+.modal-overlay { position: absolute; inset: 0; background: rgba(5, 7, 20, 0.88); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #0b1026; border: 1px solid var(--primary); border-radius: 20px; padding: 24px; width: 90%; max-width: 420px; text-align: center; box-shadow: 0 0 35px rgba(0,229,255,0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.5rem; color: #fff; text-shadow: 0 0 10px var(--primary); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🧩</span>
+    <h1 id="titleTxt">Quantum Gravity Blocks</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="hud-card">
+        <span style="color:var(--primary);">SCORE: <span id="scoreVal">0</span></span>
+      </div>
+      <div class="hud-card">
+        <span style="color:var(--gold);">HIGH: <span id="highVal">0</span></span>
+      </div>
+      <div class="hud-card">
+        <span style="color:var(--green);">GRAVITY: <span id="gravTxt">DOWN ⬇️</span></span>
+      </div>
+    </div>
+
+    <div class="power-bar">
+      <button class="btn btn-primary" id="btnBomb">💣 <span id="bombTxt">Quantum Blast</span></button>
+      <button class="btn" style="background:rgba(255,0,127,0.2);" id="btnReset">🔄 <span id="clearTxt">Shuffle</span></button>
+    </div>
+
+    <div class="gravity-controls">
+      <div class="grav-btn" id="gUp">▲</div>
+      <div class="grav-row">
+        <div class="grav-btn" id="gLeft">◄</div>
+        <div class="grav-btn" id="gDown">▼</div>
+        <div class="grav-btn" id="gRight">►</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="startModal">
+    <div class="modal-card">
+      <h2 id="modalTitle">Quantum Gravity Blocks</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Manipulate gravity directions (UP, DOWN, LEFT, RIGHT) to align matching quantum energy blocks and trigger chain reactions!</p>
+      <button class="btn btn-primary" style="justify-content:center; padding:12px; font-size:1rem;" id="startBtn">🚀 Start Game</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Quantum Gravity Blocks", home: "Home", start: "🚀 Start Game", desc: "Shift gravity in 4 directions to match 3 or more quantum energy blocks!", blast: "Quantum Blast", shuffle: "Shuffle", win: "Level Complete!", score: "Score: ", high: "High: " },
+  hy: { title: "Քվանտային Գրավիտացիա", home: "Գլխավոր", start: "🚀 Սկսել Խաղը", desc: "Փոխեք ծանրության ուղղությունը 4 կողմերով և համադրեք քվանտային բլոկները!", blast: "Քվանտային Պայթյուն", shuffle: "Խառնել", win: "Փուլն Ավարտվեց!", score: "Միավոր: ", high: "Ռեկորդ: " },
+  ru: { title: "Квантовая Гравитация", home: "Главная", start: "🚀 Начать Игру", startDesc: "Меняйте гравитацию в 4 направлениях для совпадения квантовых блоков!", blast: "Квантовый Взрыв", shuffle: "Перемешать", win: "Уровень Пройден!", score: "Счет: ", high: "Рекорд: " },
+  es: { title: "Bloques Cuánticos", home: "Inicio", start: "🚀 Iniciar Juego", desc: "¡Cambia la gravedad en 4 direcciones para alinear bloques cuánticos!", blast: "Explosión Cuántica", shuffle: "Mezclar", win: "¡Nivel Completado!", score: "Puntos: ", high: "Rrecord: " },
+  fr: { title: "Blocs Quantiques", home: "Accueil", start: "🚀 Commencer", desc: "Modifiez la gravité dans 4 directions pour aligner les blocs quantiques !", blast: "Explosion Quantique", shuffle: "Mélanger", win: "Niveau Réussi !", score: "Score : ", high: "Record : " },
+  de: { title: "Quanten Gravitation", home: "Startseite", start: "🚀 Spiel Starten", desc: "Ändere die Schwerkraft in 4 Richtungen, um Quantenblöcke zu verbinden!", blast: "Quanten-Explosion", shuffle: "Mischen", win: "Level Geschafft!", score: "Punkte: ", high: "Rekord: " },
+  it: { title: "Blocchi Quantistici", home: "Home", start: "🚀 Inizia Gioco", desc: "Cambia la gravità in 4 direzioni per abbinare i blocchi quantistici!", blast: "Esplosione Quantistica", shuffle: "Mescola", win: "Livello Completato!", score: "Punti: ", high: "Record: " },
+  pt: { title: "Blocos Quânticos", home: "Início", start: "🚀 Iniciar Jogo", desc: "Mude a gravidade em 4 direções para alinhar blocos quânticos!", blast: "Explosão Quântica", shuffle: "Embaralhar", win: "Nível Concluído!", score: "Pontos: ", high: "Recorde: " },
+  tr: { title: "Kuantum Yerçekimi", home: "Ana Sayfa", start: "🚀 Oyuna Başla", desc: "Kuantum bloklarını eşleştirmek için yerçekimini 4 yöne değiştirin!", blast: "Kuantum Patlaması", shuffle: "Karıştır", win: "Bölüm Tamamlandı!", score: "Skor: ", high: "Rekor: " },
+  ja: { title: "クアンタム・グラビティ", home: "ホーム", start: "🚀 ゲーム開始", desc: "重力を4方向に切り替えて、同じ色のクアンタムブロックを消去しよう！", blast: "クアンタムブラスト", shuffle: "シャッフル", win: "クリア！", score: "スコア: ", high: "ハイスコア: " },
+  zh: { title: "量子重力方块", home: "主页", start: "🚀 开始游戏", desc: "切换4个方向的重力，匹配同色量子方块消除！", blast: "量子炸弹", shuffle: "打乱", win: "关卡完成！", score: "得分: ", high: "最高分: " }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+let score = 0;
+let highScore = parseInt(localStorage.getItem("qb_highscore") || "0");
+let gravityDir = "DOWN"; // UP, DOWN, LEFT, RIGHT
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const ROWS = 8, COLS = 8;
+let tileSize = 55;
+let W = COLS * tileSize, H = ROWS * tileSize;
+
+let grid = [];
+const COLORS = ["#00e5ff", "#ff007f", "#ffcc00", "#00ff88", "#b800ff"];
+
+function resizeCanvas() {
+  const maxW = window.innerWidth * 0.9;
+  const maxH = (window.innerHeight - 120) * 0.9;
+  let size = Math.floor(Math.min(maxW / COLS, maxH / ROWS));
+  tileSize = Math.max(35, size);
+  canvas.width = COLS * tileSize;
+  canvas.height = ROWS * tileSize;
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'shift') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+    gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+  } else if (type === 'match') {
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(500, now); osc.frequency.exponentialRampToValueAtTime(900, now + 0.2);
+    gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+  } else if (type === 'blast') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.3);
+}
+
+function initGrid() {
+  grid = [];
+  for (let r = 0; r < ROWS; r++) {
+    grid[r] = [];
+    for (let c = 0; c < COLS; c++) {
+      grid[r][c] = COLORS[Math.floor(Math.random() * COLORS.length)];
+    }
+  }
+}
+
+function applyGravity() {
+  playSound('shift');
+  if (gravityDir === "DOWN") {
+    for (let c = 0; c < COLS; c++) {
+      let colVals = [];
+      for (let r = 0; r < ROWS; r++) if (grid[r][c]) colVals.push(grid[r][c]);
+      while (colVals.length < ROWS) colVals.unshift(null);
+      for (let r = 0; r < ROWS; r++) grid[r][c] = colVals[r];
+    }
+  } else if (gravityDir === "UP") {
+    for (let c = 0; c < COLS; c++) {
+      let colVals = [];
+      for (let r = 0; r < ROWS; r++) if (grid[r][c]) colVals.push(grid[r][c]);
+      while (colVals.length < ROWS) colVals.push(null);
+      for (let r = 0; r < ROWS; r++) grid[r][c] = colVals[r];
+    }
+  } else if (gravityDir === "LEFT") {
+    for (let r = 0; r < ROWS; r++) {
+      let rowVals = grid[r].filter(v => v !== null);
+      while (rowVals.length < COLS) rowVals.push(null);
+      grid[r] = rowVals;
+    }
+  } else if (gravityDir === "RIGHT") {
+    for (let r = 0; r < ROWS; r++) {
+      let rowVals = grid[r].filter(v => v !== null);
+      while (rowVals.length < COLS) rowVals.unshift(null);
+      grid[r] = rowVals;
+    }
+  }
+
+  fillEmptyBlocks();
+  checkMatches();
+}
+
+function fillEmptyBlocks() {
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (!grid[r][c]) {
+        grid[r][c] = COLORS[Math.floor(Math.random() * COLORS.length)];
+      }
+    }
+  }
+}
+
+function checkMatches() {
+  let matched = [];
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      let color = grid[r][c];
+      if (!color) continue;
+      // Horizontal
+      if (c + 2 < COLS && grid[r][c+1] === color && grid[r][c+2] === color) {
+        matched.push([r,c], [r,c+1], [r,c+2]);
+      }
+      // Vertical
+      if (r + 2 < ROWS && grid[r+1][c] === color && grid[r+2][c] === color) {
+        matched.push([r,c], [r+1,c], [r+2,c]);
+      }
+    }
+  }
+
+  if (matched.length > 0) {
+    playSound('match');
+    score += matched.length * 10;
+    if (score > highScore) {
+      highScore = score;
+      localStorage.setItem("qb_highscore", highScore);
+    }
+    document.getElementById("scoreVal").textContent = score;
+    document.getElementById("highVal").textContent = highScore;
+
+    matched.forEach(([r, c]) => grid[r][c] = null);
+    setTimeout(applyGravity, 250);
+  }
+}
+
+function setGravity(dir, txt) {
+  gravityDir = dir;
+  document.getElementById("gravTxt").textContent = txt;
+  applyGravity();
+}
+
+document.getElementById("gUp").onclick = () => setGravity("UP", "UP ⬆️");
+document.getElementById("gDown").onclick = () => setGravity("DOWN", "DOWN ⬇️");
+document.getElementById("gLeft").onclick = () => setGravity("LEFT", "LEFT ⬅️");
+document.getElementById("gRight").onclick = () => setGravity("RIGHT", "RIGHT ➡️");
+
+document.getElementById("btnBomb").onclick = () => {
+  playSound('blast');
+  for (let i = 0; i < 5; i++) {
+    let r = Math.floor(Math.random() * ROWS);
+    let c = Math.floor(Math.random() * COLS);
+    grid[r][c] = null;
+  }
+  applyGravity();
+};
+
+document.getElementById("btnReset").onclick = () => {
+  initGrid();
+  applyGravity();
+};
+
+function drawGrid() {
+  ctx.clearRect(0, 0, W, H);
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      let x = c * tileSize;
+      let y = r * tileSize;
+      let color = grid[r][c];
+
+      ctx.strokeStyle = "rgba(0, 229, 255, 0.15)";
+      ctx.strokeRect(x, y, tileSize, tileSize);
+
+      if (color) {
+        ctx.fillStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 8;
+        ctx.fillRect(x + 4, y + 4, tileSize - 8, tileSize - 8);
+        ctx.shadowBlur = 0;
+      }
+    }
+  }
+}
+
+function gameLoop() {
+  drawGrid();
+  requestAnimationFrame(gameLoop);
+}
+
+document.getElementById("startBtn").onclick = () => {
+  document.getElementById("startModal").style.display = "none";
+  initGrid();
+  resizeCanvas();
+  requestAnimationFrame(gameLoop);
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("startBtn").textContent = dict.start;
+  document.getElementById("bombTxt").textContent = dict.blast;
+  document.getElementById("clearTxt").textContent = dict.shuffle;
+  document.getElementById("modalTitle").textContent = dict.title;
+  document.getElementById("modalDesc").textContent = dict.desc;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+document.getElementById("highVal").textContent = highScore;
+initLang();
+updateLang();
+resizeCanvas();
+</script>
+</body>
+</html>
