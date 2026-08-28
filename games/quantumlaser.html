@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>⚡ Quantum Laser Optics Puzzle</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+<style>
+:root {
+  --bg: #050716;
+  --panel: rgba(14, 20, 44, 0.92);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --accent: #ff0055;
+  --gold: #ffaa00;
+  --green: #00ff66;
+  --purple: #a855f7;
+  --text: #e0f7fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 28, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.2); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #38ef7d; color: #000; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0d1633 0%, #040714 100%);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.18); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; }
+.hud-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px 16px; display: flex; align-items: center; gap: 12px; backdrop-filter: blur(10px); font-size: 0.88rem; font-weight: 700; }
+
+/* Control overlay */
+.touch-bar { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; pointer-events: auto; }
+
+@media (max-width: 768px) {
+  .hud-card { font-size: 0.8rem; padding: 4px 10px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">⚡</span>
+    <h1 id="titleTxt">Quantum Laser Optics</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <button id="prevLvlBtn" class="btn">◀</button>
+    <button id="nextLvlBtn" class="btn">▶</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="hud-card">
+        <span id="lvlTxt">LEVEL: 1</span>
+        <span style="color:var(--gold);">⭐ <span id="starsVal">0</span></span>
+      </div>
+
+      <div class="hud-card">
+        <span style="color:var(--primary);" id="targetStatus">TARGETS: 0/1</span>
+        <button class="btn btn-primary" id="resetLvlBtn">🔄 Reset</button>
+      </div>
+    </div>
+
+    <div class="touch-bar">
+      <button class="btn btn-primary" id="rotateBtn">🔄 Rotate Selected Mirror</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Quantum Laser Optics", home: "Home", lvl: "LEVEL: ", stars: "STARS: ", targets: "TARGETS: ", reset: "🔄 Reset", rotate: "🔄 Rotate Selected Mirror", winMsg: "QUANTUM CORE CHARGED!" },
+  hy: { title: "Քվանտային Լազեր", home: "Գլխավոր", lvl: "ՄԱԿԱՐԴԱԿ: ", stars: "ԱՍՏՂԵՐ: ", targets: "ԹԻՐԱԽՆԵՐ: ", reset: "🔄 Վերասկսել", rotate: "🔄 Պտտել Հայելին", winMsg: "ՔՎԱՆՏԱՅԻՆ ՄԻՋՈՒԿԸ ԼԻՑՔԱՎՈՐՎԱԾ Է:" },
+  ru: { title: "Квантовый Лазер", home: "Главная", lvl: "УРОВЕНЬ: ", stars: "ЗВЕЗДЫ: ", targets: "ЦЕЛИ: ", reset: "🔄 Сброс", rotate: "🔄 Повернуть Зеркало", winMsg: "КВАНТОВОЕ ЯДРО ЗАРЯЖЕНО!" },
+  es: { title: "Quantum Laser Optics", home: "Inicio", lvl: "NIVEL: ", stars: "ESTRELLAS: ", targets: "OBJETIVOS: ", reset: "🔄 Reiniciar", rotate: "🔄 Girar Espejo", winMsg: "¡NÚCLEO CUÁNTICO CARGADO!" },
+  fr: { title: "Optique Laser Quantique", home: "Accueil", lvl: "NIVEAU : ", stars: "ÉTOILES : ", targets: "CIBLES : ", reset: "🔄 Réinitialiser", rotate: "🔄 Tourner Miroir", winMsg: "NOYAU QUANTIQUE CHARGÉ !" },
+  de: { title: "Quanten-Laser Optik", home: "Startseite", lvl: "LEVEL: ", stars: "STERNE: ", targets: "ZIELE: ", reset: "🔄 Zurücksetzen", rotate: "🔄 Spiegel Drehen", winMsg: "QUANTENKERN GELADEN!" },
+  it: { title: "Ottica Laser Quantistica", home: "Home", lvl: "LIVELLO: ", stars: "STELLE: ", targets: "OBIETTIVI: ", reset: "🔄 Reset", rotate: "🔄 Ruota Specchio", winMsg: "NUCLEO QUANTISTICO CARICO!" },
+  pt: { title: "Óptica Laser Quântica", home: "Início", lvl: "NÍVEL: ", stars: "ESTRELAS: ", targets: "OBJETIVOS: ", reset: "🔄 Reiniciar", rotate: "🔄 Girar Espelho", winMsg: "NÚCLEO QUÂNTICO CARREGADO!" },
+  tr: { title: "Kuantum Lazer Optik", home: "Ana Sayfa", lvl: "SEVİYE: ", stars: "YILDIZLAR: ", targets: "HEDEFLER: ", reset: "🔄 Sıfırla", rotate: "🔄 Aynayı Döndür", winMsg: "KUANTUM ÇEKİRDEĞİ ŞARJ EDİLDİ!" },
+  ja: { title: "量子レーザーオプティクス", home: "ホーム", lvl: "レベル: ", stars: "星: ", targets: "ターゲット: ", reset: "🔄 リセット", rotate: "🔄 鏡を回転", winMsg: "量子コア充電完了！" },
+  zh: { title: "量子激光光学 puzzle", home: "主页", lvl: "关卡: ", stars: "星星: ", targets: "目标: ", reset: "🔄 重置", rotate: "🔄 旋转镜片", winMsg: "量子核心已充电完毕！" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 900, H = 550;
+const GRID_ROWS = 6, GRID_COLS = 10;
+let cellSize = 75;
+let offsetX = 0, offsetY = 0;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+
+  cellSize = Math.floor(Math.min(W / (GRID_COLS + 1), H / (GRID_ROWS + 1)));
+  offsetX = Math.floor((W - GRID_COLS * cellSize) / 2);
+  offsetY = Math.floor((H - GRID_ROWS * cellSize) / 2);
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// LocalStorage Progress
+let currentLevelIndex = parseInt(localStorage.getItem("ql_level") || "0");
+let totalStars = parseInt(localStorage.getItem("ql_stars") || "0");
+
+function saveProgress() {
+  localStorage.setItem("ql_level", currentLevelIndex);
+  localStorage.setItem("ql_stars", totalStars);
+  document.getElementById("starsVal").textContent = totalStars;
+}
+
+// Audio Synthesis
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'rotate') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(450, now);
+    osc.frequency.exponentialRampToValueAtTime(750, now + 0.08);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+  } else if (type === 'win') {
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(400, now);
+    osc.frequency.exponentialRampToValueAtTime(850, now + 0.3);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.35);
+}
+
+// Procedural / Predefined Levels
+const LEVELS = [
+  { emitter: { r: 2, c: 0, dir: 'E' }, targets: [{ r: 2, c: 8 }], mirrors: [{ r: 2, c: 4, angle: 45 }] },
+  { emitter: { r: 1, c: 0, dir: 'E' }, targets: [{ r: 4, c: 7 }], mirrors: [{ r: 1, c: 4, angle: 45 }, { r: 4, c: 4, angle: 135 }] },
+  { emitter: { r: 0, c: 2, dir: 'S' }, targets: [{ r: 5, c: 8 }], mirrors: [{ r: 3, c: 2, angle: 45 }, { r: 3, c: 8, angle: 135 }] },
+  { emitter: { r: 5, c: 1, dir: 'N' }, targets: [{ r: 1, c: 9 }], mirrors: [{ r: 1, c: 1, angle: 45 }, { r: 1, c: 5, angle: 135 }, { r: 3, c: 5, angle: 45 }, { r: 3, c: 9, angle: 135 }] }
+];
+
+let selectedMirror = null;
+let currentLevel = null;
+let levelCleared = false;
+
+function loadLevel(idx) {
+  currentLevelIndex = idx % 20;
+  let baseLevel = LEVELS[currentLevelIndex % LEVELS.length];
+  currentLevel = JSON.parse(JSON.stringify(baseLevel));
+  selectedMirror = null;
+  levelCleared = false;
+  document.getElementById("lvlTxt").textContent = (I18N[lang] || I18N.en).lvl + (currentLevelIndex + 1);
+  saveProgress();
+}
+
+canvas.addEventListener("click", e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  const c = Math.floor((mx - offsetX) / cellSize);
+  const r = Math.floor((my - offsetY) / cellSize);
+
+  if (r >= 0 && r < GRID_ROWS && c >= 0 && c < GRID_COLS) {
+    const mirror = currentLevel.mirrors.find(m => m.r === r && m.c === c);
+    if (mirror) {
+      mirror.angle = (mirror.angle + 45) % 180;
+      selectedMirror = mirror;
+      playSound('rotate');
+    }
+  }
+});
+
+document.getElementById("rotateBtn").onclick = () => {
+  if (selectedMirror) {
+    selectedMirror.angle = (selectedMirror.angle + 45) % 180;
+    playSound('rotate');
+  } else if (currentLevel.mirrors.length > 0) {
+    currentLevel.mirrors[0].angle = (currentLevel.mirrors[0].angle + 45) % 180;
+    playSound('rotate');
+  }
+};
+
+document.getElementById("resetLvlBtn").onclick = () => loadLevel(currentLevelIndex);
+document.getElementById("prevLvlBtn").onclick = () => loadLevel(currentLevelIndex - 1 + 20);
+document.getElementById("nextLvlBtn").onclick = () => loadLevel(currentLevelIndex + 1);
+
+function traceLaser() {
+  let beam = [];
+  let currR = currentLevel.emitter.r;
+  let currC = currentLevel.emitter.c;
+  let dir = currentLevel.emitter.dir; // 'N', 'S', 'E', 'W'
+
+  let startX = offsetX + currC * cellSize + cellSize / 2;
+  let startY = offsetY + currR * cellSize + cellSize / 2;
+  beam.push({ x: startX, y: startY });
+
+  let steps = 0;
+  let hitTargets = new Set();
+
+  while (steps < 40) {
+    steps++;
+    let nextR = currR, nextC = currC;
+    if (dir === 'N') nextR--;
+    else if (dir === 'S') nextR++;
+    else if (dir === 'E') nextC++;
+    else if (dir === 'W') nextC--;
+
+    if (nextR < 0 || nextR >= GRID_ROWS || nextC < 0 || nextC >= GRID_COLS) {
+      let endX = offsetX + (currC + (dir === 'E' ? 1 : dir === 'W' ? -1 : 0)) * cellSize + cellSize / 2;
+      let endY = offsetY + (currR + (dir === 'S' ? 1 : dir === 'N' ? -1 : 0)) * cellSize + cellSize / 2;
+      beam.push({ x: endX, y: endY });
+      break;
+    }
+
+    currR = nextR; currC = nextC;
+    let pointX = offsetX + currC * cellSize + cellSize / 2;
+    let pointY = offsetY + currR * cellSize + cellSize / 2;
+    beam.push({ x: pointX, y: pointY });
+
+    // Check Target hit
+    let targetIdx = currentLevel.targets.findIndex(t => t.r === currR && t.c === currC);
+    if (targetIdx !== -1) hitTargets.add(targetIdx);
+
+    // Check Mirror reflection
+    let mirror = currentLevel.mirrors.find(m => m.r === currR && m.c === currC);
+    if (mirror) {
+      // angle 45: '/' mirror; angle 135: '\' mirror
+      if (mirror.angle === 45) {
+        if (dir === 'E') dir = 'N';
+        else if (dir === 'W') dir = 'S';
+        else if (dir === 'N') dir = 'E';
+        else if (dir === 'S') dir = 'W';
+      } else if (mirror.angle === 135) {
+        if (dir === 'E') dir = 'S';
+        else if (dir === 'W') dir = 'N';
+        else if (dir === 'N') dir = 'W';
+        else if (dir === 'S') dir = 'E';
+      }
+    }
+  }
+
+  return { beam, hitTargetsCount: hitTargets.size };
+}
+
+function updateGame() {
+  const { hitTargetsCount } = traceLaser();
+  document.getElementById("targetStatus").textContent = `${(I18N[lang] || I18N.en).targets}${hitTargetsCount}/${currentLevel.targets.length}`;
+
+  if (hitTargetsCount === currentLevel.targets.length && !levelCleared) {
+    levelCleared = true;
+    totalStars += 3;
+    playSound('win');
+    saveProgress();
+    setTimeout(() => loadLevel(currentLevelIndex + 1), 1000);
+  }
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw Grid
+  ctx.strokeStyle = "rgba(0, 240, 255, 0.12)";
+  ctx.lineWidth = 1;
+  for (let r = 0; r <= GRID_ROWS; r++) {
+    ctx.beginPath();
+    ctx.moveTo(offsetX, offsetY + r * cellSize);
+    ctx.lineTo(offsetX + GRID_COLS * cellSize, offsetY + r * cellSize);
+    ctx.stroke();
+  }
+  for (let c = 0; c <= GRID_COLS; c++) {
+    ctx.beginPath();
+    ctx.moveTo(offsetX + c * cellSize, offsetY);
+    ctx.lineTo(offsetX + c * cellSize, offsetY + GRID_ROWS * cellSize);
+    ctx.stroke();
+  }
+
+  // Draw Emitter
+  let emX = offsetX + currentLevel.emitter.c * cellSize + cellSize / 2;
+  let emY = offsetY + currentLevel.emitter.r * cellSize + cellSize / 2;
+  ctx.fillStyle = "var(--primary)";
+  ctx.shadowColor = "var(--primary)";
+  ctx.shadowBlur = 15;
+  ctx.beginPath();
+  ctx.arc(emX, emY, cellSize * 0.25, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Draw Targets
+  currentLevel.targets.forEach(t => {
+    let tx = offsetX + t.c * cellSize + cellSize / 2;
+    let ty = offsetY + t.r * cellSize + cellSize / 2;
+    ctx.fillStyle = "var(--gold)";
+    ctx.shadowColor = "var(--gold)";
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(tx, ty, cellSize * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#fff";
+    ctx.stroke();
+  });
+
+  // Draw Mirrors
+  currentLevel.mirrors.forEach(m => {
+    let mx = offsetX + m.c * cellSize + cellSize / 2;
+    let my = offsetY + m.r * cellSize + cellSize / 2;
+    let rad = m.angle * Math.PI / 180;
+    let len = cellSize * 0.35;
+
+    ctx.save();
+    ctx.translate(mx, my);
+    ctx.rotate(rad);
+    ctx.strokeStyle = selectedMirror === m ? "var(--green)" : "#fff";
+    ctx.lineWidth = 5;
+    ctx.shadowColor = "var(--primary)";
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.moveTo(-len, 0); ctx.lineTo(len, 0);
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  // Draw Laser Beam Trace
+  const { beam } = traceLaser();
+  if (beam.length > 1) {
+    ctx.strokeStyle = "var(--accent)";
+    ctx.lineWidth = 4;
+    ctx.shadowColor = "var(--accent)";
+    ctx.shadowBlur = 18;
+    ctx.beginPath();
+    ctx.moveTo(beam[0].x, beam[0].y);
+    for (let i = 1; i < beam.length; i++) {
+      ctx.lineTo(beam[i].x, beam[i].y);
+    }
+    ctx.stroke();
+  }
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("lvlTxt").textContent = dict.lvl + (currentLevelIndex + 1);
+  document.getElementById("resetLvlBtn").textContent = dict.reset;
+  document.getElementById("rotateBtn").textContent = dict.rotate;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+saveProgress();
+loadLevel(currentLevelIndex);
+initLang();
+updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
