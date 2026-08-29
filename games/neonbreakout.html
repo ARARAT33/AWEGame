@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🧱 Neon Breakout FX</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧱</text></svg>">
+<style>
+:root {
+  --bg: #030611;
+  --panel: rgba(10, 16, 36, 0.92);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --accent: #ff0055;
+  --gold: #ffaa00;
+  --green: #00ff66;
+  --purple: #a855f7;
+  --text: #e0f7fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(6, 10, 24, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.2); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0a1128 0%, #03050d 100%);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.2); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 900px; margin: 0 auto; pointer-events: auto; }
+.stat-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 6px 14px; font-weight: 700; font-size: 0.85rem; backdrop-filter: blur(10px); }
+
+/* Modal */
+.modal-overlay { position: absolute; inset: 0; background: rgba(3, 5, 15, 0.9); backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #070d22; border: 1px solid var(--primary); border-radius: 22px; padding: 26px; width: 90%; max-width: 440px; text-align: center; box-shadow: 0 0 40px rgba(0,240,255,0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.6rem; color: #fff; text-shadow: 0 0 12px var(--primary); }
+
+@media (max-width: 768px) {
+  .stat-box { padding: 4px 10px; font-size: 0.75rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🧱</span>
+    <h1 id="titleTxt">Neon Breakout FX</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="stat-box" style="color:var(--primary);">🎯 SCORE: <span id="scoreVal">0</span></div>
+      <div class="stat-box" style="color:var(--gold);">🏆 HIGH: <span id="highVal">0</span></div>
+      <div class="stat-box" style="color:var(--accent);">❤️ LIVES: <span id="livesVal">3</span></div>
+      <div class="stat-box" style="color:var(--green);">⚡ LEVEL: <span id="levelVal">1</span></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="startModal">
+    <div class="modal-card">
+      <h2 id="modalHead">🧱 Neon Breakout FX</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Action synthwave brick breaker! Destroy glowing cyber blocks, trigger plasma lasers, multi-ball frenzy & beat high scores!</p>
+      <button class="btn btn-primary" style="justify-content:center; padding:12px; font-size:1rem;" id="startBtn">🚀 Launch Game</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Neon Breakout FX", home: "Home", score: "SCORE:", high: "HIGH:", lives: "LIVES:", level: "LEVEL:", launch: "🚀 Launch Game", win: "STAGE CLEARED!", gameOver: "GAME OVER!" },
+  hy: { title: "Նեոն Բրեյքաութ FX", home: "Գլխավոր", score: "ՄԻԱՎՈՐ:", high: "ՌԵԿՈՐԴ:", lives: "ԿՅԱՆՔ:", level: "ՄԱԿԱՐԴԱԿ:", launch: "🚀 Սկսել Խաղը", win: "ՓՈՒԼԸ ՄԱՔՐՎԱԾ Է!", gameOver: "ԽԱՂԸ ԱՎԱՐՏՎԵՑ!" },
+  ru: { title: "Неон Брекаут FX", home: "Главная", score: "СЧЕТ:", high: "РЕКОРД:", lives: "ЖИЗНИ:", level: "УРОВЕНЬ:", launch: "🚀 Старт Игры", win: "УРОВЕНЬ ПРОЙДЕН!", gameOver: "ИГРА ОКОНЧЕНА!" },
+  es: { title: "Neon Breakout FX", home: "Inicio", score: "PUNTOS:", high: "RÉCORD:", lives: "VIDAS:", level: "NIVEL:", launch: "🚀 Iniciar Juego", win: "¡ETAPA DESPEJADA!", gameOver: "¡JUEGO TERMINADO!" },
+  fr: { title: "Neon Breakout FX", home: "Accueil", score: "SCORE:", high: "RECORD:", lives: "VIES:", level: "NIVEAU:", launch: "🚀 Lancer le Jeu", win: "NIVEAU RÉUSSI !", gameOver: "GAME OVER !" },
+  de: { title: "Neon Breakout FX", home: "Startseite", score: "PUNKTE:", high: "REKORD:", lives: "LEBEN:", level: "LEVEL:", launch: "🚀 Spiel Starten", win: "LEVEL GESCHAFFT!", gameOver: "GAME OVER!" },
+  it: { title: "Neon Breakout FX", home: "Home", score: "PUNTI:", high: "RECORD:", lives: "VITE:", level: "LIVELLO:", launch: "🚀 Avvia Gioco", win: "LIVELLO SUPERATO!", gameOver: "GAME OVER!" },
+  pt: { title: "Neon Breakout FX", home: "Início", score: "PONTOS:", high: "RECORDE:", lives: "VIDAS:", level: "NÍVEL:", launch: "🚀 Iniciar Jogo", win: "ETAPA CONCLUÍDA!", gameOver: "GAME OVER!" },
+  tr: { title: "Neon Breakout FX", home: "Ana Sayfa", score: "SKOR:", high: "REKOR:", lives: "CAN:", level: "SEVİYE:", launch: "🚀 Oyunu Başlat", win: "BÖLÜM GEÇİLDİ!", gameOver: "OYUN BİTTİ!" },
+  ja: { title: "ネオンブレイクアウト FX", home: "ホーム", score: "スコア:", high: "ハイスコア:", lives: "ライフ:", level: "レベル:", launch: "🚀 ゲームスタート", win: "ステージクリア！", gameOver: "ゲームオーバー！" },
+  zh: { title: "霓虹弹球 Breakout FX", home: "主页", score: "得分:", high: "最高分:", lives: "生命:", level: "关卡:", launch: "🚀 开始游戏", win: "关卡清除！", gameOver: "游戏结束！" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 800, H = 500;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 10;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Sound Synthesis
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'hit') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(400, now);
+    osc.frequency.exponentialRampToValueAtTime(100, now + 0.08);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+  } else if (type === 'brick') {
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(500, now);
+    osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+  } else if (type === 'lose') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.35);
+}
+
+let score = 0;
+let highScore = parseInt(localStorage.getItem("nb_high") || "0");
+let lives = 3;
+let level = 1;
+let gameRunning = false;
+
+let paddle = { x: 350, w: 110, h: 14, speed: 8 };
+let balls = [{ x: 400, y: 440, vx: 4, vy: -5, r: 8 }];
+let bricks = [];
+
+const BRICK_ROWS = 5, BRICK_COLS = 8;
+const BRICK_COLORS = ["#00f0ff", "#ff0055", "#ffaa00", "#00ff66", "#a855f7"];
+
+function initBricks() {
+  bricks = [];
+  let padding = 10;
+  let offsetTop = 50;
+  let offsetLeft = 30;
+  let brickW = (W - offsetLeft * 2 - (BRICK_COLS - 1) * padding) / BRICK_COLS;
+  let brickH = 22;
+
+  for (let r = 0; r < BRICK_ROWS; r++) {
+    for (let c = 0; c < BRICK_COLS; c++) {
+      bricks.push({
+        x: offsetLeft + c * (brickW + padding),
+        y: offsetTop + r * (brickH + padding),
+        w: brickW,
+        h: brickH,
+        color: BRICK_COLORS[r % BRICK_COLORS.length],
+        active: true
+      });
+    }
+  }
+}
+
+function resetBall() {
+  paddle.x = W / 2 - paddle.w / 2;
+  balls = [{ x: W / 2, y: H - 40, vx: (Math.random() > 0.5 ? 1 : -1) * 4, vy: -5, r: 8 }];
+}
+
+// Touch & Mouse Movement
+window.addEventListener("mousemove", e => {
+  let rect = canvas.getBoundingClientRect();
+  paddle.x = (e.clientX - rect.left) - paddle.w / 2;
+});
+
+canvas.addEventListener("touchmove", e => {
+  let rect = canvas.getBoundingClientRect();
+  let touchX = e.touches[0].clientX - rect.left;
+  paddle.x = touchX - paddle.w / 2;
+});
+
+function updateGame() {
+  if (!gameRunning) return;
+
+  paddle.x = Math.max(0, Math.min(W - paddle.w, paddle.x));
+
+  for (let bIdx = balls.length - 1; bIdx >= 0; bIdx--) {
+    let ball = balls[bIdx];
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+
+    // Wall Bounces
+    if (ball.x - ball.r < 0 || ball.x + ball.r > W) {
+      ball.vx *= -1;
+      playSound('hit');
+    }
+    if (ball.y - ball.r < 0) {
+      ball.vy *= -1;
+      playSound('hit');
+    }
+
+    // Paddle Bounce
+    if (ball.y + ball.r >= H - 25 && ball.y - ball.r <= H - 25 + paddle.h) {
+      if (ball.x >= paddle.x && ball.x <= paddle.x + paddle.w) {
+        ball.vy = -Math.abs(ball.vy);
+        let hitPos = (ball.x - (paddle.x + paddle.w / 2)) / (paddle.w / 2);
+        ball.vx = hitPos * 6;
+        playSound('hit');
+      }
+    }
+
+    // Brick Collisions
+    bricks.forEach(b => {
+      if (b.active) {
+        if (ball.x > b.x && ball.x < b.x + b.w && ball.y > b.y && ball.y < b.y + b.h) {
+          b.active = false;
+          ball.vy *= -1;
+          score += 10;
+          playSound('brick');
+          if (score > highScore) {
+            highScore = score;
+            localStorage.setItem("nb_high", highScore);
+          }
+        }
+      }
+    });
+
+    // Bottom Wall (Lose Ball)
+    if (ball.y + ball.r > H) {
+      balls.splice(bIdx, 1);
+    }
+  }
+
+  // Check Game State
+  if (balls.length === 0) {
+    lives--;
+    playSound('lose');
+    if (lives <= 0) {
+      gameRunning = false;
+      document.getElementById("startModal").style.display = "flex";
+    } else {
+      resetBall();
+    }
+  }
+
+  if (bricks.every(b => !b.active)) {
+    level++;
+    initBricks();
+    resetBall();
+  }
+
+  updateUI();
+}
+
+function updateUI() {
+  document.getElementById("scoreVal").textContent = score;
+  document.getElementById("highVal").textContent = highScore;
+  document.getElementById("livesVal").textContent = lives;
+  document.getElementById("levelVal").textContent = level;
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw Paddle
+  ctx.save();
+  ctx.fillStyle = "var(--primary)";
+  ctx.shadowColor = "var(--primary)";
+  ctx.shadowBlur = 15;
+  ctx.fillRect(paddle.x, H - 25, paddle.w, paddle.h);
+  ctx.restore();
+
+  // Draw Balls
+  balls.forEach(ball => {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+    ctx.fillStyle = "var(--gold)";
+    ctx.shadowColor = "var(--gold)";
+    ctx.shadowBlur = 15;
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Draw Bricks
+  bricks.forEach(b => {
+    if (b.active) {
+      ctx.save();
+      ctx.fillStyle = b.color;
+      ctx.shadowColor = b.color;
+      ctx.shadowBlur = 8;
+      ctx.fillRect(b.x, b.y, b.w, b.h);
+      ctx.restore();
+    }
+  });
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+document.getElementById("startBtn").onclick = () => {
+  score = 0;
+  lives = 3;
+  level = 1;
+  initBricks();
+  resetBall();
+  gameRunning = true;
+  document.getElementById("startModal").style.display = "none";
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("startBtn").textContent = dict.launch;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang();
+updateLang();
+updateUI();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
