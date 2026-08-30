@@ -1,0 +1,5 @@
+127.0.0.1 - - [30/Aug/2026 11:19:47] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [30/Aug/2026 11:19:47] "GET /games.js HTTP/1.1" 200 -
+127.0.0.1 - - [30/Aug/2026 11:19:48] "GET /games/cybersoccer.html HTTP/1.1" 200 -
+127.0.0.1 - - [30/Aug/2026 11:19:51] "GET /games/cyberfishing.html HTTP/1.1" 200 -
+127.0.0.1 - - [30/Aug/2026 11:19:54] "GET /games/cybercircuit.html HTTP/1.1" 200 -
