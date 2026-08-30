@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🎣 Cyber Angler Fishing RPG</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎣</text></svg>">
+<style>
+:root {
+  --bg: #030814;
+  --panel: rgba(8, 16, 36, 0.92);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --accent: #ff0055;
+  --gold: #ffaa00;
+  --green: #00ff66;
+  --purple: #a855f7;
+  --text: #e0f7fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(5, 10, 24, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.2); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #38ef7d; color: #000; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #061536 0%, #020512 100%);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.2); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; }
+.hud-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px 16px; backdrop-filter: blur(10px); display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 0.88rem; }
+
+.reel-btn {
+  position: absolute; bottom: 20px; right: 20px; width: 90px; height: 90px;
+  border-radius: 50%; background: radial-gradient(circle, var(--accent) 0%, #990033 100%);
+  border: 3px solid #fff; color: #fff; font-size: 1.1rem; font-weight: 900;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  box-shadow: 0 0 25px rgba(255, 0, 85, 0.6); cursor: pointer; pointer-events: auto; touch-action: manipulation;
+}
+.reel-btn:active { transform: scale(0.92); }
+
+/* Shop / Fishdex Modals */
+.modal-overlay { position: absolute; inset: 0; background: rgba(3, 5, 15, 0.9); backdrop-filter: blur(14px); display: none; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #070d22; border: 1px solid var(--primary); border-radius: 22px; padding: 22px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; box-shadow: 0 0 40px rgba(0,240,255,0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+.shop-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border); }
+
+@media (max-width: 768px) {
+  .reel-btn { width: 75px; height: 75px; font-size: 0.9rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🎣</span>
+    <h1 id="titleTxt">Cyber Angler Fishing RPG</h1>
+  </div>
+  <div class="controls">
+    <button id="shopBtn" class="btn">🛒 <span id="shopTxt">Shop</span></button>
+    <button id="dexBtn" class="btn">📖 <span id="dexTxt">Creatures</span></button>
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="hud-card">
+        <span>🪙 <span id="creditsVal">0</span></span>
+        <span>LEVEL: <span id="lvlVal">1</span></span>
+      </div>
+      <div class="hud-card">
+        <span>🎣 Rod Lvl: <span id="rodLvlVal">1</span></span>
+        <span>🛰️ Sonar: <span id="sonarLvlVal">1</span></span>
+      </div>
+    </div>
+
+    <div class="reel-btn" id="castReelBtn">CAST</div>
+  </div>
+
+  <div class="modal-overlay" id="shopModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="shopHead">🛒 Cyber Shop</h2>
+        <button class="btn" id="closeShopBtn">✕</button>
+      </div>
+      <div class="shop-item">
+        <div>
+          <strong id="rodTitle">Titanium Rod upgrade</strong>
+          <div style="font-size:0.75rem; color:#aaa;" id="rodDesc">Increases reel power & tension control</div>
+        </div>
+        <button class="btn btn-primary" id="buyRodBtn">🪙 <span id="rodCost">100</span></button>
+      </div>
+      <div class="shop-item">
+        <div>
+          <strong id="sonarTitle">Abyssal Sonar upgrade</strong>
+          <div style="font-size:0.75rem; color:#aaa;" id="sonarDesc">Attracts legendary deep-sea cyber creatures</div>
+        </div>
+        <button class="btn btn-primary" id="buySonarBtn">🪙 <span id="sonarCost">200</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="dexModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="dexHead">📖 Cyber Creatures Fishdex</h2>
+        <button class="btn" id="closeDexBtn">✕</button>
+      </div>
+      <div id="dexList" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Angler Fishing RPG", home: "Home", shop: "Shop", dex: "Creatures", cast: "CAST", reel: "PULL", catchMsg: "CANT! Caught: ", shopHead: "🛒 Cyber Shop", dexHead: "📖 Cyber Fishdex", rodTitle: "Titanium Rod Upgrade", rodDesc: "Increases reel power & line strength", sonarTitle: "Abyssal Sonar Upgrade", sonarDesc: "Attracts rare & legendary species", maxLvl: "MAX" },
+  hy: { title: "Կիբեռ Ձկնորսություն RPG", home: "Գլխավոր", shop: "Խանութ", dex: "Ձկնացանկ", cast: "ԳՑԵԼ", reel: "ՔԱՇԵԼ", catchMsg: "ԲՌՆՎԵՑ! ", shopHead: "🛒 Կիբեռ Խանութ", dexHead: "📖 Կիբեռ Ձկնացանկ", rodTitle: "Տիտանե Կարթ", rodDesc: "Ուժեղացնում է քաշելու ուժը", sonarTitle: "Խորքային Սոնար", rodDesc: "Գրավում է հազվագյուտ ձկներ", maxLvl: "ԱՌԱՎ" },
+  ru: { title: "Кибер Рыбалка RPG", home: "Главная", shop: "Магазин", dex: "Рыбы", cast: "ЗАБРОС", reel: "ТЯНУТЬ", catchMsg: "ПОЙМАН! ", shopHead: "🛒 Кибер Магазин", dexHead: "📖 Рыбы Кибермира", rodTitle: "Удочка из титана", rodDesc: "Увеличивает силу натяжения", sonarTitle: "Глубоководный Сонар", sonarDesc: "Привлекает редких существ", maxLvl: "МАКС" },
+  es: { title: "Cyber Pesca RPG", home: "Inicio", shop: "Tienda", dex: "Peces", cast: "LANZAR", reel: "TIRAR", catchMsg: "¡CAPTURADO! ", shopHead: "🛒 Tienda Cyber", dexHead: "📖 Peces Cyber", rodTitle: "Caña de Titanio", rodDesc: "Aumenta la fuerza de pesca", sonarTitle: "Sonar Abisal", sonarDesc: "Atrae especies raras", maxLvl: "MÁX" },
+  fr: { title: "Cyber Pêche RPG", home: "Accueil", shop: "Boutique", dex: "Poissons", cast: "LANCER", reel: "TIRER", catchMsg: "CAPTURAIT ! ", shopHead: "🛒 Cyber Boutique", dexHead: "📖 Poissons Cyber", rodTitle: "Canne en Titane", rodDesc: "Augmente la force de ligne", sonarTitle: "Sonar Abyssal", sonarDesc: "Attire des espèces rares", maxLvl: "MAX" },
+  de: { title: "Cyber Angeln RPG", home: "Startseite", shop: "Shop", dex: "Fische", cast: "WERFEN", reel: "ZIEHEN", catchMsg: "GEFANGEN! ", shopHead: "🛒 Cyber Shop", dexHead: "📖 Cyber Fische", rodTitle: "Titan Angelrute", rodDesc: "Erhöht die Zugkraft", sonarTitle: "Tiefsee Sonar", sonarDesc: "Lockt seltene Arten an", maxLvl: "MAX" },
+  it: { title: "Cyber Pesca RPG", home: "Home", shop: "Negozio", dex: "Pesci", cast: "LANCIA", reel: "TIRA", catchMsg: "CATTURATO! ", shopHead: "🛒 Negozio Cyber", dexHead: "📖 Enciclopedia Pesci", rodTitle: "Canna in Titanio", rodDesc: "Aumenta la potenza di recupero", sonarTitle: "Sonar Abissale", sonarDesc: "Attira specie rare", maxLvl: "MAX" },
+  pt: { title: "Cyber Pesca RPG", home: "Início", shop: "Loja", dex: "Peixes", cast: "LANÇAR", reel: "PUXAR", catchMsg: "CAPTURADO! ", shopHead: "🛒 Loja Cyber", dexHead: "📖 Guia de Peixes", rodTitle: "Vara de Titânio", rodDesc: "Aumenta a força da linha", sonarTitle: "Sonar Abissal", sonarDesc: "Atrai espécies raras", maxLvl: "MÁX" },
+  tr: { title: "Cyber Balıkçılık RPG", home: "Ana Sayfa", shop: "Mağaza", dex: "Balıklar", cast: "AT", reel: "ÇEK", catchMsg: "YAKALANDI! ", shopHead: "🛒 Cyber Mağaza", dexHead: "📖 Balık Rehberi", rodTitle: "Titanyum Oltası", rodDesc: "Çekme gücünü artırır", sonarTitle: "Derin Deniz Sonarı", sonarDesc: "Nadir canlıları çeker", maxLvl: "MAKS" },
+  ja: { title: "サイバーフィッシング RPG", home: "ホーム", shop: "ショップ", dex: "図鑑", cast: "キャスト", reel: "引く", catchMsg: "ゲット！ ", shopHead: "🛒 サイバーショップ", dexHead: "📖 サイバー海洋図鑑", rodTitle: "チタンロッド強化", rodDesc: "引き上げる力を強化", sonarTitle: "深海ソナー強化", sonarDesc: "レア生物を引き寄せる", maxLvl: "最大" },
+  zh: { title: "赛博钓鱼 RPG", home: "主页", shop: "商店", dex: "图鉴", cast: "抛竿", reel: "收线", catchMsg: "钓到了！ ", shopHead: "🛒 赛博商店", dexHead: "📖 赛博生物图鉴", rodTitle: "钛合金钓竿升级", rodDesc: "提升收线与拉力", sonarTitle: "深海声呐升级", sonarDesc: "吸引稀有与传说生物", maxLvl: "最大" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+const FISH_SPECIES = [
+  { name: "Neon Neon-Tetra", icon: "🐟", price: 15, rare: 1 },
+  { name: "Plasma Jellyfish", icon: "🪼", price: 30, rare: 1 },
+  { name: "Cyber Eel", icon: "🐍", price: 50, rare: 2 },
+  { name: "Quantum Anglerfish", icon: "🐡", price: 80, rare: 2 },
+  { name: "Mecha Shark", icon: "🦈", price: 150, rare: 3 },
+  { name: "Cosmic Kraken", icon: "🐙", price: 300, rare: 4 }
+];
+
+let lang = "en";
+let sound = true;
+let credits = parseInt(localStorage.getItem("fa_credits") || "50");
+let level = parseInt(localStorage.getItem("fa_lvl") || "1");
+let rodLvl = parseInt(localStorage.getItem("fa_rod") || "1");
+let sonarLvl = parseInt(localStorage.getItem("fa_sonar") || "1");
+let caughtSet = JSON.parse(localStorage.getItem("fa_caught") || "[]");
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 900, H = 550;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio sound generator
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'cast') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.exponentialRampToValueAtTime(200, now + 0.2);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+  } else if (type === 'bite') {
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.exponentialRampToValueAtTime(1000, now + 0.15);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+  } else if (type === 'catch') {
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.exponentialRampToValueAtTime(700, now + 0.3);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.35);
+}
+
+// Game States: 'idle', 'waiting', 'reeling', 'caught'
+let gameState = 'idle';
+let hookY = 120;
+let tension = 0; // 0 to 100
+let progress = 0; // 0 to 100
+let currentFish = null;
+let reelPressed = false;
+
+const castBtn = document.getElementById("castReelBtn");
+
+castBtn.addEventListener("mousedown", () => handlePress(true));
+castBtn.addEventListener("mouseup", () => handlePress(false));
+castBtn.addEventListener("touchstart", (e) => { e.preventDefault(); handlePress(true); });
+castBtn.addEventListener("touchend", (e) => { e.preventDefault(); handlePress(false); });
+
+function handlePress(isDown) {
+  if (gameState === 'idle' && isDown) {
+    gameState = 'waiting';
+    hookY = 120;
+    castBtn.textContent = "...";
+    playSound('cast');
+    setTimeout(triggerBite, 1500 + Math.random() * 2500);
+  } else if (gameState === 'reeling') {
+    reelPressed = isDown;
+  }
+}
+
+function triggerBite() {
+  if (gameState !== 'waiting') return;
+  gameState = 'reeling';
+  tension = 20;
+  progress = 30;
+
+  // Pick fish species based on sonar level
+  let maxRare = Math.min(4, sonarLvl + 1);
+  let available = FISH_SPECIES.filter(f => f.rare <= maxRare);
+  currentFish = available[Math.floor(Math.random() * available.length)];
+
+  castBtn.textContent = (I18N[lang] || I18N.en).reel;
+  playSound('bite');
+}
+
+function updateGame() {
+  if (gameState === 'reeling') {
+    if (reelPressed) {
+      tension += 1.2;
+      progress += 0.4 + (rodLvl * 0.15);
+    } else {
+      tension -= 0.8;
+      progress -= 0.2;
+    }
+
+    tension = Math.max(0, tension);
+    progress = Math.max(0, progress);
+
+    // Snap line or Catch fish
+    if (tension >= 100) {
+      // Line broke
+      gameState = 'idle';
+      castBtn.textContent = (I18N[lang] || I18N.en).cast;
+      alert("Line Snap! Tension too high!");
+    } else if (progress >= 100) {
+      // Caught fish!
+      gameState = 'caught';
+      credits += currentFish.price;
+      if (!caughtSet.includes(currentFish.name)) caughtSet.push(currentFish.name);
+
+      saveData();
+      playSound('catch');
+      castBtn.textContent = (I18N[lang] || I18N.en).cast;
+
+      setTimeout(() => {
+        alert((I18N[lang] || I18N.en).catchMsg + `${currentFish.icon} ${currentFish.name} (+🪙${currentFish.price})`);
+        gameState = 'idle';
+      }, 100);
+    }
+  }
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Water surface line
+  let waterY = 110;
+  ctx.fillStyle = "rgba(0, 240, 255, 0.15)";
+  ctx.fillRect(0, waterY, W, H - waterY);
+
+  ctx.strokeStyle = "var(--primary)";
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, waterY); ctx.lineTo(W, waterY); ctx.stroke();
+
+  // Boat / Fisher
+  ctx.fillStyle = "#102040";
+  ctx.fillRect(W / 2 - 40, waterY - 20, 80, 20);
+
+  // Rod Line
+  ctx.strokeStyle = gameState === 'reeling' ? (tension > 75 ? "var(--accent)" : "var(--primary)") : "#fff";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(W / 2, waterY - 20);
+
+  let curHookY = gameState === 'waiting' || gameState === 'reeling' ? H - 120 : waterY + 20;
+  ctx.lineTo(W / 2, curHookY);
+  ctx.stroke();
+
+  // Hook / Fish
+  ctx.fillStyle = "var(--gold)";
+  ctx.beginPath(); ctx.arc(W / 2, curHookY, 8, 0, Math.PI * 2); ctx.fill();
+
+  if (gameState === 'reeling' && currentFish) {
+    ctx.font = "28px sans-serif";
+    ctx.fillText(currentFish.icon, W / 2 + 15, curHookY + 10);
+
+    // Tension Bar
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillRect(W / 2 - 80, curHookY - 50, 160, 12);
+    ctx.fillStyle = tension > 75 ? "var(--accent)" : "var(--green)";
+    ctx.fillRect(W / 2 - 80, curHookY - 50, (tension / 100) * 160, 12);
+
+    // Progress Bar
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillRect(W / 2 - 80, curHookY - 32, 160, 8);
+    ctx.fillStyle = "var(--primary)";
+    ctx.fillRect(W / 2 - 80, curHookY - 32, (progress / 100) * 160, 8);
+  }
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+function saveData() {
+  localStorage.setItem("fa_credits", credits);
+  localStorage.setItem("fa_lvl", level);
+  localStorage.setItem("fa_rod", rodLvl);
+  localStorage.setItem("fa_sonar", sonarLvl);
+  localStorage.setItem("fa_caught", JSON.stringify(caughtSet));
+  updateUI();
+}
+
+function updateUI() {
+  document.getElementById("creditsVal").textContent = credits;
+  document.getElementById("lvlVal").textContent = level;
+  document.getElementById("rodLvlVal").textContent = rodLvl;
+  document.getElementById("sonarLvlVal").textContent = sonarLvl;
+
+  document.getElementById("rodCost").textContent = rodLvl * 100;
+  document.getElementById("sonarCost").textContent = sonarLvl * 150;
+}
+
+// Shop & Dex Modals
+document.getElementById("shopBtn").onclick = () => document.getElementById("shopModal").style.display = "flex";
+document.getElementById("closeShopBtn").onclick = () => document.getElementById("shopModal").style.display = "none";
+document.getElementById("dexBtn").onclick = () => { renderDex(); document.getElementById("dexModal").style.display = "flex"; };
+document.getElementById("closeDexBtn").onclick = () => document.getElementById("dexModal").style.display = "none";
+
+document.getElementById("buyRodBtn").onclick = () => {
+  let cost = rodLvl * 100;
+  if (credits >= cost) {
+    credits -= cost; rodLvl++; saveData();
+  }
+};
+document.getElementById("buySonarBtn").onclick = () => {
+  let cost = sonarLvl * 150;
+  if (credits >= cost) {
+    credits -= cost; sonarLvl++; saveData();
+  }
+};
+
+function renderDex() {
+  const list = document.getElementById("dexList");
+  list.innerHTML = FISH_SPECIES.map(f => {
+    let unlocked = caughtSet.includes(f.name);
+    return `
+      <div style="display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.05); padding:8px 12px; border-radius:10px;">
+        <span style="font-size:1.2rem;">${unlocked ? f.icon : '❓'} ${f.name}</span>
+        <span style="color:var(--gold); font-weight:700;">${unlocked ? '🪙 ' + f.price : 'LOCKED'}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("shopTxt").textContent = dict.shop;
+  document.getElementById("dexTxt").textContent = dict.dex;
+  document.getElementById("shopHead").textContent = dict.shopHead;
+  document.getElementById("dexHead").textContent = dict.dexHead;
+  document.getElementById("rodTitle").textContent = dict.rodTitle;
+  document.getElementById("sonarTitle").textContent = dict.sonarTitle;
+  if (gameState === 'idle') castBtn.textContent = dict.cast;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang();
+updateLang();
+updateUI();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>

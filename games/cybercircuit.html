@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>⚡ Cyber Circuit Builder</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(8, 14, 28, 0.94);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --accent: #ff0055;
+  --gold: #ffaa00;
+  --green: #00ff66;
+  --purple: #a855f7;
+  --text: #e0f7fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(5, 10, 22, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.2); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 12px; }
+
+.hud-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; max-width: 600px; margin-bottom: 12px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 8px 16px;
+  font-weight: 700; font-size: 0.9rem;
+}
+
+#gridContainer {
+  display: grid; gap: 8px; background: rgba(0,0,0,0.5);
+  padding: 12px; border-radius: 18px; border: 1px solid var(--border);
+  box-shadow: 0 0 30px rgba(0,240,255,0.15); touch-action: manipulation;
+}
+
+.tile {
+  width: 70px; height: 70px; background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; cursor: pointer; transition: transform 0.2s, background 0.2s;
+  position: relative;
+}
+.tile:hover { background: rgba(0,240,255,0.15); border-color: var(--primary); }
+.tile.powered { background: rgba(0, 255, 102, 0.2); border-color: var(--green); box-shadow: 0 0 15px rgba(0,255,102,0.4); }
+.tile.power-source { background: rgba(0, 240, 255, 0.3); border-color: var(--primary); box-shadow: 0 0 20px var(--primary); }
+.tile.core-target { background: rgba(255, 0, 85, 0.3); border-color: var(--accent); box-shadow: 0 0 20px var(--accent); }
+
+@media (max-width: 600px) {
+  .tile { width: 52px; height: 52px; font-size: 1.4rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">⚡</span>
+    <h1 id="titleTxt">Cyber Circuit Builder</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <div class="hud-bar">
+    <span>LEVEL: <span id="lvlVal">1</span>/30</span>
+    <span>⚡ CORE POWER: <span id="powerVal" style="color:var(--green);">0%</span></span>
+    <span>🪙 <span id="creditsVal">0</span></span>
+  </div>
+
+  <div id="gridContainer"></div>
+
+  <div style="margin-top:16px; display:flex; gap:10px;">
+    <button class="btn btn-primary" id="resetLvlBtn">🔄 Reset Level</button>
+    <button class="btn" id="nextLvlBtn" style="display:none; background:var(--green); color:#000; font-weight:800;">NEXT LEVEL ➔</button>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Circuit Builder", home: "Home", reset: "🔄 Reset Level", next: "NEXT LEVEL ➔", complete: "⚡ CIRCUIT OVERLOADED! Core Powered Up!", win: "🎉 ALL 30 LEVELS COMPLETED!" },
+  hy: { title: "Կիբեռ Շղթա Ստեղծող", home: "Գլխավոր", reset: "🔄 Վերասկսել", next: "ՀԱՋՈՐԴ ՄԱԿԱՐԴԱԿ ➔", complete: "⚡ ՇՂԹԱՆ ՄԻԱՑՎԱԾ Է!", win: "🎉 ԲՈԼՈՐ 30 ՄԱԿԱՐԴԱԿՆԵՐԸ ԱՎԱՐՏՎԱԾ ԵՆ!" },
+  ru: { title: "Кибер Цепь Пазл", home: "Главная", reset: "🔄 Сброс", next: "СЛЕДУЮЩИЙ УРОВЕНЬ ➔", complete: "⚡ ЦЕПЬ ЗАПИТАНА!", win: "🎉 ВСЕ 30 УРОВНЕЙ ПРОЙДЕНЫ!" },
+  es: { title: "Cyber Circuito Builder", home: "Inicio", reset: "🔄 Reiniciar", next: "SIGUIENTE NIVEL ➔", complete: "⚡ ¡CIRCUITO ENERGIZADO!", win: "🎉 ¡30 NIVELES COMPLETADOS!" },
+  fr: { title: "Cyber Circuit Builder", home: "Accueil", reset: "🔄 Réinitialiser", next: "NIVEAU SUIVANT ➔", complete: "⚡ CIRCUIT ALIMENTÉ !", win: "🎉 30 NIVEAUX COMPLÉTÉS !" },
+  de: { title: "Cyber Schaltung Builder", home: "Startseite", reset: "🔄 Zurücksetzen", next: "NÄCHSTES LEVEL ➔", complete: "⚡ SCHALTUNG AKTIVIERT!", win: "🎉 ALLE 30 LEVEL GESCHAFFT!" },
+  it: { title: "Cyber Circuito Builder", home: "Home", reset: "🔄 Ricomincia", next: "PROSSIMO LIVELLO ➔", complete: "⚡ CIRCUITO ALIMENTATO!", win: "🎉 TUTTI I 30 LIVELLI COMPLETATI!" },
+  pt: { title: "Cyber Circuito Builder", home: "Início", reset: "🔄 Reiniciar", next: "PRÓXIMO NÍVEL ➔", complete: "⚡ CIRCUITO ENERGIZADO!", win: "🎉 TODOS OS 30 NÍVEIS CONCLUÍDOS!" },
+  tr: { title: "Cyber Devre Kurucu", home: "Ana Sayfa", reset: "🔄 Sıfırla", next: "SONRAKİ SEVİYE ➔", complete: "⚡ DEVRE TAMAMLANDI!", win: "🎉 30 SEVİYE TAMAMLANDI!" },
+  ja: { title: "サイバー回路パズル", home: "ホーム", reset: "🔄 リセット", next: "次のレベルへ ➔", complete: "⚡ 回路通電完了！", win: "🎉 全30レベル全クリア！" },
+  zh: { title: "赛博电路构建者", home: "主页", reset: "🔄 重置关卡", next: "下一关 ➔", complete: "⚡ 电路通电成功！", win: "🎉 全部30关通关！" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+let level = parseInt(localStorage.getItem("cc_lvl") || "1");
+let credits = parseInt(localStorage.getItem("cc_credits") || "0");
+
+const GRID_SIZE = 4;
+let tiles = [];
+
+// Audio Synthesis
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'rotate') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(400, now);
+    osc.frequency.exponentialRampToValueAtTime(600, now + 0.08);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+  } else if (type === 'complete') {
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.exponentialRampToValueAtTime(900, now + 0.3);
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.35);
+}
+
+// Tile types: 'straight' (│), 'corner' (└), 'cross' (┼), 'source' (⚡), 'core' (🔴)
+// Directions bitmask: Top:1, Right:2, Bottom:4, Left:8
+const TILE_SHAPES = {
+  'straight': [1 | 4, 2 | 8], // │ or ─
+  'corner': [1 | 2, 2 | 4, 4 | 8, 8 | 1], // └ ┌ ┐ ┘
+  'cross': [1 | 2 | 4 | 8],
+  'source': [1 | 2 | 4 | 8],
+  'core': [1 | 2 | 4 | 8]
+};
+
+function initLevel() {
+  const container = document.getElementById("gridContainer");
+  container.innerHTML = "";
+  container.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
+  tiles = [];
+  document.getElementById("nextLvlBtn").style.display = "none";
+
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      let type = 'straight';
+      if ((r === 0 && c === 0)) type = 'source';
+      else if (r === GRID_SIZE - 1 && c === GRID_SIZE - 1) type = 'core';
+      else if ((r + c) % 2 === 0) type = 'corner';
+      else if ((r + c) % 3 === 0) type = 'cross';
+
+      let rot = Math.floor(Math.random() * 4);
+      let tile = { r, c, type, rot, powered: false };
+      tiles.push(tile);
+
+      const el = document.createElement("div");
+      el.className = "tile";
+      el.id = `tile-${r}-${c}`;
+      el.onclick = () => rotateTile(tile);
+      container.appendChild(el);
+    }
+  }
+  evaluatePower();
+}
+
+function rotateTile(tile) {
+  if (tile.type === 'source' || tile.type === 'core') return;
+  tile.rot = (tile.rot + 1) % 4;
+  playSound('rotate');
+  evaluatePower();
+}
+
+function getConnections(tile) {
+  let mask = 0;
+  if (tile.type === 'straight') {
+    mask = (tile.rot % 2 === 0) ? (1 | 4) : (2 | 8);
+  } else if (tile.type === 'corner') {
+    const masks = [1 | 2, 2 | 4, 4 | 8, 8 | 1];
+    mask = masks[tile.rot % 4];
+  } else {
+    mask = 1 | 2 | 4 | 8;
+  }
+  return mask;
+}
+
+function evaluatePower() {
+  tiles.forEach(t => t.powered = false);
+
+  let source = tiles.find(t => t.type === 'source');
+  let queue = [source];
+  source.powered = true;
+
+  while (queue.length > 0) {
+    let curr = queue.shift();
+    let conn = getConnections(curr);
+
+    // Neighbors: Top (r-1, c), Right (r, c+1), Bottom (r+1, c), Left (r, c-1)
+    let dirs = [
+      { r: curr.r - 1, c: curr.c, bit: 1, oppBit: 4 },
+      { r: curr.r, c: curr.c + 1, bit: 2, oppBit: 8 },
+      { r: curr.r + 1, c: curr.c, bit: 4, oppBit: 1 },
+      { r: curr.r, c: curr.c - 1, bit: 8, oppBit: 2 }
+    ];
+
+    dirs.forEach(d => {
+      if (d.r >= 0 && d.r < GRID_SIZE && d.c >= 0 && d.c < GRID_SIZE) {
+        let neighbor = tiles.find(t => t.r === d.r && t.c === d.c);
+        if (neighbor && !neighbor.powered) {
+          let neighborConn = getConnections(neighbor);
+          if ((conn & d.bit) && (neighborConn & d.oppBit)) {
+            neighbor.powered = true;
+            queue.push(neighbor);
+          }
+        }
+      }
+    });
+  }
+
+  let poweredCount = tiles.filter(t => t.powered).length;
+  let pct = Math.floor((poweredCount / tiles.length) * 100);
+  document.getElementById("powerVal").textContent = pct + "%";
+
+  renderTiles();
+
+  let core = tiles.find(t => t.type === 'core');
+  if (core && core.powered) {
+    playSound('complete');
+    document.getElementById("nextLvlBtn").style.display = "inline-flex";
+  }
+}
+
+function renderTiles() {
+  tiles.forEach(t => {
+    const el = document.getElementById(`tile-${t.r}-${t.c}`);
+    let symbol = '│';
+    if (t.type === 'source') symbol = '⚡';
+    else if (t.type === 'core') symbol = '🔴';
+    else if (t.type === 'corner') symbol = '└';
+    else if (t.type === 'cross') symbol = '┼';
+
+    el.textContent = symbol;
+    el.style.transform = `rotate(${t.rot * 90}deg)`;
+
+    el.className = 'tile';
+    if (t.type === 'source') el.classList.add('power-source');
+    else if (t.type === 'core') el.classList.add('core-target');
+    if (t.powered) el.classList.add('powered');
+  });
+}
+
+document.getElementById("nextLvlBtn").onclick = () => {
+  credits += 50;
+  level++;
+  if (level > 30) level = 30;
+  localStorage.setItem("cc_lvl", level);
+  localStorage.setItem("cc_credits", credits);
+  updateUI();
+  initLevel();
+};
+
+document.getElementById("resetLvlBtn").onclick = () => initLevel();
+
+function updateUI() {
+  document.getElementById("lvlVal").textContent = level;
+  document.getElementById("creditsVal").textContent = credits;
+}
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("resetLvlBtn").textContent = dict.reset;
+  document.getElementById("nextLvlBtn").textContent = dict.next;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang();
+updateLang();
+updateUI();
+initLevel();
+</script>
+</body>
+</html>
