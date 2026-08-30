@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>💥 Cyber Artillery P2P</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💥</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root {
+  --bg: #030611;
+  --panel: rgba(10, 16, 36, 0.92);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --accent: #ffaa00;
+  --danger: #ff0055;
+  --green: #00ff66;
+  --purple: #a855f7;
+  --text: #e0f7fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(6, 10, 24, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.2); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #38ef7d; color: #000; }
+.btn-accent { background: var(--accent); color: #000; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0b132b 0%, #030611 100%);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.2); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; }
+.hp-bar-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 6px 14px; min-width: 140px; }
+.hp-track { width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; margin-top: 4px; }
+.hp-fill { height: 100%; transition: width 0.3s ease; }
+
+.hud-bottom { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; gap: 10px; }
+
+.aim-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 10px 16px; display: flex; flex-direction: column; gap: 8px; backdrop-filter: blur(10px); min-width: 240px; }
+.control-row { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; font-weight: 700; }
+.control-row input[type="range"] { flex: 1; accent-color: var(--primary); }
+
+/* Chat Box */
+.chat-box { width: 250px; height: 150px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; display: flex; flex-direction: column; pointer-events: auto; backdrop-filter: blur(10px); z-index: 5; }
+.chat-messages { flex: 1; padding: 8px; overflow-y: auto; font-size: 0.78rem; display: flex; flex-direction: column; gap: 4px; scrollbar-width: thin; }
+.chat-msg { word-break: break-word; }
+.chat-msg.system { color: var(--accent); font-style: italic; }
+.chat-msg.me { color: var(--primary); }
+.chat-msg.peer { color: var(--danger); }
+.chat-input-row { display: flex; border-top: 1px solid var(--border); }
+.chat-input { flex: 1; background: transparent; border: none; color: #fff; padding: 6px 8px; font-size: 0.8rem; outline: none; }
+
+/* Modal */
+.modal-overlay { position: absolute; inset: 0; background: rgba(3, 6, 17, 0.92); backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #081026; border: 1px solid var(--primary); border-radius: 22px; padding: 26px; width: 90%; max-width: 460px; text-align: center; box-shadow: 0 0 40px rgba(0,240,255,0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.6rem; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.input-field { background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; color: #fff; font-size: 0.95rem; text-align: center; font-weight: 700; outline: none; letter-spacing: 2px; }
+
+@media (max-width: 768px) {
+  .chat-box { width: 180px; height: 120px; }
+  .aim-panel { min-width: 200px; padding: 8px 10px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">💥</span>
+    <h1 id="titleTxt">Cyber Artillery P2P</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <button id="micBtn" class="btn">🎙️ <span id="micTxt">Mic Off</span></button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="hp-bar-box">
+        <div style="display:flex; justify-space-between; font-weight:800; color:var(--primary); font-size:0.85rem;">
+          <span>P1 (BLUE)</span>
+          <span id="p1HpVal">100 HP</span>
+        </div>
+        <div class="hp-track"><div id="p1HpFill" class="hp-fill" style="width:100%; background:var(--primary);"></div></div>
+      </div>
+
+      <div style="text-align:center; background:var(--panel); border:1px solid var(--border); padding:6px 16px; border-radius:14px; font-weight:800; font-size:0.85rem;">
+        <div id="turnLbl" style="color:var(--accent);">YOUR TURN</div>
+        <div style="font-size:0.75rem; color:#aaa; margin-top:2px;">🪙 <span id="creditsVal">0</span></div>
+      </div>
+
+      <div class="hp-bar-box">
+        <div style="display:flex; justify-space-between; font-weight:800; color:var(--danger); font-size:0.85rem;">
+          <span id="p2Name">P2 (RED AI)</span>
+          <span id="p2HpVal">100 HP</span>
+        </div>
+        <div class="hp-track"><div id="p2HpFill" class="hp-fill" style="width:100%; background:var(--danger);"></div></div>
+      </div>
+    </div>
+
+    <div class="hud-bottom">
+      <div class="chat-box" id="chatBox">
+        <div class="chat-messages" id="chatMsgs">
+          <div class="chat-msg system" id="welcomeChatMsg">Welcome to Cyber Artillery! Calculate trajectory & destroy target!</div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." maxlength="80">
+          <button class="btn btn-primary" style="border-radius:0 13px 13px 0;" id="sendChatBtn">Send</button>
+        </div>
+      </div>
+
+      <div class="aim-panel">
+        <div class="control-row">
+          <span id="angleLbl">ANGLE:</span>
+          <input type="range" id="angleSlider" min="10" max="85" value="45">
+          <span id="angleVal" style="width:36px; color:var(--primary);">45°</span>
+        </div>
+        <div class="control-row">
+          <span id="powerLbl">POWER:</span>
+          <input type="range" id="powerSlider" min="20" max="100" value="60">
+          <span id="powerVal" style="width:36px; color:var(--accent);">60</span>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <select id="weaponSel" class="btn" style="flex:1; border-radius:10px;">
+            <option value="plasma">⚡ Plasma Cannon</option>
+            <option value="cluster">💥 Cluster Shell</option>
+            <option value="emp">🌀 EMP Blast</option>
+            <option value="nuke">☢️ Quantum Nuke</option>
+          </select>
+          <button class="btn btn-primary" id="fireBtn" style="padding:8px 16px; border-radius:10px; font-weight:800;">FIRE 🚀</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="lobbyModal">
+    <div class="modal-card">
+      <h2 id="modalHead">💥 Cyber Artillery P2P</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Tactical trajectory physics combat! Adjust cannon angle & power, choose heavy weapons, and battle vs AI or real players in P2P WebRTC!</p>
+
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <button class="btn btn-primary" style="justify-content:center; padding:12px;" id="startAiBtn">🤖 Play vs AI Bot</button>
+        <button class="btn btn-accent" style="justify-content:center; padding:12px;" id="hostRoomBtn">🌐 Host Room (P2P)</button>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="roomCodeInput" class="input-field" placeholder="CODE" style="width:120px; text-transform:uppercase;">
+          <button class="btn" style="flex:1; justify-content:center; background:rgba(0,240,255,0.18);" id="joinRoomBtn">🔗 Join Room</button>
+        </div>
+      </div>
+
+      <div id="connectionStatus" style="font-size:0.8rem; color:var(--accent); display:none;">Initializing...</div>
+    </div>
+  </div>
+</main>
+
+<audio id="remoteAudio" autoplay></audio>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Artillery P2P", home: "Home", playAi: "🤖 Play vs AI Bot", hostRoom: "🌐 Host Room (P2P)", joinRoom: "🔗 Join Room", micOff: "Mic Off", micOn: "Mic On", welcomeMsg: "Welcome to Cyber Artillery! Calculate trajectory & destroy target!", modeAi: "MODE: AI BOT", modeHost: "MODE: HOST (P2P)", modePeer: "MODE: CLIENT (P2P)", copyCode: "Room Code: ", connected: "Peer Connected!", connecting: "Connecting...", win: "VICTORY!", lose: "DEFEAT!", typeMsg: "Type a message...", yourTurn: "YOUR TURN", enemyTurn: "ENEMY TURN", angle: "ANGLE:", power: "POWER:" },
+  hy: { title: "Կիբեռ Արտիլերիա P2P", home: "Գլխավոր", playAi: "🤖 Խաղալ AI Բոտի դեմ", hostRoom: "🌐 Ստեղծել Սենյակ (P2P)", joinRoom: "🔗 Միանալ Սենյակին", micOff: "Միկ. Անջատ", micOn: "Միկ. Միացված", welcomeMsg: "Բարի գալուստ Կիբեռ Արտիլերիա! Հաշվարկեք հետագիծը և ոչնչացրեք թիրախը:", modeAi: "ՌԵԺԻՄ: AI ԲՈՏ", modeHost: "ՌԵԺԻՄ: ՀՈՍԹ (P2P)", modePeer: "ՌԵԺԻՄ: ԿԼԻԵՆՏ (P2P)", copyCode: "Սենյակի Կոդ: ", connected: "Միացված է!", connecting: "Միանում է...", win: "ՀԱՂԹԱՆԱԿ!", lose: "ՊԱՐՏՈՒԹՅՈՒՆ!", typeMsg: "Գրեք հաղորդագրություն...", yourTurn: "ՔՈ ՔԱՅԼՆ Է", enemyTurn: "ԹՇՆԱՄՈՒ ՔԱՅԼՆ Է", angle: "ԱՆԿՅՈՒՆ:", power: "ՈՒԺ:" },
+  ru: { title: "Кибер Артиллерия P2P", home: "Главная", playAi: "🤖 Игра против ИИ", hostRoom: "🌐 Создать Комнату (P2P)", joinRoom: "🔗 Войти в Комнату", micOff: "Мик Выкл", micOn: "Мик Вкл", welcomeMsg: "Добро пожаловать в Кибер Артиллерию! Рассчитайте траекторию и уничтожьте цель!", modeAi: "РЕЖИМ: ИИ БОТ", modeHost: "РЕЖИМ: ХОСТ (P2P)", modePeer: "РЕЖИМ: КЛИЕНТ (P2P)", copyCode: "Код комнаты: ", connected: "Подключено!", connecting: "Подключение...", win: "ПОБЕДА!", lose: "ПОРАЖЕНИЕ!", typeMsg: "Сообщение...", yourTurn: "ВАШ ХОД", enemyTurn: "ХОД ВРАГА", angle: "УГОЛ:", power: "СИЛА:" },
+  es: { title: "Cyber Artillería P2P", home: "Inicio", playAi: "🤖 Jugar vs IA", hostRoom: "🌐 Crear Sala (P2P)", joinRoom: "🔗 Unirse a Sala", micOff: "Mic Apagado", micOn: "Mic Encendido", welcomeMsg: "¡Bienvenido a Cyber Artillería! ¡Calcula la trayectoria y destruye al enemigo!", modeAi: "MODO: IA BOT", modeHost: "MODO: HOST (P2P)", modePeer: "MODO: CLIENTE (P2P)", copyCode: "Código de Sala: ", connected: "¡Conectado!", connecting: "Conectando...", win: "¡VICTORIA!", lose: "¡DERROTA!", typeMsg: "Escribe...", yourTurn: "TU TURNO", enemyTurn: "TURNO ENEMIGO", angle: "ÁNGULO:", power: "FUERZA:" },
+  fr: { title: "Cyber Artillerie P2P", home: "Accueil", playAi: "🤖 Jouer vs IA", hostRoom: "🌐 Créer Salon (P2P)", joinRoom: "🔗 Rejoindre Salon", micOff: "Micro Off", micOn: "Micro On", welcomeMsg: "Bienvenue sur Cyber Artillerie ! Calculez la trajectoire et détruisez la cible !", modeAi: "MODE : IA BOT", modeHost: "MODE : HÔTE (P2P)", modePeer: "MODE : CLIENT (P2P)", copyCode: "Code Salon : ", connected: "Connecté !", connecting: "Connexion...", win: "VICTOIRE !", lose: "DÉFAITE !", typeMsg: "Message...", yourTurn: "VOTRE TOUR", enemyTurn: "TOUR ENNEMI", angle: "ANGLE :", power: "PUISSANCE :" },
+  de: { title: "Cyber Artillerie P2P", home: "Startseite", playAi: "🤖 Gegen KI spielen", hostRoom: "🌐 Raum Erstellen (P2P)", joinRoom: "🔗 Raum Beitreten", micOff: "Mikro Aus", micOn: "Mikro An", welcomeMsg: "Willkommen bei Cyber Artillerie! Berechne die Flugbahn und vernichte das Ziel!", modeAi: "MODUS: KI BOT", modeHost: "MODUS: HOST (P2P)", modePeer: "MODUS: CLIENT (P2P)", copyCode: "Raumcode: ", connected: "Verbunden!", connecting: "Verbinde...", win: "SIEG!", lose: "NIEDERLAGE!", typeMsg: "Nachricht...", yourTurn: "DU BIST DRAN", enemyTurn: "GEGNER DRAN", angle: "WINKEL:", power: "KRAFT:" },
+  it: { title: "Cyber Artiglieria P2P", home: "Home", playAi: "🤖 Gioca vs IA", hostRoom: "🌐 Crea Stanza (P2P)", joinRoom: "🔗 Unisciti alla Stanza", micOff: "Mic Off", micOn: "Mic On", welcomeMsg: "Benvenuto in Cyber Artiglieria! Calcola la traiettoria e distruggi il bersaglio!", modeAi: "MODALITÀ: IA BOT", modeHost: "MODALITÀ: HOST (P2P)", modePeer: "MODALITÀ: CLIENT (P2P)", copyCode: "Codice Stanza: ", connected: "Connesso!", connecting: "Connessione...", win: "VITTORIA!", lose: "SCONFITTA!", typeMsg: "Messaggio...", yourTurn: "IL TUO TURNO", enemyTurn: "TURNO NEMICO", angle: "ANGOLO:", power: "POTENZA:" },
+  pt: { title: "Cyber Artilharia P2P", home: "Início", playAi: "🤖 Jogar vs IA", hostRoom: "🌐 Criar Sala (P2P)", joinRoom: "🔗 Entrar na Sala", micOff: "Mic Off", micOn: "Mic On", welcomeMsg: "Bem-vindo ao Cyber Artilharia! Calcule a trajetória e destrua o alvo!", modeAi: "MODO: IA BOT", modeHost: "MODO: HOST (P2P)", modePeer: "MODO: CLIENTE (P2P)", copyCode: "Código da Sala: ", connected: "Conectado!", connecting: "Conectando...", win: "VITÓRIA!", lose: "DERROTA!", typeMsg: "Mensagem...", yourTurn: "SUA VEZ", enemyTurn: "VEZ DO INIMIGO", angle: "ÂNGULO:", power: "FORÇA:" },
+  tr: { title: "Cyber Topçuluk P2P", home: "Ana Sayfa", playAi: "🤖 Yapay Zekaya Karşı", hostRoom: "🌐 Oda Kur (P2P)", joinRoom: "🔗 Odaya Katıl", micOff: "Mik Kapalı", micOn: "Mik Açık", welcomeMsg: "Cyber Topçuluğa Hoş Geldiniz! Yörüngeyi hesaplayın ve hedefi yok edin!", modeAi: "MOD: YAPAY ZEKA", modeHost: "MOD: KURUCU (P2P)", modePeer: "MOD: KATILIMCI (P2P)", copyCode: "Oda Kodu: ", connected: "Bağlandı!", connecting: "Bağlanıyor...", win: "ZAFER!", lose: "YENİLGİ!", typeMsg: "Mesaj...", yourTurn: "SENİN SIRAN", enemyTurn: "RAKİBİN SIRASI", angle: "AÇI:", power: "GÜÇ:" },
+  ja: { title: "サイバー砲兵 P2P", home: "ホーム", playAi: "🤖 AIボットと対戦", hostRoom: "🌐 ルーム作成 (P2P)", joinRoom: "🔗 ルーム参加", micOff: "マイクOFF", micOn: "マイクON", welcomeMsg: "サイバー砲兵へようこそ！弾道を選択して敵を撃破せよ！", modeAi: "モード: AIボット", modeHost: "モード: ホスト (P2P)", modePeer: "モード: クライアント (P2P)", copyCode: "ルームコード: ", connected: "接続完了！", connecting: "接続中...", win: "勝利！", lose: "敗北...", typeMsg: "メッセージ...", yourTurn: "あなたの番", enemyTurn: "相手の番", angle: "角度:", power: "威力:" },
+  zh: { title: "赛博大炮 P2P", home: "主页", playAi: "🤖 个人人机对战", hostRoom: "🌐 创建房间 (P2P)", joinRoom: "🔗 加入房间", micOff: "麦克风关", micOn: "麦克风开", welcomeMsg: "欢迎来到赛博大炮！计算抛物线轨迹，摧毁敌方堡垒！", modeAi: "模式: 人机对战", modeHost: "模式: 主机 (P2P)", modePeer: "模式: 客服端 (P2P)", copyCode: "房间代码: ", connected: "连接成功！", connecting: "连接中...", win: "胜利！", lose: "失败！", typeMsg: "输入消息...", yourTurn: "轮到你了", enemyTurn: "敌方回合", angle: "角度:", power: "力量:" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+let micEnabled = false;
+let localStream = null;
+let peer = null, dataConn = null, audioCall = null;
+let mode = "ai";
+let credits = parseInt(localStorage.getItem("ca_credits") || "0");
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 960, H = 540;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Sound Synthesis
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'fire') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(150, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.2);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+  } else if (type === 'hit') {
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(80, now);
+    osc.frequency.exponentialRampToValueAtTime(30, now + 0.3);
+    gain.gain.setValueAtTime(0.4, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.35);
+}
+
+// Game State
+let terrain = [];
+let p1 = { x: 100, y: 0, hp: 100, color: "#00f0ff" };
+let p2 = { x: 860, y: 0, hp: 100, color: "#ff0055" };
+let turn = 1; // 1: P1, 2: P2
+let projectile = null;
+let explosions = [];
+
+function generateTerrain() {
+  terrain = [];
+  let h = H * 0.65;
+  for (let x = 0; x <= W; x++) {
+    h += (Math.sin(x * 0.01) * 1.5 + Math.cos(x * 0.025) * 2);
+    h = Math.max(H * 0.45, Math.min(H * 0.8, h));
+    terrain.push(h);
+  }
+  p1.x = Math.floor(W * 0.12);
+  p1.y = terrain[p1.x] - 14;
+  p2.x = Math.floor(W * 0.88);
+  p2.y = terrain[p2.x] - 14;
+}
+generateTerrain();
+
+function addCredits(amount) {
+  credits += amount;
+  localStorage.setItem("ca_credits", credits);
+  document.getElementById("creditsVal").textContent = credits;
+}
+
+const angleSlider = document.getElementById("angleSlider");
+const powerSlider = document.getElementById("powerSlider");
+angleSlider.oninput = () => document.getElementById("angleVal").textContent = angleSlider.value + "°";
+powerSlider.oninput = () => document.getElementById("powerVal").textContent = powerSlider.value;
+
+document.getElementById("fireBtn").onclick = () => {
+  if (projectile || (mode === "client" && turn !== 2) || (mode !== "client" && turn !== 1)) return;
+  fireWeapon(turn, parseInt(angleSlider.value), parseInt(powerSlider.value), document.getElementById("weaponSel").value);
+};
+
+function fireWeapon(shooterTurn, angleDeg, power, wType) {
+  playSound('fire');
+  let shooter = shooterTurn === 1 ? p1 : p2;
+  let rad = (angleDeg * Math.PI) / 180;
+  let dir = shooterTurn === 1 ? 1 : -1;
+
+  projectile = {
+    x: shooter.x,
+    y: shooter.y - 10,
+    vx: Math.cos(rad) * (power * 0.22) * dir,
+    vy: -Math.sin(rad) * (power * 0.22),
+    type: wType,
+    shooter: shooterTurn
+  };
+
+  if (mode === "host" && dataConn && dataConn.open) {
+    dataConn.send({ type: 'fire', angle: angleDeg, power: power, wType: wType });
+  } else if (mode === "client" && dataConn && dataConn.open) {
+    dataConn.send({ type: 'fire', angle: angleDeg, power: power, wType: wType });
+  }
+}
+
+function updateGame() {
+  // Update Projectile
+  if (projectile) {
+    projectile.x += projectile.vx;
+    projectile.y += projectile.vy;
+    projectile.vy += 0.22; // Gravity
+
+    let ix = Math.floor(projectile.x);
+    if (ix >= 0 && ix < W) {
+      if (projectile.y >= terrain[ix]) {
+        // Impact
+        explode(projectile.x, projectile.y, projectile.type);
+        projectile = null;
+        switchTurn();
+      }
+    } else if (projectile.y > H + 50 || projectile.x < -50 || projectile.x > W + 50) {
+      projectile = null;
+      switchTurn();
+    }
+  }
+
+  // AI Turn
+  if (mode === "ai" && turn === 2 && !projectile) {
+    setTimeout(() => {
+      if (turn === 2 && !projectile) {
+        let aiAngle = Math.floor(35 + Math.random() * 25);
+        let aiPower = Math.floor(45 + Math.random() * 30);
+        fireWeapon(2, aiAngle, aiPower, "plasma");
+      }
+    }, 1000);
+  }
+
+  // Update Explosions
+  for (let i = explosions.length - 1; i >= 0; i--) {
+    let e = explosions[i];
+    e.r += 2;
+    e.alpha -= 0.04;
+    if (e.alpha <= 0) explosions.splice(i, 1);
+  }
+
+  // Update HP bars UI
+  document.getElementById("p1HpVal").textContent = Math.max(0, p1.hp) + " HP";
+  document.getElementById("p2HpVal").textContent = Math.max(0, p2.hp) + " HP";
+  document.getElementById("p1HpFill").style.width = Math.max(0, p1.hp) + "%";
+  document.getElementById("p2HpFill").style.width = Math.max(0, p2.hp) + "%";
+
+  const dict = I18N[lang] || I18N.en;
+  let isMyTurn = (turn === 1 && mode !== "client") || (turn === 2 && mode === "client");
+  document.getElementById("turnLbl").textContent = isMyTurn ? dict.yourTurn : dict.enemyTurn;
+  document.getElementById("turnLbl").style.color = isMyTurn ? "var(--green)" : "var(--danger)";
+}
+
+function explode(x, y, type) {
+  playSound('hit');
+  let radius = 25;
+  let damage = 20;
+
+  if (type === 'cluster') { radius = 35; damage = 28; }
+  else if (type === 'emp') { radius = 45; damage = 15; }
+  else if (type === 'nuke') { radius = 60; damage = 40; }
+
+  explosions.push({ x: x, y: y, r: 5, maxR: radius, alpha: 1 });
+
+  // Terrain deformation
+  for (let tx = Math.max(0, Math.floor(x - radius)); tx <= Math.min(W - 1, Math.floor(x + radius)); tx++) {
+    let dx = tx - x;
+    let dy = Math.sqrt(Math.max(0, radius * radius - dx * dx));
+    terrain[tx] = Math.min(H * 0.9, Math.max(terrain[tx], y + dy));
+  }
+
+  // Damage Players
+  [p1, p2].forEach((p, idx) => {
+    let dist = Math.hypot(p.x - x, p.y - y);
+    if (dist < radius + 15) {
+      let deal = Math.floor(damage * (1 - dist / (radius + 20)));
+      p.hp -= deal;
+      if (idx === 0 && p.hp <= 0) addCredits(10);
+      if (idx === 1 && p.hp <= 0) addCredits(50);
+    }
+    p.y = terrain[p.x] - 14;
+  });
+}
+
+function switchTurn() {
+  turn = turn === 1 ? 2 : 1;
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw Terrain
+  ctx.beginPath();
+  ctx.moveTo(0, H);
+  for (let x = 0; x < W; x++) {
+    ctx.lineTo(x, terrain[x]);
+  }
+  ctx.lineTo(W, H);
+  ctx.fillStyle = "#0a192f";
+  ctx.fill();
+  ctx.strokeStyle = "var(--primary)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Draw Tanks/Cannons
+  [p1, p2].forEach(p => {
+    ctx.save();
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 14, Math.PI, 0);
+    ctx.fill();
+
+    // Barrel
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y - 6);
+    let dir = p === p1 ? 1 : -1;
+    let rad = (parseInt(angleSlider.value) * Math.PI) / 180;
+    ctx.lineTo(p.x + Math.cos(rad) * 22 * dir, p.y - 6 - Math.sin(rad) * 22);
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  // Draw Projectile
+  if (projectile) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(projectile.x, projectile.y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = "var(--accent)";
+    ctx.shadowColor = "var(--accent)";
+    ctx.shadowBlur = 15;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Draw Explosions
+  explosions.forEach(e => {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 0, 85, ${e.alpha})`;
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+// PeerJS Networking
+function initPeer(customId = null) {
+  const statusEl = document.getElementById("connectionStatus");
+  statusEl.style.display = "block";
+  statusEl.textContent = (I18N[lang] || I18N.en).connecting;
+
+  peer = customId ? new Peer(customId) : new Peer();
+
+  peer.on('open', (id) => {
+    statusEl.textContent = (I18N[lang] || I18N.en).copyCode + id;
+    addChatMessage('system', `Room created! Code: ${id}`);
+  });
+
+  peer.on('connection', (conn) => {
+    dataConn = conn;
+    setupDataConn();
+  });
+
+  peer.on('call', (call) => {
+    audioCall = call;
+    if (localStream) call.answer(localStream);
+    else call.answer();
+    call.on('stream', (remoteStream) => {
+      document.getElementById("remoteAudio").srcObject = remoteStream;
+    });
+  });
+}
+
+function setupDataConn() {
+  dataConn.on('open', () => {
+    addChatMessage('system', (I18N[lang] || I18N.en).connected);
+    document.getElementById("lobbyModal").style.display = "none";
+  });
+  dataConn.on('data', (data) => {
+    if (data.type === 'chat') {
+      addChatMessage('peer', data.msg);
+    } else if (data.type === 'fire') {
+      let targetTurn = mode === "host" ? 2 : 1;
+      fireWeapon(targetTurn, data.angle, data.power, data.wType);
+    }
+  });
+}
+
+function addChatMessage(sender, text) {
+  const msgs = document.getElementById("chatMsgs");
+  const div = document.createElement("div");
+  div.className = `chat-msg ${sender}`;
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+document.getElementById("sendChatBtn").onclick = () => {
+  const input = document.getElementById("chatInput");
+  const text = input.value.trim();
+  if (text) {
+    addChatMessage('me', text);
+    if (dataConn && dataConn.open) dataConn.send({ type: 'chat', msg: text });
+    input.value = "";
+  }
+};
+
+document.getElementById("micBtn").onclick = async () => {
+  if (!micEnabled) {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micEnabled = true;
+      document.getElementById("micTxt").textContent = (I18N[lang] || I18N.en).micOn;
+      if (dataConn && dataConn.peer) {
+        audioCall = peer.call(dataConn.peer, localStream);
+        audioCall.on('stream', s => document.getElementById("remoteAudio").srcObject = s);
+      }
+    } catch (e) { alert("Microphone access failed."); }
+  } else {
+    if (localStream) localStream.getTracks().forEach(t => t.stop());
+    micEnabled = false;
+    document.getElementById("micTxt").textContent = (I18N[lang] || I18N.en).micOff;
+  }
+};
+
+document.getElementById("startAiBtn").onclick = () => {
+  mode = "ai";
+  document.getElementById("lobbyModal").style.display = "none";
+};
+
+document.getElementById("hostRoomBtn").onclick = () => {
+  mode = "host";
+  initPeer("ARTILLERY-" + Math.floor(1000 + Math.random() * 9000));
+};
+
+document.getElementById("joinRoomBtn").onclick = () => {
+  let code = document.getElementById("roomCodeInput").value.trim().toUpperCase();
+  if (!code) return;
+  mode = "client";
+  initPeer();
+  peer.on('open', () => {
+    dataConn = peer.connect(code);
+    setupDataConn();
+  });
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("startAiBtn").textContent = dict.playAi;
+  document.getElementById("hostRoomBtn").textContent = dict.hostRoom;
+  document.getElementById("joinRoomBtn").textContent = dict.joinRoom;
+  document.getElementById("micTxt").textContent = micEnabled ? dict.micOn : dict.micOff;
+  document.getElementById("chatInput").placeholder = dict.typeMsg;
+  document.getElementById("welcomeChatMsg").textContent = dict.welcomeMsg;
+  document.getElementById("angleLbl").textContent = dict.angle;
+  document.getElementById("powerLbl").textContent = dict.power;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+document.getElementById("creditsVal").textContent = credits;
+initLang();
+updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>

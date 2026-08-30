@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🗡️ Neon Rogue Dungeon</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗡️</text></svg>">
+<style>
+:root {
+  --bg: #040814;
+  --panel: rgba(12, 18, 38, 0.94);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --accent: #a855f7;
+  --danger: #ff0055;
+  --gold: #ffaa00;
+  --green: #00ff66;
+  --text: #e0f7fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(6, 10, 24, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.2); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #38ef7d; color: #000; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
+
+#gameCanvas {
+  background: #02040a; box-shadow: 0 0 35px rgba(0, 240, 255, 0.15); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 900px; margin: 0 auto; pointer-events: auto; gap: 8px; flex-wrap: wrap; }
+
+.stat-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 6px 14px; font-weight: 700; font-size: 0.85rem; backdrop-filter: blur(10px); }
+
+.touch-pad { position: absolute; bottom: 16px; right: 16px; display: none; grid-template-columns: repeat(3, 48px); gap: 6px; pointer-events: auto; }
+.touch-btn { width: 48px; height: 48px; background: rgba(255,255,255,0.12); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; }
+.touch-btn:active { background: rgba(0, 240, 255, 0.4); }
+
+/* Log Box */
+.log-box { position: absolute; bottom: 16px; left: 16px; width: 260px; height: 130px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 8px; overflow-y: auto; font-size: 0.78rem; pointer-events: auto; backdrop-filter: blur(10px); display: flex; flex-direction: column; gap: 4px; }
+
+@media (max-width: 768px) {
+  .touch-pad { display: grid; }
+  .log-box { width: 200px; height: 100px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🗡️</span>
+    <h1 id="titleTxt">Neon Rogue Dungeon</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="stat-box" style="color:var(--green);">❤️ HP: <span id="hpVal">100/100</span></div>
+      <div class="stat-box" style="color:var(--primary);">🗡️ ATK: <span id="atkVal">15</span></div>
+      <div class="stat-box" style="color:var(--accent);">🛡️ DEF: <span id="defVal">5</span></div>
+      <div class="stat-box" style="color:var(--gold);">🪙 GOLD: <span id="goldVal">0</span></div>
+      <div class="stat-box" style="color:var(--danger);">🏰 FLOOR: <span id="floorVal">1</span></div>
+    </div>
+
+    <div class="log-box" id="logBox">
+      <div style="color:var(--gold);">Welcome to Neon Rogue Dungeon! Explore procedural rooms, fight cyber beasts & collect treasure!</div>
+    </div>
+
+    <div class="touch-pad">
+      <div></div><div class="touch-btn" id="btnUp">▲</div><div></div>
+      <div class="touch-btn" id="btnLeft">◄</div><div class="touch-btn" id="btnDown">▼</div><div class="touch-btn" id="btnRight">►</div>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Neon Rogue Dungeon", home: "Home", hp: "HP:", atk: "ATK:", def: "DEF:", gold: "GOLD:", floor: "FLOOR:", victory: "Floor cleared! Escalator activated!", gameOver: "GAME OVER! Reborn with stardust bonuses!" },
+  hy: { title: "Նեոն Ռոգ Դանջն", home: "Գլխավոր", hp: "Կյանք:", atk: "Հարված:", def: "Պաշտպ.:", gold: "Ոսկի:", floor: "ՀԱՐԿ:", victory: "Հարկը մաքրված է! Վերելակը ակտիվ է:", gameOver: "ԽԱՂԸ ԱՎԱՐՏՎԵՑ! Վերածնունդ:" },
+  ru: { title: "Неон Рог Подземелье", home: "Главная", hp: "Здор.:", atk: "Атака:", def: "Защ.:", gold: "Золото:", floor: "ЭТАЖ:", victory: "Этаж зачищен! Лифт активирован!", gameOver: "ИГРА ОКОНЧЕНА! Возрождение!" },
+  es: { title: "Neon Rogue Dungeon", home: "Inicio", hp: "HP:", atk: "ATK:", def: "DEF:", gold: "ORO:", floor: "PISO:", victory: "¡Piso despejado! ¡Elevador activado!", gameOver: "¡JUEGO TERMINADO! ¡Reinicio!" },
+  fr: { title: "Neon Rogue Donjon", home: "Accueil", hp: "PV:", atk: "ATQ:", def: "DÉF:", gold: "OR:", floor: "ÉTAGE:", victory: "Étage nettoyé ! Ascenseur activé !", gameOver: "GAME OVER ! Renaissance !" },
+  de: { title: "Neon Rogue Dungeon", home: "Startseite", hp: "KP:", atk: "ANG:", def: "VER:", gold: "GOLD:", floor: "EBENE:", victory: "Ebene gesäubert! Aufzug aktiv!", gameOver: "GAME OVER! Wiedergeburt!" },
+  it: { title: "Neon Rogue Dungeon", home: "Home", hp: "PV:", atk: "ATT:", def: "DIF:", gold: "ORO:", floor: "PIANO:", victory: "Piano completato! Ascensore attivo!", gameOver: "GAME OVER! Rinascita!" },
+  pt: { title: "Neon Rogue Dungeon", home: "Início", hp: "PV:", atk: "ATQ:", def: "DEF:", gold: "OURO:", floor: "ANDO:", victory: "Andar limpo! Elevador ativado!", gameOver: "GAME OVER! Renascimento!" },
+  tr: { title: "Neon Rogue Zindan", home: "Ana Sayfa", hp: "CAN:", atk: "SDR:", def: "SAV:", gold: "ALTIN:", floor: "KAT:", victory: "Kat temizlendi! Asansör aktif!", gameOver: "OYN BİTTİ! Yeniden doğuş!" },
+  ja: { title: "ネオンローグ ダンジョン", home: "ホーム", hp: "HP:", atk: "攻撃:", def: "防御:", gold: "ゴールド:", floor: "階層:", victory: "フロア爆破完了！エレベーター起動！", gameOver: "ゲームオーバー！再誕！" },
+  zh: { title: "霓虹地牢 Roguelike", home: "主页", hp: "生命:", atk: "攻击:", def: "防御:", gold: "金币:", floor: "层数:", victory: "楼层已肃清！电梯已开启！", gameOver: "游戏结束！轮回重生！" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 800, H = 500;
+const COLS = 20, ROWS = 12;
+let tileSize = 40;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = COLS / ROWS;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+  tileSize = W / COLS;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Sound Synthesis
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'move') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.exponentialRampToValueAtTime(150, now + 0.05);
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+  } else if (type === 'hit') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, now);
+    osc.frequency.exponentialRampToValueAtTime(50, now + 0.1);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+  } else if (type === 'gold') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.12);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.15);
+}
+
+// Player State
+let player = {
+  x: 1, y: 1,
+  hp: 100, maxHp: 100,
+  atk: 15, def: 5,
+  gold: parseInt(localStorage.getItem("nr_gold") || "0"),
+  floor: 1
+};
+
+let grid = [];
+let enemies = [];
+let items = [];
+let exitPos = { x: COLS - 2, y: ROWS - 2 };
+
+function generateDungeon() {
+  grid = [];
+  for (let r = 0; r < ROWS; r++) {
+    let row = [];
+    for (let c = 0; c < COLS; c++) {
+      if (r === 0 || r === ROWS - 1 || c === 0 || c === COLS - 1 || (Math.random() < 0.22 && !(c === 1 && r === 1))) {
+        row.push(1); // Wall
+      } else {
+        row.push(0); // Floor
+      }
+    }
+    grid.push(row);
+  }
+
+  player.x = 1; player.y = 1;
+  grid[1][1] = 0;
+
+  // Place Exit
+  exitPos = { x: COLS - 2, y: ROWS - 2 };
+  grid[exitPos.y][exitPos.x] = 0;
+
+  // Spawn Enemies & Items
+  enemies = [];
+  items = [];
+  let enemyCount = 3 + player.floor * 2;
+  for (let i = 0; i < enemyCount; i++) {
+    let ex = Math.floor(Math.random() * (COLS - 2)) + 1;
+    let ey = Math.floor(Math.random() * (ROWS - 2)) + 1;
+    if (grid[ey][ex] === 0 && !(ex === 1 && ey === 1)) {
+      enemies.push({ x: ex, y: ey, hp: 20 + player.floor * 8, maxHp: 20 + player.floor * 8, atk: 6 + player.floor * 2 });
+    }
+  }
+
+  for (let i = 0; i < 4; i++) {
+    let ix = Math.floor(Math.random() * (COLS - 2)) + 1;
+    let iy = Math.floor(Math.random() * (ROWS - 2)) + 1;
+    if (grid[iy][ix] === 0) {
+      items.push({ x: ix, y: iy, type: Math.random() > 0.5 ? 'gold' : 'heal' });
+    }
+  }
+}
+generateDungeon();
+
+function logMsg(txt, color = "#fff") {
+  const box = document.getElementById("logBox");
+  const div = document.createElement("div");
+  div.style.color = color;
+  div.textContent = txt;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function movePlayer(dx, dy) {
+  let nx = player.x + dx;
+  let ny = player.y + dy;
+
+  if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS || grid[ny][nx] === 1) return;
+
+  // Check Enemy Attack
+  let enemyIdx = enemies.findIndex(e => e.x === nx && e.y === ny);
+  if (enemyIdx !== -1) {
+    let enemy = enemies[enemyIdx];
+    let dmg = Math.max(1, player.atk - 2);
+    enemy.hp -= dmg;
+    playSound('hit');
+    logMsg(`You hit Cyber Beast for ${dmg} DMG!`, "var(--primary)");
+
+    if (enemy.hp <= 0) {
+      enemies.splice(enemyIdx, 1);
+      player.gold += 15;
+      logMsg(`Defeated Cyber Beast! +15 Gold`, "var(--gold)");
+    }
+  } else {
+    player.x = nx;
+    player.y = ny;
+    playSound('move');
+  }
+
+  // Pick up Items
+  let itemIdx = items.findIndex(i => i.x === player.x && i.y === player.y);
+  if (itemIdx !== -1) {
+    let item = items[itemIdx];
+    if (item.type === 'gold') {
+      player.gold += 25;
+      playSound('gold');
+      logMsg(`Picked up Gold Chest! +25 Gold`, "var(--gold)");
+    } else if (item.type === 'heal') {
+      player.hp = Math.min(player.maxHp, player.hp + 30);
+      playSound('gold');
+      logMsg(`Used Health Stim! +30 HP`, "var(--green)");
+    }
+    items.splice(itemIdx, 1);
+  }
+
+  // Check Exit Elevator
+  if (player.x === exitPos.x && player.y === exitPos.y) {
+    player.floor++;
+    player.atk += 3;
+    player.maxHp += 10;
+    player.hp = player.maxHp;
+    logMsg((I18N[lang] || I18N.en).victory, "var(--green)");
+    generateDungeon();
+  } else {
+    // Enemy Turn
+    updateEnemies();
+  }
+
+  saveData();
+  updateUI();
+}
+
+function updateEnemies() {
+  enemies.forEach(e => {
+    let dx = Math.sign(player.x - e.x);
+    let dy = Math.sign(player.y - e.y);
+
+    if (Math.abs(player.x - e.x) + Math.abs(player.y - e.y) === 1) {
+      // Attack player
+      let dmg = Math.max(1, e.atk - player.def);
+      player.hp -= dmg;
+      playSound('hit');
+      logMsg(`Cyber Beast struck you for ${dmg} DMG!`, "var(--danger)");
+
+      if (player.hp <= 0) {
+        logMsg((I18N[lang] || I18N.en).gameOver, "var(--danger)");
+        player.hp = player.maxHp;
+        player.floor = 1;
+        generateDungeon();
+      }
+    } else {
+      let nx = e.x + dx;
+      let ny = e.y + dy;
+      if (grid[ny][nx] === 0 && !enemies.some(other => other.x === nx && other.y === ny) && !(nx === player.x && ny === player.y)) {
+        e.x = nx; e.y = ny;
+      }
+    }
+  });
+}
+
+function saveData() {
+  localStorage.setItem("nr_gold", player.gold);
+}
+
+function updateUI() {
+  document.getElementById("hpVal").textContent = `${player.hp}/${player.maxHp}`;
+  document.getElementById("atkVal").textContent = player.atk;
+  document.getElementById("defVal").textContent = player.def;
+  document.getElementById("goldVal").textContent = player.gold;
+  document.getElementById("floorVal").textContent = player.floor;
+}
+
+window.addEventListener("keydown", e => {
+  if (e.key === "ArrowUp" || e.key === "w") movePlayer(0, -1);
+  if (e.key === "ArrowDown" || e.key === "s") movePlayer(0, 1);
+  if (e.key === "ArrowLeft" || e.key === "a") movePlayer(-1, 0);
+  if (e.key === "ArrowRight" || e.key === "d") movePlayer(1, 0);
+});
+
+function bindTouch(id, dx, dy) {
+  const el = document.getElementById(id);
+  el.addEventListener("touchstart", (e) => { e.preventDefault(); movePlayer(dx, dy); });
+}
+bindTouch("btnUp", 0, -1);
+bindTouch("btnDown", 0, 1);
+bindTouch("btnLeft", -1, 0);
+bindTouch("btnRight", 1, 0);
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw Grid
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      let x = c * tileSize;
+      let y = r * tileSize;
+
+      if (grid[r][c] === 1) {
+        ctx.fillStyle = "#0c1836";
+        ctx.fillRect(x, y, tileSize, tileSize);
+        ctx.strokeStyle = "rgba(0, 240, 255, 0.2)";
+        ctx.strokeRect(x, y, tileSize, tileSize);
+      } else {
+        ctx.fillStyle = "#040b1e";
+        ctx.fillRect(x, y, tileSize, tileSize);
+      }
+    }
+  }
+
+  // Draw Exit
+  ctx.fillStyle = "var(--green)";
+  ctx.shadowColor = "var(--green)";
+  ctx.shadowBlur = 12;
+  ctx.fillRect(exitPos.x * tileSize + 6, exitPos.y * tileSize + 6, tileSize - 12, tileSize - 12);
+
+  // Draw Items
+  items.forEach(i => {
+    ctx.fillStyle = i.type === 'gold' ? "var(--gold)" : "var(--green)";
+    ctx.shadowColor = ctx.fillStyle;
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(i.x * tileSize + tileSize / 2, i.y * tileSize + tileSize / 2, tileSize / 4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Draw Enemies
+  enemies.forEach(e => {
+    ctx.fillStyle = "var(--danger)";
+    ctx.shadowColor = "var(--danger)";
+    ctx.shadowBlur = 15;
+    ctx.fillRect(e.x * tileSize + 6, e.y * tileSize + 6, tileSize - 12, tileSize - 12);
+  });
+
+  // Draw Player
+  ctx.fillStyle = "var(--primary)";
+  ctx.shadowColor = "var(--primary)";
+  ctx.shadowBlur = 15;
+  ctx.beginPath();
+  ctx.arc(player.x * tileSize + tileSize / 2, player.y * tileSize + tileSize / 2, tileSize / 2 - 4, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function gameLoop() {
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang();
+updateLang();
+updateUI();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
