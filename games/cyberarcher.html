@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🎯 Cyber Archer Elite</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(10, 16, 35, 0.92);
+  --border: rgba(0, 255, 136, 0.35);
+  --primary: #00ff88;
+  --secondary: #00f0ff;
+  --accent: #ff0055;
+  --gold: #ffcc00;
+  --text: #f0f6fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 26, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 255, 136, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; }
+
+#canvas {
+  background: radial-gradient(circle at center, #051329 0%, #020612 100%);
+  box-shadow: 0 0 35px rgba(0, 255, 136, 0.18); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; }
+.stats-bar { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 8px 18px; font-weight: 700; color: var(--gold); display: flex; align-items: center; gap: 16px; font-size: 0.9rem; backdrop-filter: blur(10px); }
+
+/* Touch Overlay */
+.touch-controls { position: absolute; bottom: 16px; right: 16px; display: none; gap: 10px; pointer-events: auto; }
+.t-btn { width: 56px; height: 56px; background: rgba(255,255,255,0.12); border: 1px solid var(--border); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.3rem; font-weight: 800; }
+.t-btn:active { background: rgba(0, 255, 136, 0.4); }
+
+@media (max-width: 768px) {
+  .touch-controls { display: flex; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🎯</span>
+    <h1 id="titleTxt">Cyber Archer Elite</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="canvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="stats-bar">
+        <span>🎯 <span id="scoreVal">0</span></span>
+        <span>🪙 <span id="coinsVal">0</span></span>
+        <span>🌬️ <span id="windVal">0.0</span> m/s</span>
+        <span>🏹 <span id="arrowsVal">10</span></span>
+      </div>
+    </div>
+
+    <div class="touch-controls">
+      <div class="t-btn" id="btnFocus" style="background:rgba(0,240,255,0.3); border-color:var(--secondary);">👁️</div>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Archer Elite", home: "Home", win: "STAGE CLEAR!", lose: "OUT OF ARROWS!", restart: "Tap to retry" },
+  hy: { title: "Կիբեռ Աղեղնավոր", home: "Գլխավոր", win: "ՓՈՒԼՆ ԱՆՑՎԱԾ Է!", lose: "ՆԵՏԵՐԸ ԼՐԱՑԱՆ!", restart: "Սեղմեք կրկնելու համար" },
+  ru: { title: "Кибер Лучник", home: "Главная", win: "УРОВЕНЬ ПРОЙДЕН!", lose: "СТРЕЛЫ CОНЧИЛИСЬ!", restart: "Нажмите для повтора" },
+  es: { title: "Cyber Arquero Élite", home: "Inicio", win: "¡NIVEL SUPERADO!", lose: "¡SIN FLECHAS!", restart: "Toca para reintentar" },
+  fr: { title: "Cyber Archer Élite", home: "Accueil", win: "NIVEAU RÉUSSI !", lose: "PLUS DE FLÈCHES !", restart: "Appuyez pour rejouer" },
+  de: { title: "Cyber Bogenschütze", home: "Startseite", win: "LEVEL GESCHAFFT!", lose: "KEINE PFEILE MEHR!", restart: "Tippen zum Wiederholen" },
+  it: { title: "Cyber Arciere Elite", home: "Home", win: "LIVELLO SUPERATO!", lose: "FRECCE FINITE!", restart: "Tocca per riprovare" },
+  pt: { title: "Cyber Arqueiro Elite", home: "Início", win: "FASE CONCLUÍDA!", lose: "SEM FLECHAS!", restart: "Toque para tentar de novo" },
+  tr: { title: "Cyber Okçu Elite", home: "Ana Sayfa", win: "BÖLÜM GEÇİLDİ!", lose: "OKLAR BİTTİ!", restart: "Tekrar denemek için dokun" },
+  ja: { title: "サイバーアーチャー", home: "ホーム", win: "ステージクリア！", lose: "矢がなくなりました！", restart: "タップしてリトライ" },
+  zh: { title: "赛博神射手", home: "主页", win: "关卡完成！", lose: "箭矢耗尽！", restart: "点击重试" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+let score = 0;
+let coins = parseInt(localStorage.getItem("ca_coins") || "0");
+let arrowsLeft = 10;
+let wind = (Math.random() - 0.5) * 4;
+let focusMode = false;
+let timeScale = 1.0;
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+let W = 900, H = 550;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w); canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Sound Generator
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'release') {
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(150, now + 0.12);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+  } else if (type === 'hit') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(300, now + 0.15);
+    gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+  } else if (type === 'bullseye') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(523, now); osc.frequency.setValueAtTime(659, now + 0.1);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.3);
+}
+
+class Arrow {
+  constructor(x, y, angle, power) {
+    this.x = x; this.y = y;
+    this.vx = Math.cos(angle) * power;
+    this.vy = Math.sin(angle) * power;
+    this.angle = angle;
+    this.active = true;
+  }
+  update() {
+    if (!this.active) return;
+    this.vx += wind * 0.015 * timeScale;
+    this.vy += 0.22 * timeScale;
+    this.x += this.vx * timeScale;
+    this.y += this.vy * timeScale;
+    this.angle = Math.atan2(this.vy, this.vx);
+
+    if (this.x > W || this.y > H || this.x < 0) this.active = false;
+  }
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle);
+    ctx.strokeStyle = "var(--primary)"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(-20, 0); ctx.lineTo(10, 0); ctx.stroke();
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.moveTo(10, -4); ctx.lineTo(18, 0); ctx.lineTo(10, 4); ctx.fill();
+    ctx.restore();
+  }
+}
+
+class Target {
+  constructor() {
+    this.x = W - 120;
+    this.y = H / 2;
+    this.r = 45;
+    this.vy = 2;
+  }
+  update() {
+    this.y += this.vy * timeScale;
+    if (this.y - this.r < 80 || this.y + this.r > H - 60) this.vy *= -1;
+  }
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    let rings = [
+      { r: this.r, color: "var(--accent)" },
+      { r: this.r * 0.7, color: "#fff" },
+      { r: this.r * 0.4, color: "var(--secondary)" },
+      { r: this.r * 0.2, color: "var(--gold)" }
+    ];
+    rings.forEach(ring => {
+      ctx.beginPath(); ctx.arc(0, 0, ring.r, 0, Math.PI * 2);
+      ctx.fillStyle = ring.color; ctx.fill();
+      ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = 2; ctx.stroke();
+    });
+    ctx.restore();
+  }
+}
+
+let archer = { x: 100, y: H - 120 };
+let target = new Target();
+let arrows = [];
+let isAiming = false;
+let aimStart = { x: 0, y: 0 };
+let currentAngle = 0, currentPower = 0;
+
+canvas.addEventListener("pointerdown", e => {
+  if (arrowsLeft <= 0) { resetGame(); return; }
+  const rect = canvas.getBoundingClientRect();
+  isAiming = true;
+  aimStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+});
+
+canvas.addEventListener("pointermove", e => {
+  if (!isAiming) return;
+  const rect = canvas.getBoundingClientRect();
+  let mx = e.clientX - rect.left;
+  let my = e.clientY - rect.top;
+  let dx = aimStart.x - mx;
+  let dy = aimStart.y - my;
+  currentAngle = Math.atan2(dy, dx);
+  currentPower = Math.min(Math.hypot(dx, dy) * 0.15, 22);
+});
+
+canvas.addEventListener("pointerup", () => {
+  if (!isAiming) return;
+  isAiming = false;
+  if (currentPower > 3) {
+    arrows.push(new Arrow(archer.x, archer.y, currentAngle, currentPower));
+    arrowsLeft--;
+    playSound('release');
+    document.getElementById("arrowsVal").textContent = arrowsLeft;
+  }
+});
+
+function addCoins(amt) {
+  coins += amt;
+  localStorage.setItem("ca_coins", coins);
+  document.getElementById("coinsVal").textContent = coins;
+}
+
+function checkHits() {
+  arrows.forEach(a => {
+    if (!a.active) return;
+    let dist = Math.hypot(a.x - target.x, a.y - target.y);
+    if (dist < target.r) {
+      a.active = false;
+      let pts = Math.max(10, Math.floor((1 - dist / target.r) * 100));
+      score += pts;
+      addCoins(Math.floor(pts / 5));
+      if (dist < target.r * 0.2) playSound('bullseye');
+      else playSound('hit');
+
+      wind = (Math.random() - 0.5) * 5;
+      document.getElementById("scoreVal").textContent = score;
+      document.getElementById("windVal").textContent = wind.toFixed(1);
+    }
+  });
+}
+
+function resetGame() {
+  score = 0; arrowsLeft = 10;
+  document.getElementById("scoreVal").textContent = score;
+  document.getElementById("arrowsVal").textContent = arrowsLeft;
+}
+
+function update() {
+  timeScale = focusMode ? 0.3 : 1.0;
+  target.update();
+  arrows.forEach(a => a.update());
+  checkHits();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Range floor
+  ctx.fillStyle = "rgba(0, 255, 136, 0.08)";
+  ctx.fillRect(0, H - 40, W, 40);
+  ctx.strokeStyle = "var(--primary)"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, H - 40); ctx.lineTo(W, H - 40); ctx.stroke();
+
+  target.draw();
+
+  // Archer
+  ctx.save();
+  ctx.translate(archer.x, archer.y);
+  ctx.fillStyle = "var(--secondary)"; ctx.beginPath(); ctx.arc(0, -20, 16, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0, -4); ctx.lineTo(0, 30); ctx.stroke();
+  ctx.restore();
+
+  // Aim trajectory line
+  if (isAiming) {
+    ctx.save();
+    ctx.strokeStyle = "rgba(0, 255, 136, 0.4)"; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+    ctx.beginPath(); ctx.moveTo(archer.x, archer.y);
+    let tx = archer.x, ty = archer.y, tvx = Math.cos(currentAngle) * currentPower, tvy = Math.sin(currentAngle) * currentPower;
+    for (let i = 0; i < 25; i++) {
+      tvx += wind * 0.015; tvy += 0.22; tx += tvx; ty += tvy;
+      ctx.lineTo(tx, ty);
+    }
+    ctx.stroke(); ctx.restore();
+  }
+
+  arrows.forEach(a => a.draw());
+}
+
+function loop() {
+  update(); draw();
+  requestAnimationFrame(loop);
+}
+
+document.getElementById("btnFocus").onpointerdown = () => focusMode = true;
+document.getElementById("btnFocus").onpointerup = () => focusMode = false;
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+document.getElementById("coinsVal").textContent = coins;
+initLang(); updateLang();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

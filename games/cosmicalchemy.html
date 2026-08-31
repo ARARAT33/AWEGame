@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🪐 Cosmic Element Sandbox</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪐</text></svg>">
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(12, 18, 38, 0.92);
+  --border: rgba(168, 85, 247, 0.35);
+  --primary: #a855f7;
+  --secondary: #00f0ff;
+  --gold: #ffcc00;
+  --text: #f0f6fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 26, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(168, 85, 247, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #fff; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; flex-direction: column; width: 100%; height: calc(100vh - 55px); overflow: hidden; }
+
+.workspace { flex: 1; display: flex; position: relative; width: 100%; height: 100%; }
+
+#canvas { flex: 1; min-width: 0; min-height: 0; background: radial-gradient(circle at center, #0b0f26 0%, #02040a 100%); display: block; touch-action: none; }
+
+.sidebar {
+  width: 280px; background: var(--panel); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; padding: 12px; gap: 12px; backdrop-filter: blur(12px);
+  z-index: 5; overflow-y: auto;
+}
+
+.section-title { font-size: 0.85rem; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
+
+.element-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.elem-card {
+  background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+  padding: 8px; text-align: center; cursor: pointer; transition: 0.2s; font-size: 0.8rem; font-weight: 600;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.elem-card:hover, .elem-card.active { background: rgba(168, 85, 247, 0.25); border-color: var(--primary); }
+.elem-icon { font-size: 1.4rem; }
+
+.stats-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 14px; padding: 10px; display: flex; justify-content: space-around; text-align: center; font-size: 0.8rem; }
+.stat-val { font-size: 1.2rem; font-weight: 900; color: var(--gold); }
+
+.discovery-log { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 12px; padding: 8px; font-size: 0.78rem; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.log-item { color: var(--secondary); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px; }
+
+@media (max-width: 768px) {
+  .workspace { flex-direction: column-reverse; }
+  .sidebar { width: 100%; height: 210px; border-left: none; border-top: 1px solid var(--border); }
+  .element-grid { grid-template-columns: repeat(4, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🪐</span>
+    <h1 id="titleTxt">Cosmic Element Sandbox</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="clearBtn" class="btn">🧹 <span id="clearTxt">Clear</span></button>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <div class="workspace">
+    <canvas id="canvas"></canvas>
+
+    <div class="sidebar">
+      <div class="stats-card">
+        <div><div class="stat-val" id="discVal">0 / 12</div><div id="discLbl">Discovered</div></div>
+        <div><div class="stat-val" id="energyVal">0</div><div id="energyLbl">Cosmic Energy</div></div>
+      </div>
+
+      <div class="section-title"><span id="elemHead">Cosmic Elements</span></div>
+      <div class="element-grid" id="elemGrid"></div>
+
+      <div class="section-title"><span id="logHead">Reaction Journal</span></div>
+      <div class="discovery-log" id="discLog">
+        <div class="log-item" id="startLog">Drop cosmic elements onto the sandbox to trigger reactions!</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cosmic Element Sandbox", home: "Home", clear: "Clear", discLbl: "Discovered", energyLbl: "Energy", elemHead: "Cosmic Elements", logHead: "Reaction Journal", startLog: "Drop cosmic elements onto the sandbox to trigger reactions!" },
+  hy: { title: "Տիեզերական Տարրերի Սանդբոքս", home: "Գլխավոր", clear: "Մաքրել", discLbl: "Բացահայտված", energyLbl: "Էներգիա", elemHead: "Տիեզերական Տարրեր", logHead: "Ռեակցիաների Օրագիր", startLog: "Քաշեք տարրերը կտավի վրա ռեակցիաներ ստանալու համար!" },
+  ru: { title: "Песочница Космических Элементов", home: "Главная", clear: "Очистить", discLbl: "Открыто", energyLbl: "Энергия", elemHead: "Элементы", logHead: "Журнал Реакций", startLog: "Бросайте элементы на поле для создания реакций!" },
+  es: { title: "Sandbox de Elementos Cósmicos", home: "Inicio", clear: "Limpiar", discLbl: "Descubiertos", energyLbl: "Energía", elemHead: "Elementos Cósmicos", logHead: "Diario de Reacciones", startLog: "¡Suelta elementos en el campo para desencadenar reacciones!" },
+  fr: { title: "Bac à Sable d'Éléments Cosmiques", home: "Accueil", clear: "Effacer", discLbl: "Découverts", energyLbl: "Énergie", elemHead: "Éléments Cosmiques", logHead: "Journal des Réactions", startLog: "Déposez des éléments pour créer des réactions !" },
+  de: { title: "Kosmischer Element-Sandbox", home: "Startseite", clear: "Löschen", discLbl: "Entdeckt", energyLbl: "Energie", elemHead: "Elemente", logHead: "Reaktions-Tagebuch", startLog: "Ziehe Elemente auf das Feld, um Reaktionen auszulösen!" },
+  it: { title: "Sandbox Elementi Cosmici", home: "Home", clear: "Pulisci", discLbl: "Scoperti", energyLbl: "Energia", elemHead: "Elementi Cosmici", logHead: "Diario Reazioni", startLog: "Rilascia elementi sul campo per innescare reazioni!" },
+  pt: { title: "Sandbox de Elementos Cósicos", home: "Início", clear: "Limpar", discLbl: "Descobertos", energyLbl: "Energia", elemHead: "Elementos Cósicos", logHead: "Diário de Reações", startLog: "Solte elementos no campo para gerar reações!" },
+  tr: { title: "Kozmik Element Sandbox", home: "Ana Sayfa", clear: "Temizle", discLbl: "Keşfedilen", energyLbl: "Enerji", elemHead: "Kozmik Elementler", logHead: "Tepkime Günlüğü", startLog: "Reaksiyon başlatmak için elementleri alana bırakın!" },
+  ja: { title: "宇宙エレメント・サンドボックス", home: "ホーム", clear: "クリア", discLbl: "発見数", energyLbl: "エネルギー", elemHead: "宇宙エレメント", logHead: "反応ジャーナル", startLog: "エレメントをドロップして宇宙反応を起こそう！" },
+  zh: { title: "宇宙元素沙盒", home: "主页", clear: "清除", discLbl: "已解锁", energyLbl: "宇宙能量", elemHead: "宇宙元素", logHead: "反应日志", startLog: "将元素拖入沙盒以触发宇宙化学反应！" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+let cosmicEnergy = parseInt(localStorage.getItem("ce_energy") || "0");
+let unlocked = JSON.parse(localStorage.getItem("ce_unlocked") || '["starlight", "dust", "plasma"]');
+
+const ELEMENTS = [
+  { id: "starlight", name: "Starlight", icon: "✨", color: "#ffea00", radius: 5 },
+  { id: "dust", name: "Cosmic Dust", icon: "🪨", color: "#8b949e", radius: 4 },
+  { id: "plasma", name: "Plasma Core", icon: "⚡", color: "#00f0ff", radius: 6 },
+  { id: "star", name: "Protostar", icon: "🌟", color: "#ffaa00", radius: 10 },
+  { id: "blackhole", name: "Singularity", icon: "🕳️", color: "#a855f7", radius: 14 },
+  { id: "nebula", name: "Glowing Nebula", icon: "🌌", color: "#ff0088", radius: 12 },
+  { id: "comet", name: "Ice Comet", icon: "☄️", color: "#00ffcc", radius: 8 },
+  { id: "supernova", name: "Supernova Flare", icon: "💥", color: "#ff3300", radius: 16 }
+];
+
+const REACTIONS = [
+  { a: "starlight", b: "dust", result: "star", name: "Protostar Genesis (+50 Energy)" },
+  { a: "star", b: "plasma", result: "supernova", name: "Supernova Explosion (+100 Energy)" },
+  { a: "supernova", b: "dust", result: "blackhole", name: "Singularity Collapse (+200 Energy)" },
+  { a: "starlight", b: "plasma", result: "nebula", name: "Nebular Ignition (+80 Energy)" },
+  { a: "dust", b: "plasma", result: "comet", name: "Comet Condensation (+60 Energy)" }
+];
+
+let selectedElem = "starlight";
+let particles = [];
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+let W = 800, H = 600;
+
+function resizeCanvas() {
+  const rect = canvas.parentNode.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+
+// Web Audio Sound Synth
+let audioCtx = null;
+function playSound(freq, type = 'sine') {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+}
+
+class Particle {
+  constructor(x, y, elemId) {
+    this.x = x; this.y = y;
+    this.elem = ELEMENTS.find(e => e.id === elemId) || ELEMENTS[0];
+    this.vx = (Math.random() - 0.5) * 2;
+    this.vy = (Math.random() - 0.5) * 2;
+    this.r = this.elem.radius;
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    this.vx *= 0.98; this.vy *= 0.98;
+
+    if (this.x - this.r < 0 || this.x + this.r > W) this.vx *= -0.8;
+    if (this.y - this.r < 0 || this.y + this.r > H) this.vy *= -0.8;
+
+    this.x = Math.max(this.r, Math.min(W - this.r, this.x));
+    this.y = Math.max(this.r, Math.min(H - this.r, this.y));
+  }
+  draw() {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = this.elem.color;
+    ctx.shadowColor = this.elem.color; ctx.shadowBlur = 12;
+    ctx.fill(); ctx.restore();
+  }
+}
+
+function spawnParticle(x, y) {
+  if (particles.length > 250) particles.shift();
+  particles.push(new Particle(x, y, selectedElem));
+  playSound(300 + Math.random() * 200, 'triangle');
+}
+
+canvas.addEventListener("pointerdown", e => {
+  const rect = canvas.getBoundingClientRect();
+  spawnParticle(e.clientX - rect.left, e.clientY - rect.top);
+});
+
+canvas.addEventListener("pointermove", e => {
+  if (e.buttons === 1) {
+    const rect = canvas.getBoundingClientRect();
+    spawnParticle(e.clientX - rect.left, e.clientY - rect.top);
+  }
+});
+
+function checkReactions() {
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      let p1 = particles[i];
+      let p2 = particles[j];
+      let dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+      if (dist < p1.r + p2.r + 4) {
+        let rx = REACTIONS.find(r => (r.a === p1.elem.id && r.b === p2.elem.id) || (r.a === p2.elem.id && r.b === p1.elem.id));
+        if (rx) {
+          // Trigger Reaction!
+          let midX = (p1.x + p2.x) / 2;
+          let midY = (p1.y + p2.y) / 2;
+          particles.splice(j, 1);
+          particles.splice(i, 1);
+
+          particles.push(new Particle(midX, midY, rx.result));
+          playSound(600, 'sawtooth');
+
+          if (!unlocked.includes(rx.result)) {
+            unlocked.push(rx.result);
+            localStorage.setItem("ce_unlocked", JSON.stringify(unlocked));
+            renderElements();
+          }
+
+          cosmicEnergy += 50;
+          localStorage.setItem("ce_energy", cosmicEnergy);
+          document.getElementById("energyVal").textContent = cosmicEnergy;
+
+          addLogItem(`✨ ${rx.name}`);
+          return;
+        }
+      }
+    }
+  }
+}
+
+function addLogItem(text) {
+  const log = document.getElementById("discLog");
+  const div = document.createElement("div");
+  div.className = "log-item"; div.textContent = text;
+  log.prepend(div);
+}
+
+function update() {
+  particles.forEach(p => p.update());
+  checkReactions();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  particles.forEach(p => p.draw());
+}
+
+function loop() {
+  update(); draw();
+  requestAnimationFrame(loop);
+}
+
+function renderElements() {
+  const grid = document.getElementById("elemGrid");
+  grid.innerHTML = "";
+  ELEMENTS.forEach(e => {
+    const isUnlocked = unlocked.includes(e.id);
+    const card = document.createElement("div");
+    card.className = `elem-card ${selectedElem === e.id ? 'active' : ''}`;
+    card.style.opacity = isUnlocked ? "1" : "0.35";
+    card.innerHTML = `
+      <div class="elem-icon">${e.icon}</div>
+      <div>${isUnlocked ? e.name : '???'}</div>
+    `;
+    if (isUnlocked) {
+      card.onclick = () => {
+        selectedElem = e.id;
+        renderElements();
+      };
+    }
+    grid.appendChild(card);
+  });
+  document.getElementById("discVal").textContent = `${unlocked.length} / ${ELEMENTS.length}`;
+}
+
+document.getElementById("clearBtn").onclick = () => {
+  particles = [];
+  playSound(150, 'square');
+};
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("clearTxt").textContent = dict.clear;
+  document.getElementById("discLbl").textContent = dict.discLbl;
+  document.getElementById("energyLbl").textContent = dict.energyLbl;
+  document.getElementById("elemHead").textContent = dict.elemHead;
+  document.getElementById("logHead").textContent = dict.logHead;
+  document.getElementById("startLog").textContent = dict.startLog;
+}
+
+resizeCanvas();
+initLang(); updateLang(); renderElements();
+document.getElementById("energyVal").textContent = cosmicEnergy;
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
