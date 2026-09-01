@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🧩 Cosmic Memory Matrix</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧩</text></svg>">
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(10, 16, 35, 0.92);
+  --border: rgba(139, 92, 246, 0.35);
+  --primary: #8b5cf6;
+  --secondary: #00f0ff;
+  --gold: #ffcc00;
+  --text: #f0f6fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 26, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(139, 92, 246, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #fff; border: none; font-weight: 700; }
+.btn-primary:hover { background: #9d72ff; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 12px; }
+
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 600px; margin-bottom: 16px; }
+.hud-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px 16px; display: flex; align-items: center; gap: 12px; backdrop-filter: blur(10px); font-weight: 700; font-size: 0.9rem; }
+
+.grid-container {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; max-width: 480px; aspect-ratio: 1;
+}
+.card {
+  background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); border-radius: 16px;
+  display: flex; align-items: center; justify-content: center; font-size: 2rem; cursor: pointer;
+  transition: transform 0.3s, background 0.3s; perspective: 1000px;
+}
+.card:hover { transform: scale(1.04); border-color: var(--primary); }
+.card.flipped { background: rgba(139, 92, 246, 0.2); border-color: var(--secondary); box-shadow: 0 0 16px rgba(0,240,255,0.3); }
+.card.matched { background: rgba(0, 240, 255, 0.15); border-color: var(--secondary); opacity: 0.6; pointer-events: none; }
+
+.modal-overlay { position: absolute; inset: 0; background: rgba(3, 5, 15, 0.88); backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #0a0f24; border: 1px solid var(--primary); border-radius: 22px; padding: 26px; width: 90%; max-width: 440px; text-align: center; box-shadow: 0 0 40px rgba(139, 92, 246, 0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.6rem; color: #fff; text-shadow: 0 0 12px var(--primary); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🧩</span>
+    <h1 id="titleTxt">Cosmic Memory Matrix</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <div class="hud-top">
+    <div class="hud-card">
+      <span>🏆 <span id="scoreTxt">Score</span>: <span id="scoreVal" style="color:var(--secondary); font-size:1.2rem;">0</span></span>
+      <span>⭐ <span id="highVal" style="color:var(--gold);">0</span></span>
+    </div>
+
+    <div class="hud-card">
+      <span>⏱️ <span id="timeVal">60</span>s</span>
+      <span>🪙 <span id="coinsVal" style="color:var(--gold);">0</span></span>
+    </div>
+  </div>
+
+  <div class="grid-container" id="grid"></div>
+
+  <div class="modal-overlay" id="menuModal">
+    <div class="modal-card">
+      <h2 id="modalHead">🧩 Cosmic Memory Matrix</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Test your quantum memory! Match cosmic glyph pairs under the timer, build combos, and win stardust coins!</p>
+
+      <button class="btn btn-primary" style="justify-content:center; padding:12px; font-size:1.05rem;" id="startBtn">▶ Start Game</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cosmic Memory Matrix", home: "Home", start: "▶ Start Game", score: "Score", victory: "MATRIX CLEAR!", restart: "Play Again" },
+  hy: { title: "Տիեզերական Հիշողության Մատրից", home: "Գլխավոր", start: "▶ Սկսել Խաղը", score: "Միավորներ", victory: "ՄԱՏՐԻՑԸ ՄԱՔՐՎԱԾ Է!", restart: "Կրկին խաղալ" },
+  ru: { title: "Космическая Матрица Памяти", home: "Главная", start: "▶ Начать Игру", score: "Счет", victory: "МАТРИЦА ОЧИЩЕНА!", restart: "Играть Снова" },
+  es: { title: "Matriz de Memoria Cósmica", home: "Inicio", start: "▶ Iniciar Juego", score: "Puntos", victory: "¡MATRIZ COMPLETADA!", restart: "Reintentar" },
+  fr: { title: "Matrice Mémoire Cosmique", home: "Accueil", start: "▶ Démarrer Jeu", score: "Score", victory: "MATRICE COMPLÉTÉE !", restart: "Rejouer" },
+  de: { title: "Kosmische Speicher-Matrix", home: "Startseite", start: "▶ Spiel Starten", score: "Punkte", victory: "MATRIX GELÖST!", restart: "Nochmals" },
+  it: { title: "Matrice di Memoria Cosmica", home: "Home", start: "▶ Avvia Gioco", score: "Punteggio", victory: "MATRICE COMPLETATA!", restart: "Rigioca" },
+  pt: { title: "Matriz de Memória Cósmica", home: "Início", start: "▶ Iniciar Jogo", score: "Pontos", victory: "MATRIZ CONCLUÍDA!", restart: "Jogar De Novo" },
+  tr: { title: "Kozmik Hafıza Matrisi", home: "Ana Sayfa", start: "▶ Oyuna Başla", score: "Skor", victory: "MATRİS TAMAMLANDI!", restart: "Tekrar Oyna" },
+  ja: { title: "コズミックメモリーマトリックス", home: "ホーム", start: "▶ ゲーム開始", score: "スコア", victory: "マトリックス クリア！", restart: "もう一度" },
+  zh: { title: "宇宙记忆矩阵", home: "主页", start: "▶ 开始游戏", score: "得分", victory: "矩阵解锁！", restart: "再玩一次" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+const GLYPHS = ["🪐", "🌌", "☄️", "🛸", "👾", "⚛️", "🔮", "✨"];
+
+let lang = "en";
+let sound = true;
+let score = 0, highScore = parseInt(localStorage.getItem("cm_high") || "0");
+let coins = parseInt(localStorage.getItem("cm_coins") || "0");
+let timeLeft = 60, timer = null;
+let cards = [], flippedCards = [], matchedPairs = 0;
+
+// Sound Synth
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'flip') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(500, now + 0.08);
+    gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+  } else if (type === 'match') {
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(523, now); osc.frequency.exponentialRampToValueAtTime(880, now + 0.2);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.25);
+}
+
+function createGrid() {
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+  let deck = [...GLYPHS, ...GLYPHS].sort(() => Math.random() - 0.5);
+  cards = []; flippedCards = []; matchedPairs = 0;
+
+  deck.forEach((glyph, idx) => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.dataset.glyph = glyph;
+    card.dataset.idx = idx;
+    card.onclick = () => flipCard(card);
+    grid.appendChild(card);
+    cards.push(card);
+  });
+}
+
+function flipCard(card) {
+  if (flippedCards.length >= 2 || card.classList.contains("flipped") || card.classList.contains("matched")) return;
+
+  playSound('flip');
+  card.classList.add("flipped");
+  card.textContent = card.dataset.glyph;
+  flippedCards.push(card);
+
+  if (flippedCards.length === 2) {
+    let [c1, c2] = flippedCards;
+    if (c1.dataset.glyph === c2.dataset.glyph) {
+      playSound('match');
+      c1.classList.add("matched"); c2.classList.add("matched");
+      flippedCards = [];
+      matchedPairs++;
+      score += 25; coins += 5;
+      document.getElementById("scoreVal").textContent = score;
+      document.getElementById("coinsVal").textContent = coins;
+      localStorage.setItem("cm_coins", coins);
+
+      if (matchedPairs === GLYPHS.length) {
+        clearInterval(timer);
+        if (score > highScore) { highScore = score; localStorage.setItem("cm_high", highScore); }
+        document.getElementById("highVal").textContent = highScore;
+        document.getElementById("modalHead").textContent = (I18N[lang] || I18N.en).victory;
+        document.getElementById("startBtn").textContent = (I18N[lang] || I18N.en).restart;
+        document.getElementById("menuModal").style.display = "flex";
+      }
+    } else {
+      setTimeout(() => {
+        c1.classList.remove("flipped"); c1.textContent = "";
+        c2.classList.remove("flipped"); c2.textContent = "";
+        flippedCards = [];
+      }, 700);
+    }
+  }
+}
+
+function startGame() {
+  score = 0; timeLeft = 60;
+  document.getElementById("scoreVal").textContent = score;
+  document.getElementById("timeVal").textContent = timeLeft;
+  document.getElementById("menuModal").style.display = "none";
+  createGrid();
+
+  if (timer) clearInterval(timer);
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timeVal").textContent = timeLeft;
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      document.getElementById("modalHead").textContent = "TIME UP!";
+      document.getElementById("startBtn").textContent = (I18N[lang] || I18N.en).restart;
+      document.getElementById("menuModal").style.display = "flex";
+    }
+  }, 1000);
+}
+
+document.getElementById("startBtn").onclick = startGame;
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("startBtn").textContent = dict.start;
+  document.getElementById("scoreTxt").textContent = dict.score;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+document.getElementById("coinsVal").textContent = coins;
+document.getElementById("highVal").textContent = highScore;
+initLang(); updateLang();
+</script>
+</body>
+</html>
