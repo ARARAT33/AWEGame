@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🐍 Cyber Synth Snake FX</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐍</text></svg>">
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(10, 16, 35, 0.92);
+  --border: rgba(0, 255, 170, 0.35);
+  --primary: #00ffaa;
+  --secondary: #ff0077;
+  --accent: #ffd700;
+  --text: #f0f6fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 26, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 255, 170, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #33ffbb; color: #000; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #071a18 0%, #02080a 100%);
+  box-shadow: 0 0 35px rgba(0, 255, 170, 0.18); display: block; touch-action: none;
+}
+
+.hud { position: absolute; top: 12px; left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+.hud-box { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px 14px; font-weight: 700; font-size: 0.88rem; display: flex; gap: 12px; backdrop-filter: blur(10px); }
+
+/* Touch controls overlay */
+.touch-controls { position: absolute; bottom: 20px; right: 20px; display: none; gap: 12px; pointer-events: auto; }
+.d-pad { display: grid; grid-template-columns: repeat(3, 46px); gap: 4px; }
+.t-btn { width: 46px; height: 46px; background: rgba(255,255,255,0.12); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; font-weight: 800; }
+.t-btn:active { background: rgba(0, 255, 170, 0.4); }
+
+/* Shop Modal */
+.modal-overlay { position: absolute; inset: 0; background: rgba(3, 5, 15, 0.9); backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #0a0f24; border: 1px solid var(--primary); border-radius: 22px; padding: 26px; width: 90%; max-width: 480px; text-align: center; box-shadow: 0 0 40px rgba(0,255,170,0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.6rem; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.upgrade-list { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+.upgrade-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; font-size: 0.85rem; }
+
+@media (max-width: 768px) {
+  .touch-controls { display: flex; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🐍</span>
+    <h1 id="titleTxt">Cyber Synth Snake FX</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <button id="shopBtn" class="btn">🛒 <span id="shopTxt">Shop</span></button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="hud">
+    <div class="hud-box">
+      <span>⚡ <span id="scoreVal">0</span></span>
+      <span>🏆 <span id="highVal">0</span></span>
+    </div>
+    <div class="hud-box">
+      <span>🪙 <span id="coinsVal">0</span></span>
+      <span>🛡️ <span id="shieldVal">1</span></span>
+    </div>
+  </div>
+
+  <div class="touch-controls">
+    <div class="d-pad">
+      <div></div><div class="t-btn" id="btnUp">▲</div><div></div>
+      <div class="t-btn" id="btnLeft">◄</div><div class="t-btn" id="btnDown">▼</div><div class="t-btn" id="btnRight">►</div>
+    </div>
+    <div class="t-btn" id="btnBoost" style="width:54px; height:54px; border-color:var(--secondary); background:rgba(255,0,119,0.25);">⚡</div>
+  </div>
+
+  <div class="modal-overlay" id="startModal">
+    <div class="modal-card">
+      <h2 id="modalHead">🐍 Cyber Synth Snake FX</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Steer the quantum cyber-snake through neon matrix grids. Collect glowing plasma orbs, evade laser walls, and activate hyper turbo!</p>
+
+      <div class="upgrade-list">
+        <div class="upgrade-item">
+          <span>⚡ Speed Level (<span id="lvlSpeed">1</span>)</span>
+          <button class="btn btn-primary" id="buySpeedBtn">🪙 100</button>
+        </div>
+        <div class="upgrade-item">
+          <span>🛡️ Shield Cap (<span id="lvlShield">1</span>)</span>
+          <button class="btn btn-primary" id="buyShieldBtn">🪙 150</button>
+        </div>
+        <div class="upgrade-item">
+          <span>🧲 Magnet Range (<span id="lvlMagnet">1</span>)</span>
+          <button class="btn btn-primary" id="buyMagnetBtn">🪙 200</button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="justify-content:center; padding:12px; font-size:1.1rem;" id="startBtn">▶ Play Game</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Synth Snake FX", home: "Home", shop: "Shop", play: "▶ Play Game", gameOver: "GAME OVER! Final Score: ", speed: "⚡ Speed Level", shield: "🛡️ Shield Cap", magnet: "🧲 Magnet Range" },
+  hy: { title: "Կիբեռ Սինթ Օձ FX", home: "Գլխավոր", shop: "Խանութ", play: "▶ Սկսել Խաղը", gameOver: "ԽԱՂՆ ԱՎԱՐՏՎԵՑ: Միավորներ՝ ", speed: "⚡ Արագության Մակարդակ", shield: "🛡️ Վահան", magnet: "🧲 Մագնիս" },
+  ru: { title: "Кибер Синт Змейка FX", home: "Главная", shop: "Магазин", play: "▶ Начать Игру", gameOver: "ИГРА ОКОНЧЕНА! Очки: ", speed: "⚡ Скорость", shield: "🛡️ Щит", magnet: "🧲 Магнит" },
+  es: { title: "Cyber Serpiente FX", home: "Inicio", shop: "Tienda", play: "▶ Jugar", gameOver: "¡JUEGO TERMINADO! Puntos: ", speed: "⚡ Velocidad", shield: "🛡️ Escudo", magnet: "🧲 Imán" },
+  fr: { title: "Cyber Serpent FX", home: "Accueil", shop: "Boutique", play: "▶ Jouer", gameOver: "PARTIE TERMINÉE ! Score : ", speed: "⚡ Vitesse", shield: "🛡️ Bouclier", magnet: "🧲 Aimant" },
+  de: { title: "Cyber Schlange FX", home: "Startseite", shop: "Shop", play: "▶ Spielen", gameOver: "SPIEL ENDE! Punkte: ", speed: "⚡ Tempo", shield: "🛡️ Schild", magnet: "🧲 Magnet" },
+  it: { title: "Cyber Serpente FX", home: "Home", shop: "Negozio", play: "▶ Gioca", gameOver: "GIOCO FINITO! Punteggio: ", speed: "⚡ Velocità", shield: "🛡️ Scudo", magnet: "🧲 Magnete" },
+  pt: { title: "Cyber Cobra FX", home: "Início", shop: "Loja", play: "▶ Jogar", gameOver: "FIM DE JOGO! Pontuação: ", speed: "⚡ Velocidade", shield: "🛡️ Escudo", magnet: "🧲 Ímã" },
+  tr: { title: "Cyber Yılan FX", home: "Ana Sayfa", shop: "Mağaza", play: "▶ Oyna", gameOver: "OYUN BİTTİ! Skor: ", speed: "⚡ Hız", shield: "🛡️ Kalkan", magnet: "🧲 Mıknatıs" },
+  ja: { title: "サイバースネーク FX", home: "ホーム", shop: "ショップ", play: "▶ プレイ", gameOver: "ゲームオーバー！スコア: ", speed: "⚡ 速度レベル", shield: "🛡️ シールド", magnet: "🧲 マグネット" },
+  zh: { title: "赛博贪吃蛇 FX", home: "主页", shop: "商店", play: "▶ 开始游戏", gameOver: "游戏结束！最终得分：", speed: "⚡ 速度等级", shield: "🛡️ 护盾容量", magnet: "🧲 磁铁范围" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+let score = 0;
+let highScore = parseInt(localStorage.getItem("cs_high") || "0");
+let coins = parseInt(localStorage.getItem("cs_coins") || "0");
+let speedLvl = parseInt(localStorage.getItem("cs_speed") || "1");
+let shieldLvl = parseInt(localStorage.getItem("cs_shield") || "1");
+let magnetLvl = parseInt(localStorage.getItem("cs_magnet") || "1");
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 900, H = 550;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio sound generator
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'eat') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(700, now + 0.1);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+  } else if (type === 'boost') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(450, now + 0.15);
+    gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+  } else if (type === 'hit') {
+    osc.type = 'square'; osc.frequency.setValueAtTime(120, now); osc.frequency.exponentialRampToValueAtTime(40, now + 0.25);
+    gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.25);
+}
+
+// Game Entities
+let snake = [];
+let snakeDir = { x: 1, y: 0 };
+let snakeSpeed = 3.5;
+let isBoosting = false;
+let shields = shieldLvl;
+let food = { x: 300, y: 200, r: 8, type: 'normal' };
+let obstacles = [];
+let isPlaying = false;
+
+function initGame() {
+  snake = [];
+  for (let i = 0; i < 15; i++) {
+    snake.push({ x: W / 2 - i * 10, y: H / 2 });
+  }
+  snakeDir = { x: 1, y: 0 };
+  snakeSpeed = 3.2 + speedLvl * 0.4;
+  shields = shieldLvl;
+  score = 0;
+  spawnFood();
+  spawnObstacles();
+  isPlaying = true;
+  document.getElementById("startModal").style.display = "none";
+}
+
+function spawnFood() {
+  food.x = 40 + Math.random() * (W - 80);
+  food.y = 40 + Math.random() * (H - 80);
+  food.type = Math.random() < 0.2 ? 'gold' : 'normal';
+}
+
+function spawnObstacles() {
+  obstacles = [];
+  for (let i = 0; i < 5; i++) {
+    obstacles.push({
+      x: 80 + Math.random() * (W - 160),
+      y: 80 + Math.random() * (H - 160),
+      w: 60 + Math.random() * 80,
+      h: 12
+    });
+  }
+}
+
+// Controls
+let keys = {};
+window.addEventListener("keydown", e => {
+  keys[e.key.toLowerCase()] = true;
+  if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'w') setDir(0, -1);
+  if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') setDir(0, 1);
+  if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') setDir(-1, 0);
+  if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') setDir(1, 0);
+});
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+function setDir(x, y) {
+  if (snakeDir.x !== -x && snakeDir.y !== -y) {
+    snakeDir = { x, y };
+  }
+}
+
+function bindTouch(id, x, y) {
+  const el = document.getElementById(id);
+  el.addEventListener("touchstart", (e) => { e.preventDefault(); setDir(x, y); });
+}
+bindTouch("btnUp", 0, -1);
+bindTouch("btnDown", 0, 1);
+bindTouch("btnLeft", -1, 0);
+bindTouch("btnRight", 1, 0);
+
+document.getElementById("btnBoost").addEventListener("touchstart", (e) => { e.preventDefault(); isBoosting = true; });
+document.getElementById("btnBoost").addEventListener("touchend", (e) => { e.preventDefault(); isBoosting = false; });
+
+function updateGame() {
+  if (!isPlaying) return;
+
+  isBoosting = keys['shift'] || keys['space'];
+  let currentSpeed = isBoosting ? snakeSpeed * 1.8 : snakeSpeed;
+
+  let head = { x: snake[0].x + snakeDir.x * currentSpeed, y: snake[0].y + snakeDir.y * currentSpeed };
+
+  // Screen wrap
+  if (head.x < 0) head.x = W;
+  if (head.x > W) head.x = 0;
+  if (head.y < 0) head.y = H;
+  if (head.y > H) head.y = 0;
+
+  // Check Obstacle Collisions
+  for (let obs of obstacles) {
+    if (head.x > obs.x && head.x < obs.x + obs.w && head.y > obs.y && head.y < obs.y + obs.h) {
+      if (shields > 0) {
+        shields--; playSound('hit');
+        head.x -= snakeDir.x * 30; head.y -= snakeDir.y * 30;
+      } else {
+        gameOver(); return;
+      }
+    }
+  }
+
+  // Magnet effect
+  let magnetRadius = 60 + magnetLvl * 30;
+  let distFood = Math.hypot(food.x - head.x, food.y - head.y);
+  if (distFood < magnetRadius) {
+    food.x += (head.x - food.x) * 0.08;
+    food.y += (head.y - food.y) * 0.08;
+  }
+
+  // Eat Food
+  if (distFood < 18) {
+    let pts = food.type === 'gold' ? 30 : 10;
+    score += pts; coins += Math.floor(pts / 2);
+    playSound('eat');
+    if (score > highScore) { highScore = score; localStorage.setItem("cs_high", highScore); }
+    localStorage.setItem("cs_coins", coins);
+    spawnFood();
+  } else {
+    snake.pop();
+  }
+
+  snake.unshift(head);
+
+  // Self collision check (skip head and neck)
+  for (let i = 8; i < snake.length; i++) {
+    if (Math.hypot(snake[i].x - head.x, snake[i].y - head.y) < 8) {
+      if (shields > 0) {
+        shields--; playSound('hit');
+      } else {
+        gameOver(); return;
+      }
+    }
+  }
+
+  document.getElementById("scoreVal").textContent = score;
+  document.getElementById("highVal").textContent = highScore;
+  document.getElementById("coinsVal").textContent = coins;
+  document.getElementById("shieldVal").textContent = shields;
+}
+
+function gameOver() {
+  isPlaying = false;
+  playSound('hit');
+  alert((I18N[lang] || I18N.en).gameOver + score);
+  document.getElementById("startModal").style.display = "flex";
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid background
+  ctx.strokeStyle = "rgba(0, 255, 170, 0.06)"; ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+  // Draw Obstacles
+  ctx.fillStyle = "rgba(255, 0, 119, 0.6)"; ctx.shadowColor = "#ff0077"; ctx.shadowBlur = 12;
+  for (let obs of obstacles) {
+    ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+  }
+
+  // Draw Food
+  ctx.beginPath(); ctx.arc(food.x, food.y, food.r, 0, Math.PI * 2);
+  ctx.fillStyle = food.type === 'gold' ? "#ffd700" : "#00ffaa";
+  ctx.shadowColor = food.type === 'gold' ? "#ffd700" : "#00ffaa"; ctx.shadowBlur = 18;
+  ctx.fill();
+
+  // Draw Snake
+  snake.forEach((seg, i) => {
+    ctx.beginPath();
+    let r = Math.max(3, 10 - i * 0.15);
+    ctx.arc(seg.x, seg.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = i === 0 ? "#ffffff" : `hsl(${160 + i * 2}, 100%, 50%)`;
+    ctx.shadowColor = "#00ffaa"; ctx.shadowBlur = i === 0 ? 15 : 6;
+    ctx.fill();
+  });
+}
+
+function gameLoop() {
+  updateGame(); drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+// Shop Logic
+function updateShopUI() {
+  document.getElementById("lvlSpeed").textContent = speedLvl;
+  document.getElementById("lvlShield").textContent = shieldLvl;
+  document.getElementById("lvlMagnet").textContent = magnetLvl;
+  document.getElementById("coinsVal").textContent = coins;
+}
+
+document.getElementById("buySpeedBtn").onclick = () => {
+  let cost = speedLvl * 100;
+  if (coins >= cost) { coins -= cost; speedLvl++; localStorage.setItem("cs_speed", speedLvl); localStorage.setItem("cs_coins", coins); updateShopUI(); }
+};
+document.getElementById("buyShieldBtn").onclick = () => {
+  let cost = shieldLvl * 150;
+  if (coins >= cost) { coins -= cost; shieldLvl++; localStorage.setItem("cs_shield", shieldLvl); localStorage.setItem("cs_coins", coins); updateShopUI(); }
+};
+document.getElementById("buyMagnetBtn").onclick = () => {
+  let cost = magnetLvl * 200;
+  if (coins >= cost) { coins -= cost; magnetLvl++; localStorage.setItem("cs_magnet", magnetLvl); localStorage.setItem("cs_coins", coins); updateShopUI(); }
+};
+
+document.getElementById("startBtn").onclick = () => initGame();
+document.getElementById("shopBtn").onclick = () => document.getElementById("startModal").style.display = "flex";
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("shopTxt").textContent = dict.shop;
+  document.getElementById("startBtn").textContent = dict.play;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang(); updateLang(); updateShopUI();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
