@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>⛳ Cyber Mini Golf Odyssey</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⛳</text></svg>">
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(10, 16, 35, 0.92);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --secondary: #ff0055;
+  --accent: #ffcc00;
+  --text: #f0f6fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 26, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #33f3ff; color: #000; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #071329 0%, #020612 100%);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.18); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; }
+.hud-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px 14px; display: flex; align-items: center; gap: 12px; backdrop-filter: blur(10px); font-weight: 700; font-size: 0.9rem; }
+
+/* Modal */
+.modal-overlay { position: absolute; inset: 0; background: rgba(3, 5, 15, 0.9); backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #0a0f24; border: 1px solid var(--primary); border-radius: 22px; padding: 26px; width: 90%; max-width: 480px; text-align: center; box-shadow: 0 0 40px rgba(0,240,255,0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.6rem; color: #fff; text-shadow: 0 0 12px var(--primary); }
+
+.grid-levels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; max-height: 220px; overflow-y: auto; padding: 4px; }
+.lvl-btn { background: rgba(255,255,255,0.08); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: #fff; font-weight: 700; cursor: pointer; transition: 0.2s; }
+.lvl-btn:hover { background: var(--primary); color: #000; }
+.lvl-btn.locked { opacity: 0.4; cursor: not-allowed; }
+
+@media (max-width: 600px) {
+  .hud-card { font-size: 0.78rem; padding: 4px 10px; }
+  .grid-levels { grid-template-columns: repeat(4, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">⛳</span>
+    <h1 id="titleTxt">Cyber Mini Golf Odyssey</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="lvlSelectBtn" class="btn">🗺️ <span id="lvlsTxt">Levels</span></button>
+    <button id="shopBtn" class="btn">🔮 <span id="shopTxt">Balls</span></button>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="hud-card">
+        <span style="color:var(--primary);" id="lvlLbl">HOLE 1/20</span>
+        <span style="color:#aaa;" id="parLbl">PAR 3</span>
+      </div>
+
+      <div class="hud-card">
+        <span>⛳ <span id="strokeLbl">STROKES: 0</span></span>
+        <span>🪙 <span id="coinsVal">0</span></span>
+      </div>
+
+      <button class="btn btn-primary" id="resetBallBtn" style="pointer-events:auto;">🔄 Reset Ball</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="lvlModal">
+    <div class="modal-card">
+      <h2 id="modalHead">⛳ Cyber Mini Golf Odyssey</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Putt through 20 futuristic synthwave courses! Master laser portals, wormholes, speed boosters, and precision angles!</p>
+
+      <div class="grid-levels" id="lvlGrid"></div>
+
+      <button class="btn btn-primary" style="justify-content:center; padding:10px;" id="startPlayBtn">🚀 Play Level</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="shopModal" style="display:none;">
+    <div class="modal-card">
+      <h2>🔮 Cyber Glow Balls</h2>
+      <div id="ballsList" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0;"></div>
+      <button class="btn btn-primary" style="justify-content:center;" id="closeShopBtn">Close</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Mini Golf Odyssey", home: "Home", levels: "Levels", balls: "Balls", hole: "HOLE", par: "PAR", strokes: "STROKES", resetBall: "Reset Ball", levelClear: "HOLE IN ONE / CLEAR!", typeMsg: "Type a message..." },
+  hy: { title: "Կիբեռ Մինի Գոլֆ", home: "Գլխավոր", levels: "Մակարդակներ", balls: "Գնդակներ", hole: "ՓՈՍ", par: "ՊԱՐ", strokes: "ՀԱՐՎԱԾ", resetBall: "Վերականգնել", levelClear: "ՀԱՂԹԱՆԱԿ!", typeMsg: "Գրեք..." },
+  ru: { title: "Кибер Мини Гольф", home: "Главная", levels: "Уровни", balls: "Шары", hole: "LУНКА", par: "ПАР", strokes: "УДАРЫ", resetBall: "Сброс шара", levelClear: "ЛУНКА ПРОЙДЕНА!", typeMsg: "Сообщение..." },
+  es: { title: "Cyber Mini Golf Odisea", home: "Inicio", levels: "Niveles", balls: "Bolas", hole: "HOYO", par: "PAR", strokes: "GOLPES", resetBall: "Reiniciar Bola", levelClear: "¡HOYO COMPLETADO!", typeMsg: "Escribe..." },
+  fr: { title: "Cyber Mini Golf Odyssée", home: "Accueil", levels: "Niveaux", balls: "Balles", hole: "TROU", par: "PAR", strokes: "COUPS", resetBall: "Réinitialiser", levelClear: "TROU REUSSI !", typeMsg: "Message..." },
+  de: { title: "Cyber Minigolf Odyssee", home: "Startseite", levels: "Level", balls: "Bälle", hole: "LOCH", par: "PAR", strokes: "SCHLÄGE", resetBall: "Ball Reset", levelClear: "LOCH GESCHAFFT!", typeMsg: "Nachricht..." },
+  it: { title: "Cyber Mini Golf Odissea", home: "Home", levels: "Livelli", balls: "Palline", hole: "BUCA", par: "PAR", strokes: "COLPI", resetBall: "Resetta", levelClear: "BUCA COMPLETATA!", typeMsg: "Messaggio..." },
+  pt: { title: "Cyber Mini Golf Odisséia", home: "Início", levels: "Níveis", balls: "Bolas", hole: "BURACO", par: "PAR", strokes: "TACADAS", resetBall: "Reiniciar Bola", levelClear: "BURACO CONCLUÍDO!", typeMsg: "Mensagem..." },
+  tr: { title: "Cyber Mini Golf Macerası", home: "Ana Sayfa", levels: "Seviyeler", balls: "Toplar", hole: "DELİK", par: "PAR", strokes: "VURUŞ", resetBall: "Topu Sıfırla", levelClear: "DELİK TAMAMLANDI!", typeMsg: "Mesaj..." },
+  ja: { title: "サイバーミニゴルフ", home: "ホーム", levels: "ステージ", balls: "ボール", hole: "ホール", par: "パー", strokes: "打数", resetBall: "リセット", levelClear: "ホールイン！", typeMsg: "メッセージ..." },
+  zh: { title: "赛博迷你高尔夫", home: "主页", levels: "关卡", balls: "球体", hole: "球洞", par: "标准杆", strokes: "击球数", resetBall: "重置球", levelClear: "进球成功！", typeMsg: "输入消息..." }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+const BALLS = [
+  { id: 'cyan', name: 'Neon Cyan', cost: 0, color: '#00f0ff', bounce: 0.8 },
+  { id: 'pink', name: 'Plasma Pink', cost: 100, color: '#ff0055', bounce: 0.88 },
+  { id: 'gold', name: 'Quantum Gold', cost: 250, color: '#ffcc00', bounce: 0.95 },
+  { id: 'violet', name: 'Void Purple', cost: 500, color: '#b400ff', bounce: 1.05 }
+];
+
+let lang = "en";
+let sound = true;
+let currentLvl = 1;
+let strokes = 0;
+
+let coins = parseInt(localStorage.getItem("cg_coins") || "0");
+let unlockedLvl = parseInt(localStorage.getItem("cg_unlocked_lvl") || "1");
+let equippedBall = localStorage.getItem("cg_ball") || "cyan";
+let unlockedBalls = JSON.parse(localStorage.getItem("cg_unlocked_balls") || '["cyan"]');
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 900, H = 550;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio sound generator
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'hit') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(500, now); osc.frequency.exponentialRampToValueAtTime(150, now + 0.1);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+  } else if (type === 'bounce') {
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(120, now + 0.08);
+    gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+  } else if (type === 'portal') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.2);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+  } else if (type === 'hole') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(523, now); osc.frequency.setValueAtTime(659, now + 0.1); osc.frequency.setValueAtTime(783, now + 0.2);
+    gain.gain.setValueAtTime(0.35, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.35);
+}
+
+// Course Level Data Generator
+function getLevelData(lvl) {
+  let startX = 120, startY = H / 2;
+  let holeX = W - 120, holeY = H / 2;
+  let walls = [];
+  let portals = [];
+  let boosters = [];
+
+  // Outer boundary walls
+  walls.push({ x: 50, y: 50, w: W - 100, h: 20 });
+  walls.push({ x: 50, y: H - 70, w: W - 100, h: 20 });
+  walls.push({ x: 50, y: 50, w: 20, h: H - 120 });
+  walls.push({ x: W - 70, y: 50, w: 20, h: H - 120 });
+
+  // Custom inner obstacles per level
+  if (lvl % 2 === 0) {
+    walls.push({ x: W / 2 - 10, y: 120, w: 20, h: 200 });
+  }
+  if (lvl % 3 === 0) {
+    portals.push({ inX: 250, inY: 150, outX: W - 250, outY: H - 150 });
+  }
+  if (lvl > 5) {
+    boosters.push({ x: W / 2, y: H / 2, r: 25, vx: 3, vy: 0 });
+  }
+
+  return { startX, startY, holeX, holeY, par: 3 + (lvl % 3), walls, portals, boosters };
+}
+
+class Ball {
+  constructor() {
+    this.r = 10;
+    this.x = 120; this.y = H / 2;
+    this.vx = 0; this.vy = 0;
+    this.friction = 0.982;
+  }
+  getBallData() {
+    return BALLS.find(b => b.id === equippedBall) || BALLS[0];
+  }
+  update(lvlData) {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vx *= this.friction;
+    this.vy *= this.friction;
+
+    if (Math.hypot(this.vx, this.vy) < 0.05) { this.vx = 0; this.vy = 0; }
+
+    let b = this.getBallData();
+
+    // Wall collision
+    lvlData.walls.forEach(w => {
+      if (this.x + this.r > w.x && this.x - this.r < w.x + w.w &&
+          this.y + this.r > w.y && this.y - this.r < w.y + w.h) {
+        playSound('bounce');
+        if (this.x < w.x || this.x > w.x + w.w) this.vx *= -b.bounce;
+        if (this.y < w.y || this.y > w.y + w.h) this.vy *= -b.bounce;
+      }
+    });
+
+    // Portal Warp
+    lvlData.portals.forEach(p => {
+      if (Math.hypot(this.x - p.inX, this.y - p.inY) < 20) {
+        playSound('portal');
+        this.x = p.outX; this.y = p.outY;
+      }
+    });
+
+    // Hole check
+    if (Math.hypot(this.x - lvlData.holeX, this.y - lvlData.holeY) < 18) {
+      if (Math.hypot(this.vx, this.vy) < 3.5) {
+        playSound('hole');
+        handleLevelComplete();
+      }
+    }
+  }
+  draw() {
+    ctx.save();
+    let bd = this.getBallData();
+    ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = bd.color; ctx.shadowColor = bd.color; ctx.shadowBlur = 15;
+    ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#fff"; ctx.stroke();
+    ctx.restore();
+  }
+}
+
+let ball = new Ball();
+let activeLvlData = getLevelData(currentLvl);
+let isAiming = false;
+let aimX = 0, aimY = 0;
+
+function loadLevel(lvl) {
+  currentLvl = lvl;
+  strokes = 0;
+  activeLvlData = getLevelData(lvl);
+  ball.x = activeLvlData.startX; ball.y = activeLvlData.startY;
+  ball.vx = 0; ball.vy = 0;
+  document.getElementById("lvlLbl").textContent = `${(I18N[lang] || I18N.en).hole} ${currentLvl}/20`;
+  document.getElementById("parLbl").textContent = `${(I18N[lang] || I18N.en).par} ${activeLvlData.par}`;
+  document.getElementById("strokeLbl").textContent = `0`;
+}
+
+function handleLevelComplete() {
+  coins += 30;
+  if (currentLvl >= unlockedLvl && unlockedLvl < 20) {
+    unlockedLvl++;
+    localStorage.setItem("cg_unlocked_lvl", unlockedLvl);
+  }
+  localStorage.setItem("cg_coins", coins);
+  updateStatsDisplay();
+  alert((I18N[lang] || I18N.en).levelClear);
+  if (currentLvl < 20) loadLevel(currentLvl + 1);
+  else renderLvlModal();
+}
+
+// Aim & Shoot controls
+canvas.addEventListener("pointerdown", e => {
+  if (ball.vx !== 0 || ball.vy !== 0) return;
+  let rect = canvas.getBoundingClientRect();
+  let mx = (e.clientX - rect.left) * (W / rect.width);
+  let my = (e.clientY - rect.top) * (H / rect.height);
+  if (Math.hypot(mx - ball.x, my - ball.y) < 35) {
+    isAiming = true; aimX = mx; aimY = my;
+  }
+});
+
+canvas.addEventListener("pointermove", e => {
+  if (!isAiming) return;
+  let rect = canvas.getBoundingClientRect();
+  aimX = (e.clientX - rect.left) * (W / rect.width);
+  aimY = (e.clientY - rect.top) * (H / rect.height);
+});
+
+canvas.addEventListener("pointerup", () => {
+  if (!isAiming) return;
+  isAiming = false;
+  let dx = ball.x - aimX;
+  let dy = ball.y - aimY;
+  let power = Math.min(Math.hypot(dx, dy) * 0.1, 14);
+  let angle = Math.atan2(dy, dx);
+  ball.vx = Math.cos(angle) * power;
+  ball.vy = Math.sin(angle) * power;
+  strokes++;
+  document.getElementById("strokeLbl").textContent = strokes;
+  playSound('hit');
+});
+
+function updateGame() {
+  ball.update(activeLvlData);
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw Hole
+  ctx.save();
+  ctx.beginPath(); ctx.arc(activeLvlData.holeX, activeLvlData.holeY, 18, 0, Math.PI * 2);
+  ctx.fillStyle = "#000"; ctx.fill(); ctx.strokeStyle = "var(--primary)"; ctx.lineWidth = 3; ctx.stroke();
+  ctx.restore();
+
+  // Draw Walls
+  activeLvlData.walls.forEach(w => {
+    ctx.fillStyle = "#0d2248";
+    ctx.fillRect(w.x, w.y, w.w, w.h);
+    ctx.strokeStyle = "var(--border)"; ctx.lineWidth = 2;
+    ctx.strokeRect(w.x, w.y, w.w, w.h);
+  });
+
+  // Draw Portals
+  activeLvlData.portals.forEach(p => {
+    ctx.beginPath(); ctx.arc(p.inX, p.inY, 16, 0, Math.PI * 2);
+    ctx.fillStyle = "#ff0055"; ctx.fill();
+    ctx.beginPath(); ctx.arc(p.outX, p.outY, 16, 0, Math.PI * 2);
+    ctx.fillStyle = "#00f0ff"; ctx.fill();
+  });
+
+  // Aim Line
+  if (isAiming) {
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(ball.x, ball.y); ctx.lineTo(ball.x + (ball.x - aimX), ball.y + (ball.y - aimY));
+    ctx.strokeStyle = "var(--accent)"; ctx.lineWidth = 3; ctx.setLineDash([6, 6]); ctx.stroke();
+    ctx.restore();
+  }
+
+  ball.draw();
+}
+
+function gameLoop() {
+  updateGame(); drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+document.getElementById("resetBallBtn").onclick = () => {
+  ball.x = activeLvlData.startX; ball.y = activeLvlData.startY;
+  ball.vx = 0; ball.vy = 0;
+};
+
+document.getElementById("lvlSelectBtn").onclick = () => renderLvlModal();
+document.getElementById("startPlayBtn").onclick = () => document.getElementById("lvlModal").style.display = "none";
+
+function renderLvlModal() {
+  const grid = document.getElementById("lvlGrid");
+  grid.innerHTML = "";
+  for (let i = 1; i <= 20; i++) {
+    const btn = document.createElement("button");
+    btn.className = `lvl-btn ${i <= unlockedLvl ? '' : 'locked'}`;
+    btn.textContent = i;
+    if (i <= unlockedLvl) {
+      btn.onclick = () => { loadLevel(i); document.getElementById("lvlModal").style.display = "none"; };
+    }
+    grid.appendChild(btn);
+  }
+  document.getElementById("lvlModal").style.display = "flex";
+}
+
+document.getElementById("shopBtn").onclick = () => renderShop();
+document.getElementById("closeShopBtn").onclick = () => document.getElementById("shopModal").style.display = "none";
+
+function renderShop() {
+  const list = document.getElementById("ballsList");
+  list.innerHTML = "";
+  BALLS.forEach(b => {
+    const isUnlocked = unlockedBalls.includes(b.id);
+    const isEquipped = equippedBall === b.id;
+    const div = document.createElement("div");
+    div.style.cssText = `background:rgba(255,255,255,0.06); padding:10px; border-radius:12px; border:1px solid ${b.color}; display:flex; flex-direction:column; gap:4px; align-items:center;`;
+    div.innerHTML = `
+      <div style="font-weight:700; color:${b.color};">${b.name}</div>
+      <div style="font-size:0.75rem; color:#aaa;">Bounce: x${b.bounce}</div>
+      ${isEquipped ? `<button class="btn btn-primary" disabled>Equipped</button>` :
+        isUnlocked ? `<button class="btn btn-primary" onclick="equipBall('${b.id}')">Equip</button>` :
+        `<button class="btn btn-primary" style="background:var(--secondary); color:#fff;" onclick="buyBall('${b.id}', ${b.cost})">🪙 ${b.cost}</button>`}
+    `;
+    list.appendChild(div);
+  });
+  document.getElementById("shopModal").style.display = "flex";
+}
+
+window.equipBall = (id) => {
+  equippedBall = id; localStorage.setItem("cg_ball", id);
+  renderShop();
+};
+
+window.buyBall = (id, cost) => {
+  if (coins >= cost) {
+    coins -= cost; localStorage.setItem("cg_coins", coins);
+    unlockedBalls.push(id); localStorage.setItem("cg_unlocked_balls", JSON.stringify(unlockedBalls));
+    equippedBall = id; localStorage.setItem("cg_ball", id);
+    updateStatsDisplay(); renderShop();
+  } else {
+    alert("Not enough coins!");
+  }
+};
+
+function updateStatsDisplay() {
+  document.getElementById("coinsVal").textContent = coins;
+}
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("lvlsTxt").textContent = dict.levels;
+  document.getElementById("shopTxt").textContent = dict.balls;
+  document.getElementById("resetBallBtn").textContent = "🔄 " + dict.resetBall;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+updateStatsDisplay(); initLang(); updateLang(); loadLevel(1);
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
