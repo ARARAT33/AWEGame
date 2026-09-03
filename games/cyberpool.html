@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🎱 Cyber Neon Pool & Trickshots</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎱</text></svg>">
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(10, 16, 35, 0.92);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --secondary: #ff0055;
+  --accent: #ffcc00;
+  --text: #f0f6fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 26, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #33f3ff; color: #000; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #07172b 0%, #020612 100%);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.18); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; }
+.hud-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px 14px; display: flex; align-items: center; gap: 12px; backdrop-filter: blur(10px); font-weight: 700; font-size: 0.9rem; }
+
+/* Modal */
+.modal-overlay { position: absolute; inset: 0; background: rgba(3, 5, 15, 0.9); backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #0a0f24; border: 1px solid var(--primary); border-radius: 22px; padding: 26px; width: 90%; max-width: 480px; text-align: center; box-shadow: 0 0 40px rgba(0,240,255,0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.6rem; color: #fff; text-shadow: 0 0 12px var(--primary); }
+
+@media (max-width: 600px) {
+  .hud-card { font-size: 0.78rem; padding: 4px 10px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🎱</span>
+    <h1 id="titleTxt">Cyber Neon Pool & Trickshots</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="shopBtn" class="btn">🪄 <span id="shopTxt">Cues</span></button>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="hud-card">
+        <span style="color:var(--primary);" id="modeLbl">8-BALL VS AI</span>
+      </div>
+
+      <div class="hud-card">
+        <span>🎱 <span id="pocketsVal">POCKETED: 0</span></span>
+        <span>🪙 <span id="coinsVal">0</span></span>
+      </div>
+
+      <button class="btn btn-primary" id="rackBtn" style="pointer-events:auto;">🎱 Re-Rack</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="lobbyModal">
+    <div class="modal-card">
+      <h2 id="modalHead">🎱 Cyber Neon Pool</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Experience realistic cyberpunk pool physics! Aim, adjust cue power, and sink glowing balls against smart AI or clear trickshots!</p>
+
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <button class="btn btn-primary" style="justify-content:center; padding:12px;" id="startAiBtn">🤖 Play 8-Ball vs AI Bot</button>
+        <button class="btn btn-primary" style="justify-content:center; padding:12px; background:var(--secondary); color:#fff;" id="startTrickBtn">🎯 Trickshot Puzzle Mode</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="shopModal" style="display:none;">
+    <div class="modal-card">
+      <h2>🪄 Cyber Cue Shop</h2>
+      <div id="cuesList" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0;"></div>
+      <button class="btn btn-primary" style="justify-content:center;" id="closeShopBtn">Close</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Neon Pool & Trickshots", home: "Home", cues: "Cues", rack: "Re-Rack", modeAi: "8-BALL VS AI", modeTrick: "TRICKSHOT PUZZLE", win: "TABLE CLEARED / VICTORY!", typeMsg: "Type a message..." },
+  hy: { title: "Կիբեռ Նեոն Բիլիարդ", home: "Գլխավոր", cues: "Փայտեր", rack: "Վերադասավորել", modeAi: "8-BALL AI ԴԵՄ", modeTrick: "ԹՐԻՔՇՈԹ ՌԵԺԻՄ", win: "ՀԱՂԹԱՆԱԿ!", typeMsg: "Գրեք..." },
+  ru: { title: "Кибер Неон Бильярд", home: "Главная", cues: "Кии", rack: "Расставить", modeAi: "8-ШАР ПРОТИВ ИИ", modeTrick: "ТРИКШОТЫ", win: "ПОБЕДА!", typeMsg: "Сообщение..." },
+  es: { title: "Cyber Billar Neón", home: "Inicio", cues: "Tacos", rack: "Reiniciar", modeAi: "8-BOLA VS IA", modeTrick: "MODO TRUCOS", win: "¡VICTORIA!", typeMsg: "Escribe..." },
+  fr: { title: "Cyber Billard Néon", home: "Accueil", cues: "Queues", rack: "Replacer", modeAi: "8-BILLES VS IA", modeTrick: "TRICKSHOTS", win: "VICTOIRE !", typeMsg: "Message..." },
+  de: { title: "Cyber Neon Billard", home: "Startseite", cues: "Köos", rack: "Neu Ordnen", modeAi: "8-BALL GEGEN KI", modeTrick: "TRICKSHOTS", win: "SIEG!", typeMsg: "Nachricht..." },
+  it: { title: "Cyber Biliardo Biliardo", home: "Home", cues: "Stecche", rack: "Riorganizza", modeAi: "8-PALLE VS IA", modeTrick: "TRICKSHOTS", win: "VITTORIA!", typeMsg: "Messaggio..." },
+  pt: { title: "Cyber Sinuca Neon", home: "Início", cues: "Tacos", rack: "Reiniciar", modeAi: "8-BOLAS VS IA", modeTrick: "MODO TRUQUES", win: "VITÓRIA!", typeMsg: "Mensagem..." },
+  tr: { title: "Cyber Neon Bilardo", home: "Ana Sayfa", cues: "Istakalar", rack: "Diz", modeAi: "8-TOP YAPAY ZEKA", modeTrick: "TRİKŞOT MODU", win: "ZAFER!", typeMsg: "Mesaj..." },
+  ja: { title: "サイバービリヤード", home: "ホーム", cues: "キュー", rack: "ラック", modeAi: "8ボール vs AI", modeTrick: "トリックショット", win: "勝利！", typeMsg: "メッセージ..." },
+  zh: { title: "赛博台球", home: "主页", cues: "球杆", rack: "重新摆球", modeAi: "8球对战AI", modeTrick: "花式表演", win: "完全清台胜利！", typeMsg: "输入消息..." }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+const CUES = [
+  { id: 'cyan', name: 'Laser Cyan', cost: 0, power: 1.0, color: '#00f0ff' },
+  { id: 'red', name: 'Plasma Red', cost: 150, power: 1.25, color: '#ff0055' },
+  { id: 'gold', name: 'Quantum Gold', cost: 300, power: 1.5, color: '#ffcc00' },
+  { id: 'purple', name: 'Void Purple', cost: 500, power: 1.8, color: '#b400ff' }
+];
+
+let lang = "en";
+let sound = true;
+let mode = "ai";
+let totalPockets = 0;
+
+let coins = parseInt(localStorage.getItem("cp_coins") || "0");
+let equippedCue = localStorage.getItem("cp_cue") || "cyan";
+let unlockedCues = JSON.parse(localStorage.getItem("cp_unlocked_cues") || '["cyan"]');
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 900, H = 500;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio sound generator
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'hit') {
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(120, now + 0.08);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+  } else if (type === 'clack') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
+    gain.gain.setValueAtTime(0.25, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+  } else if (type === 'pocket') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(220, now); osc.frequency.exponentialRampToValueAtTime(80, now + 0.2);
+    gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.2);
+}
+
+class Ball {
+  constructor(x, y, color, number = 0) {
+    this.x = x; this.y = y;
+    this.r = 11;
+    this.vx = 0; this.vy = 0;
+    this.color = color;
+    this.number = number;
+    this.isCue = number === 0;
+    this.inPocket = false;
+  }
+  update() {
+    if (this.inPocket) return;
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vx *= 0.985;
+    this.vy *= 0.985;
+
+    if (Math.hypot(this.vx, this.vy) < 0.05) { this.vx = 0; this.vy = 0; }
+
+    // Cushion bounces
+    let left = 75, right = W - 75, top = 75, bottom = H - 75;
+    if (this.x - this.r < left) { this.x = left + this.r; this.vx *= -0.9; playSound('clack'); }
+    if (this.x + this.r > right) { this.x = right - this.r; this.vx *= -0.9; playSound('clack'); }
+    if (this.y - this.r < top) { this.y = top + this.r; this.vy *= -0.9; playSound('clack'); }
+    if (this.y + this.r > bottom) { this.y = bottom - this.r; this.vy *= -0.9; playSound('clack'); }
+
+    // Pocket check
+    const pockets = [
+      { x: 65, y: 65 }, { x: W / 2, y: 60 }, { x: W - 65, y: 65 },
+      { x: 65, y: H - 65 }, { x: W / 2, y: H - 60 }, { x: W - 65, y: H - 65 }
+    ];
+
+    pockets.forEach(p => {
+      if (Math.hypot(this.x - p.x, this.y - p.y) < 22) {
+        this.inPocket = true;
+        playSound('pocket');
+        if (this.isCue) {
+          setTimeout(() => { this.inPocket = false; this.x = W * 0.25; this.y = H / 2; this.vx = 0; this.vy = 0; }, 500);
+        } else {
+          totalPockets++; coins += 10;
+          localStorage.setItem("cp_coins", coins);
+          updateStatsDisplay();
+        }
+      }
+    });
+  }
+  draw() {
+    if (this.inPocket) return;
+    ctx.save();
+    ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = this.color; ctx.shadowColor = this.color; ctx.shadowBlur = 10;
+    ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = "#fff"; ctx.stroke();
+
+    if (this.number > 0) {
+      ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(this.x, this.y, 4, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+let balls = [];
+let cueBall = null;
+let isAiming = false;
+let aimX = 0, aimY = 0;
+
+function setupRack() {
+  balls = [];
+  cueBall = new Ball(W * 0.25, H / 2, "#ffffff", 0);
+  balls.push(cueBall);
+
+  // Triangular rack of 8-ball
+  let rx = W * 0.65, ry = H / 2;
+  let colors = ["#ff0055", "#00f0ff", "#ffcc00", "#b400ff", "#00ff66", "#000000", "#ff6600"];
+  let num = 1;
+  for (let col = 0; col < 5; col++) {
+    for (let row = 0; row <= col; row++) {
+      let x = rx + col * 20;
+      let y = ry - col * 11 + row * 22;
+      balls.push(new Ball(x, y, colors[num % colors.length], num));
+      num++;
+    }
+  }
+}
+
+// Ball-to-ball collisions
+function resolveCollisions() {
+  for (let i = 0; i < balls.length; i++) {
+    for (let j = i + 1; j < balls.length; j++) {
+      let b1 = balls[i], b2 = balls[j];
+      if (b1.inPocket || b2.inPocket) continue;
+      let dx = b2.x - b1.x, dy = b2.y - b1.y;
+      let dist = Math.hypot(dx, dy);
+      if (dist < b1.r + b2.r) {
+        playSound('clack');
+        let angle = Math.atan2(dy, dx);
+        let targetX = b1.x + Math.cos(angle) * (b1.r + b2.r);
+        let targetY = b1.y + Math.sin(angle) * (b1.r + b2.r);
+        let ax = (targetX - b2.x) * 0.5, ay = (targetY - b2.y) * 0.5;
+        b1.x -= ax; b1.y -= ay; b2.x += ax; b2.y += ay;
+
+        let v1 = Math.hypot(b1.vx, b1.vy), v2 = Math.hypot(b2.vx, b2.vy);
+        let d1 = Math.atan2(b1.vy, b1.vx), d2 = Math.atan2(b2.vy, b2.vx);
+        let vx1 = v1 * Math.cos(d1 - angle), vy1 = v1 * Math.sin(d1 - angle);
+        let vx2 = v2 * Math.cos(d2 - angle), vy2 = v2 * Math.sin(d2 - angle);
+
+        b1.vx = Math.cos(angle) * vx2 + Math.cos(angle + Math.PI / 2) * vy1;
+        b1.vy = Math.sin(angle) * vx2 + Math.sin(angle + Math.PI / 2) * vy1;
+        b2.vx = Math.cos(angle) * vx1 + Math.cos(angle + Math.PI / 2) * vy2;
+        b2.vy = Math.sin(angle) * vx1 + Math.sin(angle + Math.PI / 2) * vy2;
+      }
+    }
+  }
+}
+
+canvas.addEventListener("pointerdown", e => {
+  if (!cueBall || cueBall.vx !== 0 || cueBall.vy !== 0) return;
+  let rect = canvas.getBoundingClientRect();
+  let mx = (e.clientX - rect.left) * (W / rect.width);
+  let my = (e.clientY - rect.top) * (H / rect.height);
+  isAiming = true; aimX = mx; aimY = my;
+});
+
+canvas.addEventListener("pointermove", e => {
+  if (!isAiming) return;
+  let rect = canvas.getBoundingClientRect();
+  aimX = (e.clientX - rect.left) * (W / rect.width);
+  aimY = (e.clientY - rect.top) * (H / rect.height);
+});
+
+canvas.addEventListener("pointerup", () => {
+  if (!isAiming || !cueBall) return;
+  isAiming = false;
+  let dx = cueBall.x - aimX;
+  let dy = cueBall.y - aimY;
+  let c = CUES.find(cue => cue.id === equippedCue) || CUES[0];
+  let power = Math.min(Math.hypot(dx, dy) * 0.1, 16) * c.power;
+  let angle = Math.atan2(dy, dx);
+  cueBall.vx = Math.cos(angle) * power;
+  cueBall.vy = Math.sin(angle) * power;
+  playSound('hit');
+});
+
+function updateGame() {
+  balls.forEach(b => b.update());
+  resolveCollisions();
+}
+
+function drawTable() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Table felt
+  ctx.fillStyle = "#0c2840";
+  ctx.fillRect(50, 50, W - 100, H - 100);
+  ctx.strokeStyle = "var(--border)"; ctx.lineWidth = 10;
+  ctx.strokeRect(50, 50, W - 100, H - 100);
+
+  // Table Pockets
+  const pockets = [
+    { x: 65, y: 65 }, { x: W / 2, y: 60 }, { x: W - 65, y: 65 },
+    { x: 65, y: H - 65 }, { x: W / 2, y: H - 60 }, { x: W - 65, y: H - 65 }
+  ];
+  pockets.forEach(p => {
+    ctx.beginPath(); ctx.arc(p.x, p.y, 22, 0, Math.PI * 2);
+    ctx.fillStyle = "#02050f"; ctx.fill(); ctx.strokeStyle = "var(--primary)"; ctx.lineWidth = 2; ctx.stroke();
+  });
+}
+
+function drawGame() {
+  drawTable();
+  balls.forEach(b => b.draw());
+
+  // Aim Guideline
+  if (isAiming && cueBall) {
+    ctx.save();
+    let cue = CUES.find(c => c.id === equippedCue) || CUES[0];
+    ctx.beginPath(); ctx.moveTo(cueBall.x, cueBall.y); ctx.lineTo(cueBall.x + (cueBall.x - aimX) * 2, cueBall.y + (cueBall.y - aimY) * 2);
+    ctx.strokeStyle = cue.color; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function gameLoop() {
+  updateGame(); drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+document.getElementById("rackBtn").onclick = () => setupRack();
+document.getElementById("startAiBtn").onclick = () => { mode = "ai"; document.getElementById("lobbyModal").style.display = "none"; };
+document.getElementById("startTrickBtn").onclick = () => { mode = "trick"; document.getElementById("lobbyModal").style.display = "none"; };
+
+document.getElementById("shopBtn").onclick = () => renderShop();
+document.getElementById("closeShopBtn").onclick = () => document.getElementById("shopModal").style.display = "none";
+
+function renderShop() {
+  const list = document.getElementById("cuesList");
+  list.innerHTML = "";
+  CUES.forEach(c => {
+    const isUnlocked = unlockedCues.includes(c.id);
+    const isEquipped = equippedCue === c.id;
+    const div = document.createElement("div");
+    div.style.cssText = `background:rgba(255,255,255,0.06); padding:10px; border-radius:12px; border:1px solid ${c.color}; display:flex; flex-direction:column; gap:4px; align-items:center;`;
+    div.innerHTML = `
+      <div style="font-weight:700; color:${c.color};">${c.name}</div>
+      <div style="font-size:0.75rem; color:#aaa;">Power: x${c.power}</div>
+      ${isEquipped ? `<button class="btn btn-primary" disabled>Equipped</button>` :
+        isUnlocked ? `<button class="btn btn-primary" onclick="equipCue('${c.id}')">Equip</button>` :
+        `<button class="btn btn-primary" style="background:var(--secondary); color:#fff;" onclick="buyCue('${c.id}', ${c.cost})">🪙 ${c.cost}</button>`}
+    `;
+    list.appendChild(div);
+  });
+  document.getElementById("shopModal").style.display = "flex";
+}
+
+window.equipCue = (id) => {
+  equippedCue = id; localStorage.setItem("cp_cue", id);
+  renderShop();
+};
+
+window.buyCue = (id, cost) => {
+  if (coins >= cost) {
+    coins -= cost; localStorage.setItem("cp_coins", coins);
+    unlockedCues.push(id); localStorage.setItem("cp_unlocked_cues", JSON.stringify(unlockedCues));
+    equippedCue = id; localStorage.setItem("cp_cue", id);
+    updateStatsDisplay(); renderShop();
+  } else {
+    alert("Not enough coins!");
+  }
+};
+
+function updateStatsDisplay() {
+  document.getElementById("coinsVal").textContent = coins;
+  document.getElementById("pocketsVal").textContent = `POCKETED: ${totalPockets}`;
+}
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("shopTxt").textContent = dict.cues;
+  document.getElementById("rackBtn").textContent = "🎱 " + dict.rack;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+updateStatsDisplay(); initLang(); updateLang(); setupRack();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>

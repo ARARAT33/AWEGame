@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🥊 Cyber Boxing Ring 1v1 P2P</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥊</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(10, 16, 35, 0.92);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --secondary: #ff0055;
+  --accent: #ffcc00;
+  --text: #f0f6fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 26, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #33f3ff; color: #000; }
+.btn-accent { background: var(--secondary); color: #fff; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0a1128 0%, #02050f 100%);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.18); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; }
+.fighter-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 8px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 180px; backdrop-filter: blur(10px); }
+.bar-wrap { width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; position: relative; }
+.bar-fill { height: 100%; transition: width 0.15s ease-out; }
+.hp-fill { background: linear-gradient(90deg, #ff0055, #ff5500); }
+.p1-hp { background: linear-gradient(90deg, #00f0ff, #0088ff); }
+.stamina-fill { background: #ffcc00; }
+
+.timer-box { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px 16px; font-size: 1.4rem; font-weight: 900; color: #fff; text-shadow: 0 0 10px var(--primary); backdrop-filter: blur(10px); text-align: center; }
+
+/* Chat Box */
+.chat-box { position: absolute; bottom: 16px; left: 16px; width: 260px; height: 160px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; display: flex; flex-direction: column; pointer-events: auto; backdrop-filter: blur(10px); z-index: 5; }
+.chat-messages { flex: 1; padding: 8px; overflow-y: auto; font-size: 0.78rem; display: flex; flex-direction: column; gap: 4px; scrollbar-width: thin; }
+.chat-msg { word-break: break-word; }
+.chat-msg.system { color: var(--accent); font-style: italic; }
+.chat-msg.me { color: var(--primary); }
+.chat-msg.peer { color: var(--secondary); }
+.chat-input-row { display: flex; border-top: 1px solid var(--border); }
+.chat-input { flex: 1; background: transparent; border: none; color: #fff; padding: 6px 8px; font-size: 0.8rem; outline: none; }
+
+/* Touch Controls */
+.touch-controls { position: absolute; bottom: 16px; right: 16px; display: none; gap: 10px; pointer-events: auto; }
+.d-pad { display: flex; gap: 6px; }
+.action-btns { display: grid; grid-template-columns: repeat(2, 46px); gap: 6px; }
+.t-btn { width: 46px; height: 46px; background: rgba(255,255,255,0.12); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.1rem; font-weight: 800; }
+.t-btn:active { background: rgba(0, 240, 255, 0.4); }
+
+/* Modal */
+.modal-overlay { position: absolute; inset: 0; background: rgba(3, 5, 15, 0.9); backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #0a0f24; border: 1px solid var(--primary); border-radius: 22px; padding: 26px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 0 40px rgba(0,240,255,0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.6rem; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.input-field { background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; color: #fff; font-size: 0.95rem; text-align: center; font-weight: 700; outline: none; letter-spacing: 2px; }
+
+@media (max-width: 768px) {
+  .chat-box { width: 200px; height: 130px; }
+  .touch-controls { display: flex; }
+  .fighter-card { min-width: 120px; padding: 6px 10px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🥊</span>
+    <h1 id="titleTxt">Cyber Boxing Ring 1v1 P2P</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="shopBtn" class="btn">🥊 <span id="shopTxt">Shop</span></button>
+    <button id="sndBtn" class="btn">🔊</button>
+    <button id="micBtn" class="btn">🎙️ <span id="micTxt">Mic Off</span></button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="fighter-card">
+        <span style="color:var(--primary); font-weight:800; font-size:0.85rem;" id="p1NameLbl">CYBER VIPER</span>
+        <div class="bar-wrap"><div class="bar-fill p1-hp" id="p1HpBar" style="width:100%;"></div></div>
+        <div class="bar-wrap" style="height:6px;"><div class="bar-fill stamina-fill" id="p1StaminaBar" style="width:100%;"></div></div>
+      </div>
+
+      <div class="timer-box">
+        <div style="font-size:0.7rem; color:var(--accent);" id="roundLbl">ROUND 1</div>
+        <span id="timerVal">90</span>
+      </div>
+
+      <div class="fighter-card">
+        <span style="color:var(--secondary); font-weight:800; font-size:0.85rem;" id="p2NameLbl">CYBER TITAN</span>
+        <div class="bar-wrap"><div class="bar-fill hp-fill" id="p2HpBar" style="width:100%;"></div></div>
+        <div class="bar-wrap" style="height:6px;"><div class="bar-fill stamina-fill" id="p2StaminaBar" style="width:100%;"></div></div>
+      </div>
+    </div>
+
+    <div class="chat-box" id="chatBox">
+      <div class="chat-messages" id="chatMsgs">
+        <div class="chat-msg system" id="welcomeChatMsg">Welcome to Cyber Boxing Ring! Jab, Hook, Block and KO your opponent!</div>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." maxlength="80">
+        <button class="btn btn-primary" style="border-radius:0 13px 13px 0;" id="sendChatBtn">Send</button>
+      </div>
+    </div>
+
+    <div class="touch-controls">
+      <div class="d-pad">
+        <div class="t-btn" id="btnLeft">◄</div>
+        <div class="t-btn" id="btnDuck">▼</div>
+        <div class="t-btn" id="btnRight">►</div>
+      </div>
+      <div class="action-btns">
+        <div class="t-btn" id="btnJab" style="background:rgba(0,240,255,0.3); border-color:var(--primary);">🥊</div>
+        <div class="t-btn" id="btnHook" style="background:rgba(255,0,85,0.3); border-color:var(--secondary);">💥</div>
+        <div class="t-btn" id="btnBlock" style="background:rgba(255,204,0,0.3); border-color:var(--accent);">🛡️</div>
+        <div class="t-btn" id="btnSuper" style="background:rgba(180,0,255,0.4); border-color:#b400ff;">⚡</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="lobbyModal">
+    <div class="modal-card">
+      <h2 id="modalHead">🥊 Cyber Boxing Ring 1v1</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Enter the futuristic neon boxing arena! Knock out AI bots or battle real online players over WebRTC P2P!</p>
+
+      <div style="display:flex; justify-content:space-around; background:rgba(255,255,255,0.05); padding:10px; border-radius:12px;">
+        <div>🪙 <span id="coinsVal">0</span></div>
+        <div>🏆 <span id="winsVal">0</span></div>
+        <div>💥 <span id="koVal">0</span> KO</div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <button class="btn btn-primary" style="justify-content:center; padding:12px;" id="startAiBtn">🤖 Fight vs AI Bot</button>
+        <button class="btn btn-accent" style="justify-content:center; padding:12px;" id="hostRoomBtn">🌐 Host Ring Room (P2P)</button>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="roomCodeInput" class="input-field" placeholder="CODE" style="width:120px; text-transform:uppercase;">
+          <button class="btn" style="flex:1; justify-content:center; background:rgba(0,240,255,0.2);" id="joinRoomBtn">🔗 Join Ring</button>
+        </div>
+      </div>
+
+      <div id="connectionStatus" style="font-size:0.8rem; color:var(--accent); display:none;">Initializing...</div>
+    </div>
+  </div>
+
+  <!-- Shop Modal -->
+  <div class="modal-overlay" id="shopModal" style="display:none;">
+    <div class="modal-card">
+      <h2>🥊 Cyber Gloves Shop</h2>
+      <div id="glovesList" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0;"></div>
+      <button class="btn btn-primary" style="justify-content:center;" id="closeShopBtn">Close</button>
+    </div>
+  </div>
+</main>
+
+<audio id="remoteAudio" autoplay></audio>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Boxing Ring 1v1 P2P", home: "Home", shop: "Shop", playAi: "🤖 Fight vs AI Bot", hostRoom: "🌐 Host Ring Room (P2P)", joinRoom: "🔗 Join Ring", micOff: "Mic Off", micOn: "Mic On", welcomeMsg: "Welcome to Cyber Boxing Ring! Jab, Hook, Block and KO your opponent!", modeAi: "MODE: AI BOT", modeHost: "MODE: HOST (P2P)", modePeer: "MODE: CLIENT (P2P)", copyCode: "Room Code: ", connected: "Challenger Connected!", connecting: "Connecting...", win: "KNOCKOUT VICTORY!", lose: "KNOCKED OUT!", typeMsg: "Type a message..." },
+  hy: { title: "Կիբեռ Բոքսի Ռինգ 1v1 P2P", home: "Գլխավոր", shop: "Խանութ", playAi: "🤖 Մարտ AI Բոտի դեմ", hostRoom: "🌐 Ստեղծել Ռինգ (P2P)", joinRoom: "🔗 Միանալ Ռինգին", micOff: "Միկ. Անջատ", micOn: "Միկ. Միացված", welcomeMsg: "Բարի գալուստ Կիբեռ Բոքս: Հարվածեք, պաշտպանվեք և նոկաուտի ենթարկեք!", modeAi: "ՌԵԺԻՄ: AI ԲՈՏ", modeHost: "ՌԵԺԻՄ: ՀՈՍԹ (P2P)", modePeer: "ՌԵԺԻՄ: ԿԼԻԵՆՏ (P2P)", copyCode: "Ռինգի Կոդ: ", connected: "Միացված է!", connecting: "Միանում է...", win: "ՆՈԿԱՈՒՏ ՀԱՂԹԱՆԱԿ!", lose: "ՆՈԿԱՈՒՏ!", typeMsg: "Գրեք..." },
+  ru: { title: "Кибер Бокс 1v1 P2P", home: "Главная", shop: "Магазин", playAi: "🤖 Бой против ИИ", hostRoom: "🌐 Создать Ринг (P2P)", joinRoom: "🔗 Войти на Ринг", micOff: "Мик Выкл", micOn: "Мик Вкл", welcomeMsg: "Добро пожаловать в Кибер Бокс! Бейте джебы, хуки и отправляйте в нокаут!", modeAi: "РЕЖИМ: ИИ БОТ", modeHost: "РЕЖИМ: ХОСТ (P2P)", modePeer: "РЕЖИМ: КЛИЕНТ (P2P)", copyCode: "Код ринга: ", connected: "Соперник подключен!", connecting: "Подключение...", win: "ПОБЕДА НОКАУТОМ!", lose: "НОКАУТ!", typeMsg: "Сообщение..." },
+  es: { title: "Cyber Boxeo Ring 1v1 P2P", home: "Inicio", shop: "Tienda", playAi: "🤖 Pelear vs IA", hostRoom: "🌐 Crear Ring (P2P)", joinRoom: "🔗 Unirse al Ring", micOff: "Mic Apagado", micOn: "Mic Encendido", welcomeMsg: "¡Bienvenido a Cyber Boxeo! ¡Jab, Hook, Bloquea y noquea!", modeAi: "MODO: IA BOT", modeHost: "MODO: HOST (P2P)", modePeer: "MODO: CLIENTE (P2P)", copyCode: "Código Ring: ", connected: "¡Rival Conectado!", connecting: "Conectando...", win: "¡VICTORIA POR KO!", lose: "¡NOQUEADO!", typeMsg: "Escribe..." },
+  fr: { title: "Cyber Boxe Ring 1v1 P2P", home: "Accueil", shop: "Boutique", playAi: "🤖 Combat vs IA", hostRoom: "🌐 Créer Ring (P2P)", joinRoom: "🔗 Rejoindre Ring", micOff: "Micro Off", micOn: "Micro On", welcomeMsg: "Bienvenue sur Cyber Boxe ! Jab, Crochet, Blocage et K.O. !", modeAi: "MODE : IA BOT", modeHost: "MODE : HÔTE (P2P)", modePeer: "MODE : CLIENT (P2P)", copyCode: "Code Ring : ", connected: "Adversaire Connecté !", connecting: "Connexion...", win: "VICTOIRE PAR KO !", lose: "K.O. !", typeMsg: "Message..." },
+  de: { title: "Cyber Boxen Ring 1v1 P2P", home: "Startseite", shop: "Shop", playAi: "🤖 Kampf gegen KI", hostRoom: "🌐 Ring Erstellen (P2P)", joinRoom: "🔗 Ring Beitreten", micOff: "Mikro Aus", micOn: "Mikro An", welcomeMsg: "Willkommen beim Cyber Boxen! Jab, Hook, Blocken und K.O.!", modeAi: "MODUS: KI BOT", modeHost: "MODUS: HOST (P2P)", modePeer: "MODUS: CLIENT (P2P)", copyCode: "Ringcode: ", connected: "Gegner Verbunden!", connecting: "Verbinde...", win: "K.O. SIEG!", lose: "KNOCKOUT!", typeMsg: "Nachricht..." },
+  it: { title: "Cyber Boxe Ring 1v1 P2P", home: "Home", shop: "Negozi", playAi: "🤖 Lotta vs IA", hostRoom: "🌐 Crea Ring (P2P)", joinRoom: "🔗 Unisciti al Ring", micOff: "Mic Off", micOn: "Mic On", welcomeMsg: "Benvenuto in Cyber Boxe! Jab, Gancio, Parata e K.O.!", modeAi: "MODALITÀ: IA BOT", modeHost: "MODALITÀ: HOST (P2P)", modePeer: "MODALITÀ: CLIENT (P2P)", copyCode: "Codice Ring: ", connected: "Sfidante Connesso!", connecting: "Connessione...", win: "VITTORIA PER KO!", lose: "K.O.!", typeMsg: "Messaggio..." },
+  pt: { title: "Cyber Boxe Ringue 1v1 P2P", home: "Início", shop: "Loja", playAi: "🤖 Lutar vs IA", hostRoom: "🌐 Criar Ringue (P2P)", joinRoom: "🔗 Entrar no Ringue", micOff: "Mic Off", micOn: "Mic On", welcomeMsg: "Bem-vindo ao Cyber Boxe! Jab, Cruzado, Bloqueio e Nocaute!", modeAi: "MODO: IA BOT", modeHost: "MODO: HOST (P2P)", modePeer: "MODO: CLIENTE (P2P)", copyCode: "Código Ringue: ", connected: "Oponente Conectado!", connecting: "Conectando...", win: "VITÓRIA POR KO!", lose: "NOCAUTEADO!", typeMsg: "Mensagem..." },
+  tr: { title: "Cyber Boks Ringi 1v1 P2P", home: "Ana Sayfa", shop: "Mağaza", playAi: "🤖 Yapay Zekaya Karşı", hostRoom: "🌐 Ring Kur (P2P)", joinRoom: "🔗 Ringe Katıl", micOff: "Mik Kapalı", micOn: "Mik Açık", welcomeMsg: "Cyber Boks Ringine Hoş Geldiniz! Direk, Kroşe, Blok ve Nakavt!", modeAi: "MOD: YAPAY ZEKA", modeHost: "MOD: KURUCU (P2P)", modePeer: "MOD: KATILIMCI (P2P)", copyCode: "Ring Kodu: ", connected: "Rakip Bağlandı!", connecting: "Bağlanıyor...", win: "NAKAVT ZAFERİ!", lose: "NAKAVT OLDUNUZ!", typeMsg: "Mesaj..." },
+  ja: { title: "サイバーボクシング 1v1 P2P", home: "ホーム", shop: "ショップ", playAi: "🤖 AIボットと対戦", hostRoom: "🌐 リング作成 (P2P)", joinRoom: "🔗 リング参加", micOff: "マイクOFF", micOn: "マイクON", welcomeMsg: "サイバーボクシングへようこそ！ジャブ、フック、ガードでKO勝利を掴め！", modeAi: "モード: AIボット", modeHost: "モード: ホスト (P2P)", modePeer: "モード: クライアント (P2P)", copyCode: "リングコード: ", connected: "挑戦者が接続しました！", connecting: "接続中...", win: "KO勝利！", lose: "KO負け…", typeMsg: "メッセージ..." },
+  zh: { title: "赛博拳击 1v1 P2P", home: "主页", shop: "商店", playAi: "🤖 对战AI机器人", hostRoom: "🌐 创建拳台 (P2P)", joinRoom: "🔗 加入拳台", micOff: "麦克风关", micOn: "麦克风开", welcomeMsg: "欢迎来到赛博拳击！刺拳、勾拳、格挡，击倒对手！", modeAi: "模式: AI机器人", modeHost: "模式: 主机 (P2P)", modePeer: "模式: 客户端 (P2P)", copyCode: "拳台代码: ", connected: "对手已连接！", connecting: "连接中...", win: "KO 辉煌胜利！", lose: "被击倒！", typeMsg: "输入消息..." }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+const GLOVES = [
+  { id: 'cyan', name: 'Neon Cyan', cost: 0, power: 1.0, speed: 1.0, color: '#00f0ff' },
+  { id: 'red', name: 'Plasma Red', cost: 150, power: 1.25, speed: 1.1, color: '#ff0055' },
+  { id: 'gold', name: 'Quantum Gold', cost: 350, power: 1.5, speed: 1.2, color: '#ffcc00' },
+  { id: 'purple', name: 'Void Purple', cost: 600, power: 1.8, speed: 1.35, color: '#b400ff' }
+];
+
+let lang = "en";
+let sound = true;
+let micEnabled = false;
+let localStream = null;
+let peer = null, dataConn = null, audioCall = null;
+let mode = "ai";
+
+let coins = parseInt(localStorage.getItem("cb_coins") || "0");
+let wins = parseInt(localStorage.getItem("cb_wins") || "0");
+let kos = parseInt(localStorage.getItem("cb_kos") || "0");
+let equippedGlove = localStorage.getItem("cb_glove") || "cyan";
+let unlockedGloves = JSON.parse(localStorage.getItem("cb_unlocked") || '["cyan"]');
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 900, H = 500;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio sound generator
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'jab') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(320, now); osc.frequency.exponentialRampToValueAtTime(120, now + 0.08);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+  } else if (type === 'hook') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(450, now); osc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+    gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+  } else if (type === 'block') {
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(180, now); osc.frequency.exponentialRampToValueAtTime(250, now + 0.1);
+    gain.gain.setValueAtTime(0.25, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+  } else if (type === 'ko') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.5);
+    gain.gain.setValueAtTime(0.5, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.5);
+}
+
+class Fighter {
+  constructor(x, color, isP1) {
+    this.x = x;
+    this.y = H - 120;
+    this.color = color;
+    this.isP1 = isP1;
+    this.hp = 100;
+    this.stamina = 100;
+    this.state = 'idle'; // idle, jab, hook, block, duck, ko
+    this.animTimer = 0;
+    this.facing = isP1 ? 1 : -1;
+  }
+  getGlove() {
+    return GLOVES.find(g => g.id === equippedGlove) || GLOVES[0];
+  }
+  update() {
+    // Stamina recovery
+    if (this.stamina < 100 && this.state !== 'block') {
+      this.stamina = Math.min(100, this.stamina + 0.4);
+    }
+    if (this.animTimer > 0) {
+      this.animTimer--;
+      if (this.animTimer === 0 && this.state !== 'ko') this.state = 'idle';
+    }
+  }
+  draw() {
+    ctx.save();
+    let bx = this.x, by = this.y;
+    if (this.state === 'duck') by += 20;
+
+    // Body Shadow
+    ctx.beginPath(); ctx.ellipse(bx, H - 70, 30, 10, 0, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fill();
+
+    // Body
+    ctx.beginPath(); ctx.arc(bx, by - 40, 22, 0, Math.PI * 2);
+    ctx.fillStyle = this.color; ctx.shadowColor = this.color; ctx.shadowBlur = 15;
+    ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.stroke();
+
+    // Visor
+    ctx.fillStyle = "#000";
+    ctx.fillRect(bx + (this.facing > 0 ? 4 : -16), by - 46, 12, 6);
+
+    // Torso & Legs
+    ctx.beginPath(); ctx.moveTo(bx, by - 18); ctx.lineTo(bx, by + 15);
+    ctx.lineWidth = 14; ctx.strokeStyle = this.color; ctx.stroke();
+
+    // Gloves
+    let gloveColor = this.isP1 ? this.getGlove().color : '#ff0055';
+    let g1x = bx + (this.facing > 0 ? 18 : -18);
+    let g1y = by - 35;
+    let g2x = bx + (this.facing > 0 ? 28 : -28);
+    let g2y = by - 35;
+
+    if (this.state === 'jab') {
+      g2x += this.facing * 35;
+    } else if (this.state === 'hook') {
+      g2x += this.facing * 45; g2y -= 10;
+    } else if (this.state === 'block') {
+      g1x = bx + (this.facing > 0 ? 8 : -8); g1y = by - 45;
+      g2x = bx + (this.facing > 0 ? 14 : -14); g2y = by - 45;
+    }
+
+    ctx.beginPath(); ctx.arc(g1x, g1y, 11, 0, Math.PI * 2);
+    ctx.fillStyle = gloveColor; ctx.fill(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
+
+    ctx.beginPath(); ctx.arc(g2x, g2y, 11, 0, Math.PI * 2);
+    ctx.fillStyle = gloveColor; ctx.fill(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
+
+    ctx.restore();
+  }
+}
+
+let p1 = new Fighter(W * 0.35, "#00f0ff", true);
+let p2 = new Fighter(W * 0.65, "#ff0055", false);
+let roundTime = 90;
+let keys = {};
+
+window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+function bindTouch(id, action) {
+  const el = document.getElementById(id);
+  el.addEventListener("touchstart", (e) => { e.preventDefault(); action(true); });
+  el.addEventListener("touchend", (e) => { e.preventDefault(); action(false); });
+}
+bindTouch("btnLeft", v => keys['a'] = v);
+bindTouch("btnRight", v => keys['d'] = v);
+bindTouch("btnDuck", v => { if (v) p1.state = 'duck'; else if (p1.state === 'duck') p1.state = 'idle'; });
+bindTouch("btnJab", v => { if (v) attack(p1, p2, 'jab'); });
+bindTouch("btnHook", v => { if (v) attack(p1, p2, 'hook'); });
+bindTouch("btnBlock", v => { if (v) p1.state = 'block'; else if (p1.state === 'block') p1.state = 'idle'; });
+
+function attack(attacker, defender, type) {
+  if (attacker.stamina < 15 || attacker.state === 'ko') return;
+  let g = attacker.getGlove();
+  let cost = type === 'jab' ? 12 : 25;
+  let baseDmg = type === 'jab' ? 8 : 18;
+  attacker.stamina -= cost;
+  attacker.state = type;
+  attacker.animTimer = 12;
+  playSound(type);
+
+  // Check collision distance
+  let dist = Math.abs(attacker.x - defender.x);
+  let range = type === 'jab' ? 80 : 95;
+
+  if (dist < range) {
+    if (defender.state === 'block') {
+      defender.hp -= Math.max(2, baseDmg * 0.15);
+      playSound('block');
+    } else if (defender.state === 'duck' && type === 'hook') {
+      // Missed due to ducking!
+    } else {
+      let finalDmg = baseDmg * g.power;
+      defender.hp = Math.max(0, defender.hp - finalDmg);
+      if (defender.hp === 0) {
+        defender.state = 'ko';
+        playSound('ko');
+        handleKo(attacker.isP1);
+      }
+    }
+  }
+}
+
+function handleKo(p1Won) {
+  if (p1Won) {
+    wins++; kos++; coins += 50;
+    localStorage.setItem("cb_wins", wins);
+    localStorage.setItem("cb_kos", kos);
+    localStorage.setItem("cb_coins", coins);
+    updateStatsDisplay();
+    alert((I18N[lang] || I18N.en).win);
+  } else {
+    alert((I18N[lang] || I18N.en).lose);
+  }
+  resetMatch();
+}
+
+function resetMatch() {
+  p1.hp = 100; p1.stamina = 100; p1.state = 'idle'; p1.x = W * 0.35;
+  p2.hp = 100; p2.stamina = 100; p2.state = 'idle'; p2.x = W * 0.65;
+  roundTime = 90;
+}
+
+setInterval(() => {
+  if (roundTime > 0) roundTime--;
+  document.getElementById("timerVal").textContent = roundTime;
+}, 1000);
+
+function updateAi() {
+  if (p2.state === 'ko') return;
+  let dist = Math.abs(p1.x - p2.x);
+
+  // AI Movement
+  if (dist > 75) {
+    p2.x -= 1.8;
+  } else if (dist < 50) {
+    p2.x += 1.8;
+  }
+
+  // AI Attack / Block logic
+  if (Math.random() < 0.04 && dist < 85) {
+    if (p1.state === 'jab' || p1.state === 'hook') {
+      p2.state = 'block'; p2.animTimer = 15;
+    } else {
+      attack(p2, p1, Math.random() < 0.6 ? 'jab' : 'hook');
+    }
+  }
+}
+
+function updateGame() {
+  p1.update(); p2.update();
+
+  // Player 1 Keyboard Controls
+  if (keys['a'] || keys['arrowleft']) p1.x = Math.max(W * 0.15, p1.x - 3.5);
+  if (keys['d'] || keys['arrowright']) p1.x = Math.min(W * 0.85, p1.x + 3.5);
+  if (keys['s'] || keys['arrowdown']) p1.state = 'duck';
+  if (keys['w'] || keys['arrowup']) p1.state = 'block';
+
+  if (keys['j'] || keys['space']) { attack(p1, p2, 'jab'); keys['j'] = false; keys['space'] = false; }
+  if (keys['k'] || keys['x']) { attack(p1, p2, 'hook'); keys['k'] = false; keys['x'] = false; }
+
+  if (mode === 'ai') updateAi();
+
+  document.getElementById("p1HpBar").style.width = p1.hp + "%";
+  document.getElementById("p2HpBar").style.width = p2.hp + "%";
+  document.getElementById("p1StaminaBar").style.width = p1.stamina + "%";
+  document.getElementById("p2StaminaBar").style.width = p2.stamina + "%";
+
+  // P2P Sync
+  if (mode === "host" && dataConn && dataConn.open) {
+    dataConn.send({
+      type: 'sync',
+      p1: { x: p1.x, hp: p1.hp, stamina: p1.stamina, state: p1.state },
+      p2: { x: p2.x, hp: p2.hp, stamina: p2.stamina, state: p2.state }
+    });
+  } else if (mode === "client" && dataConn && dataConn.open) {
+    dataConn.send({ type: 'clientPos', x: p1.x, state: p1.state });
+  }
+}
+
+function drawRing() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Ring Mat Floor
+  let ry = H - 80;
+  ctx.fillStyle = "#0c1838";
+  ctx.fillRect(W * 0.1, ry, W * 0.8, 80);
+
+  // Ring Neon Ropes
+  for (let i = 1; i <= 3; i++) {
+    let ropeY = ry - i * 45;
+    ctx.strokeStyle = i === 2 ? "#ff0055" : "#00f0ff";
+    ctx.lineWidth = 4;
+    ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.moveTo(W * 0.1, ropeY); ctx.lineTo(W * 0.9, ropeY); ctx.stroke();
+  }
+
+  // Ring Posts
+  ctx.fillStyle = "#ffcc00";
+  ctx.fillRect(W * 0.1 - 10, ry - 140, 16, 140);
+  ctx.fillRect(W * 0.9 - 6, ry - 140, 16, 140);
+}
+
+function drawGame() {
+  drawRing();
+  p1.draw(); p2.draw();
+}
+
+function gameLoop() {
+  updateGame(); drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+// PeerJS Setup
+function initPeer(customId = null) {
+  const statusEl = document.getElementById("connectionStatus");
+  statusEl.style.display = "block";
+  statusEl.textContent = (I18N[lang] || I18N.en).connecting;
+
+  peer = customId ? new Peer(customId) : new Peer();
+
+  peer.on('open', (id) => {
+    statusEl.textContent = (I18N[lang] || I18N.en).copyCode + id;
+    addChatMessage('system', `Ring created! Code: ${id}`);
+  });
+
+  peer.on('connection', (conn) => {
+    dataConn = conn; setupDataConn();
+  });
+
+  peer.on('call', (call) => {
+    audioCall = call;
+    if (localStream) call.answer(localStream);
+    else call.answer();
+    call.on('stream', (remoteStream) => {
+      document.getElementById("remoteAudio").srcObject = remoteStream;
+    });
+  });
+}
+
+function setupDataConn() {
+  dataConn.on('open', () => {
+    addChatMessage('system', (I18N[lang] || I18N.en).connected);
+    document.getElementById("lobbyModal").style.display = "none";
+  });
+  dataConn.on('data', (data) => {
+    if (data.type === 'chat') {
+      addChatMessage('peer', data.msg);
+    } else if (data.type === 'sync') {
+      p2.x = data.p1.x; p2.hp = data.p1.hp; p2.stamina = data.p1.stamina; p2.state = data.p1.state;
+      p1.hp = data.p2.hp; p1.stamina = data.p2.stamina;
+    } else if (data.type === 'clientPos') {
+      p2.x = data.x; p2.state = data.state;
+    }
+  });
+}
+
+function addChatMessage(sender, text) {
+  const msgs = document.getElementById("chatMsgs");
+  const div = document.createElement("div");
+  div.className = `chat-msg ${sender}`;
+  div.textContent = text;
+  msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+}
+
+document.getElementById("sendChatBtn").onclick = () => {
+  const input = document.getElementById("chatInput");
+  const text = input.value.trim();
+  if (text) {
+    addChatMessage('me', text);
+    if (dataConn && dataConn.open) dataConn.send({ type: 'chat', msg: text });
+    input.value = "";
+  }
+};
+
+document.getElementById("micBtn").onclick = async () => {
+  if (!micEnabled) {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micEnabled = true;
+      document.getElementById("micTxt").textContent = (I18N[lang] || I18N.en).micOn;
+      if (dataConn && dataConn.peer) {
+        audioCall = peer.call(dataConn.peer, localStream);
+        audioCall.on('stream', s => document.getElementById("remoteAudio").srcObject = s);
+      }
+    } catch (e) { alert("Microphone access failed."); }
+  } else {
+    if (localStream) localStream.getTracks().forEach(t => t.stop());
+    micEnabled = false;
+    document.getElementById("micTxt").textContent = (I18N[lang] || I18N.en).micOff;
+  }
+};
+
+document.getElementById("startAiBtn").onclick = () => {
+  mode = "ai";
+  document.getElementById("lobbyModal").style.display = "none";
+};
+
+document.getElementById("hostRoomBtn").onclick = () => {
+  mode = "host";
+  initPeer("BOXING-" + Math.floor(1000 + Math.random() * 9000));
+};
+
+document.getElementById("joinRoomBtn").onclick = () => {
+  let code = document.getElementById("roomCodeInput").value.trim().toUpperCase();
+  if (!code) return;
+  mode = "client";
+  initPeer();
+  peer.on('open', () => {
+    dataConn = peer.connect(code);
+    setupDataConn();
+  });
+};
+
+document.getElementById("shopBtn").onclick = () => renderShop();
+document.getElementById("closeShopBtn").onclick = () => document.getElementById("shopModal").style.display = "none";
+
+function renderShop() {
+  const list = document.getElementById("glovesList");
+  list.innerHTML = "";
+  GLOVES.forEach(g => {
+    const isUnlocked = unlockedGloves.includes(g.id);
+    const isEquipped = equippedGlove === g.id;
+    const div = document.createElement("div");
+    div.style.cssText = `background:rgba(255,255,255,0.06); padding:10px; border-radius:12px; border:1px solid ${g.color}; display:flex; flex-direction:column; gap:4px; align-items:center;`;
+    div.innerHTML = `
+      <div style="font-weight:700; color:${g.color};">${g.name}</div>
+      <div style="font-size:0.75rem; color:#aaa;">Pwr: x${g.power} | Spd: x${g.speed}</div>
+      ${isEquipped ? `<button class="btn btn-primary" disabled>Equipped</button>` :
+        isUnlocked ? `<button class="btn btn-primary" onclick="equipGlove('${g.id}')">Equip</button>` :
+        `<button class="btn btn-accent" onclick="buyGlove('${g.id}', ${g.cost})">🪙 ${g.cost}</button>`}
+    `;
+    list.appendChild(div);
+  });
+  document.getElementById("shopModal").style.display = "flex";
+}
+
+window.equipGlove = (id) => {
+  equippedGlove = id; localStorage.setItem("cb_glove", id);
+  renderShop();
+};
+
+window.buyGlove = (id, cost) => {
+  if (coins >= cost) {
+    coins -= cost; localStorage.setItem("cb_coins", coins);
+    unlockedGloves.push(id); localStorage.setItem("cb_unlocked", JSON.stringify(unlockedGloves));
+    equippedGlove = id; localStorage.setItem("cb_glove", id);
+    updateStatsDisplay(); renderShop();
+  } else {
+    alert("Not enough coins!");
+  }
+};
+
+function updateStatsDisplay() {
+  document.getElementById("coinsVal").textContent = coins;
+  document.getElementById("winsVal").textContent = wins;
+  document.getElementById("koVal").textContent = kos;
+}
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("shopTxt").textContent = dict.shop;
+  document.getElementById("startAiBtn").textContent = dict.playAi;
+  document.getElementById("hostRoomBtn").textContent = dict.hostRoom;
+  document.getElementById("joinRoomBtn").textContent = dict.joinRoom;
+  document.getElementById("micTxt").textContent = micEnabled ? dict.micOn : dict.micOff;
+  document.getElementById("chatInput").placeholder = dict.typeMsg;
+  document.getElementById("welcomeChatMsg").textContent = dict.welcomeMsg;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+updateStatsDisplay(); initLang(); updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
