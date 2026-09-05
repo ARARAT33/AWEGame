@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Cyber Grapple Ninja</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪢</text></svg>">
+<style>
+:root {
+  --bg: #060814;
+  --panel: rgba(15, 23, 42, 0.88);
+  --border: rgba(0, 242, 254, 0.3);
+  --primary: #00f2fe;
+  --accent: #ff007f;
+  --gold: #ffb703;
+  --green: #39ff14;
+  --text: #f0fdfa;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(10, 15, 30, 0.92);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+  z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand h1 { font-size: 1.25rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px var(--primary); }
+.controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;
+  text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 242, 254, 0.2); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #38bdf8; color: #000; }
+.btn-accent { background: var(--accent); color: #fff; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 24px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+select option { background: #0f172a; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0e1630 0%, #060814 100%);
+  box-shadow: 0 0 30px rgba(0, 242, 254, 0.15); display: block; touch-action: none;
+}
+
+.overlay {
+  position: absolute; inset: 0; pointer-events: none;
+  display: flex; flex-direction: column; justify-content: space-between; padding: 12px;
+}
+.hud-top {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; gap: 10px;
+}
+.hud-card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+  padding: 6px 14px; font-weight: 700; display: flex; align-items: center; gap: 10px;
+  font-size: 0.85rem; backdrop-filter: blur(8px);
+}
+
+.modal-overlay {
+  position: absolute; inset: 0; background: rgba(5, 7, 18, 0.92);
+  backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center;
+  z-index: 20; pointer-events: auto;
+}
+.modal-card {
+  background: #0f172a; border: 1px solid var(--primary); border-radius: 20px;
+  padding: 24px; width: 90%; max-width: 440px; text-align: center;
+  box-shadow: 0 0 40px rgba(0, 242, 254, 0.2); display: flex; flex-direction: column; gap: 14px;
+}
+.modal-card h2 { font-size: 1.5rem; color: #fff; text-shadow: 0 0 10px var(--primary); }
+
+.upgrade-grid { display: flex; flex-direction: column; gap: 10px; }
+.upgrade-item {
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px;
+  padding: 10px; display: flex; align-items: center; justify-content: space-between;
+}
+.upgrade-info { text-align: left; }
+.upgrade-title { font-weight: 700; font-size: 0.9rem; color: var(--text); }
+.upgrade-desc { font-size: 0.75rem; color: #aaa; }
+
+.touch-controls {
+  position: absolute; bottom: 16px; right: 16px; display: none;
+  pointer-events: auto;
+}
+.touch-btn-large {
+  width: 70px; height: 70px; background: rgba(0, 242, 254, 0.2);
+  border: 2px solid var(--primary); border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; color: #fff; font-size: 1.5rem;
+  user-select: none; -webkit-user-select: none; box-shadow: 0 0 15px var(--primary);
+}
+.touch-btn-large:active { background: var(--primary); color: #000; }
+
+@media (max-width: 768px) {
+  .touch-controls { display: block; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:22px;">🪢</span>
+    <h1 id="titleTxt">Cyber Grapple Ninja</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <button id="shopBtn" class="btn btn-primary">🛠️ <span id="shopTxt">Upgrades</span></button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="hud-card" style="color:var(--primary);">
+        🚀 DISTANCE: <span id="distTxt">0</span>m
+      </div>
+
+      <div class="hud-card" style="color:var(--gold);">
+        🏆 BEST: <span id="bestTxt">0</span>m
+      </div>
+
+      <div class="hud-card" style="color:var(--green);">
+        💎 COINS: <span id="coinsTxt">0</span>
+      </div>
+    </div>
+
+    <div class="touch-controls">
+      <div class="touch-btn-large" id="grappleTouchBtn">🪢</div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="shopModal" style="display:none;">
+    <div class="modal-card">
+      <h2 id="modalHead">Grapple Suit Upgrades</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Upgrade spring tension, thrusters, and magnet range!</p>
+
+      <div class="upgrade-grid">
+        <div class="upgrade-item">
+          <div class="upgrade-info">
+            <div class="upgrade-title" id="up1Title">Hook Tension & Pull</div>
+            <div class="upgrade-desc" id="up1Desc">Increase swing grapple velocity</div>
+          </div>
+          <button class="btn btn-primary" id="buyTensionBtn">💎 <span id="up1Cost">50</span></button>
+        </div>
+
+        <div class="upgrade-item">
+          <div class="upgrade-info">
+            <div class="upgrade-title" id="up2Title">Magnet Ring</div>
+            <div class="upgrade-desc" id="up2Desc">Pull nearby energy coins</div>
+          </div>
+          <button class="btn btn-primary" id="buyMagnetBtn">💎 <span id="up2Cost">80</span></button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="justify-content:center; padding:10px; margin-top:8px;" id="closeShopBtn">Close Upgrades</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Grapple Ninja", home: "Home", shop: "Upgrades", up1Title: "Hook Tension", up1Desc: "Boost grapple swing pull", up2Title: "Coin Magnet", up2Desc: "Attract nearby coins", close: "Resume Swing" },
+  hy: { title: "Սայբեր Ճոպան Նինջա", home: "Գլխավոր", shop: "Բարելավումներ", up1Title: "Ճոպանի Ձգողություն", up1Desc: "Ուժեղացնել թռիչքի ուժը", up2Title: "Մետաղադրամի Մագնիս", up2Desc: "Ձգել մոտակա մետաղադրամները", close: "Շարունակել" },
+  ru: { title: "Сайбер Крюк Ниндзя", home: "Главная", shop: "Улучшения", up1Title: "Натяжение Крюка", up1Desc: "Увеличить силу раскачки", up2Title: "Магнит Монет", up2Desc: "Притягивать монеты", close: "Продолжить" },
+  es: { title: "Cyber Grapple Ninja", home: "Inicio", shop: "Mejoras", up1Title: "Tensión del Gancho", up1Desc: "Mayor impulso en balanceo", up2Title: "Imán de Monedas", up2Desc: "Atraer monedas cercanas", close: "Reanudar" },
+  fr: { title: "Cyber Grapple Ninja", home: "Accueil", shop: "Améliorations", up1Title: "Tension Grappin", up1Desc: "Boost de vitesse", up2Title: "Aimant Pièces", up2Desc: "Attirer les pièces", close: "Reprendre" },
+  de: { title: "Cyber Grapple Ninja", home: "Startseite", shop: "Upgrades", up1Title: "Haken-Spannung", up1Desc: "Erhöht Schwung-Geschwindigkeit", up2Title: "Münz-Magnet", up2Desc: "Zieht Münzen an", close: "Weiter" },
+  it: { title: "Cyber Grapple Ninja", home: "Home", shop: "Potenziamenti", up1Title: "Tensione Rampino", up1Desc: "Spinta maggiore", up2Title: "Magnete Monete", up2Desc: "Attira monete vicine", close: "Riprendi" },
+  pt: { title: "Cyber Grapple Ninja", home: "Início", shop: "Melhorias", up1Title: "Tensão do Gancho", up1Desc: "Aumentar impulso", up2Title: "Ímã de Moedas", up2Desc: "Atrair moedas", close: "Continuar" },
+  tr: { title: "Cyber Grapple Ninja", home: "Ana Sayfa", shop: "Geliştirmeler", up1Title: "Kanca Gerilimi", up1Desc: "Sallanma hızını artır", up2Title: "Jeton Mıknatısı", up2Desc: "Yakındaki jetonları çek", close: "Devam Et" },
+  ja: { title: "サイバーグラップルニンジャ", home: "ホーム", shop: "アップグレード", up1Title: "フックテンション", up1Desc: "スイング速度を強化", up2Title: "コインマグネット", up2Desc: "コイン引き寄せ機能", close: "再開" },
+  zh: { title: "赛博抓钩忍者", home: "主页", shop: "装备升级", up1Title: "抓钩张力", up1Desc: "提升摆荡拉力", up2Title: "金币磁铁", up2Desc: "吸附附近金币", close: "继续游戏" }
+};
+
+const LANG_LIST = [
+  ["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"],
+  ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"],
+  ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]
+];
+
+let lang = "en";
+let sound = true;
+
+// Storage
+let saveData = JSON.parse(localStorage.getItem("cyberGrappleData") || '{"coins":0, "best":0, "tensionLvl":1, "magnetLvl":1}');
+function saveStorage() { localStorage.setItem("cyberGrappleData", JSON.stringify(saveData)); }
+
+// Canvas
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 800, H = 500;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 50;
+  let aspect = 16 / 10;
+  let w = maxW;
+  let h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width;
+  H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Sound
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'hook') {
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(400, now);
+    osc.frequency.exponentialRampToValueAtTime(800, now + 0.12);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.12);
+  } else if (type === 'coin') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.1);
+  }
+}
+
+// Game State
+let player = { x: 100, y: 250, vx: 5, vy: 0, radius: 14 };
+let grapple = { active: false, anchorX: 0, anchorY: 0, length: 0 };
+let nodes = [];
+let coins = [];
+let particles = [];
+let distance = 0;
+let isHooking = false;
+
+function generateWorld() {
+  let lastX = nodes.length ? nodes[nodes.length - 1].x : 100;
+  while (lastX < player.x + W + 200) {
+    lastX += 120 + Math.random() * 80;
+    nodes.push({ x: lastX, y: 80 + Math.random() * 120 });
+    if (Math.random() < 0.6) {
+      coins.push({ x: lastX + (Math.random() - 0.5) * 60, y: 200 + Math.random() * 180, collected: false });
+    }
+  }
+}
+
+window.addEventListener("keydown", (e) => { if (e.code === "Space") attachHook(); });
+window.addEventListener("keyup", (e) => { if (e.code === "Space") detachHook(); });
+canvas.addEventListener("mousedown", attachHook);
+canvas.addEventListener("mouseup", detachHook);
+canvas.addEventListener("touchstart", (e) => { e.preventDefault(); attachHook(); });
+canvas.addEventListener("touchend", (e) => { e.preventDefault(); detachHook(); });
+
+function attachHook() {
+  if (grapple.active) return;
+  // Find closest anchor node ahead
+  let bestNode = null, minDist = 400;
+  nodes.forEach(n => {
+    if (n.x > player.x - 50) {
+      let d = Math.hypot(n.x - player.x, n.y - player.y);
+      if (d < minDist) { minDist = d; bestNode = n; }
+    }
+  });
+
+  if (bestNode) {
+    grapple.active = true;
+    grapple.anchorX = bestNode.x;
+    grapple.anchorY = bestNode.y;
+    grapple.length = Math.hypot(bestNode.x - player.x, bestNode.y - player.y);
+    playSound('hook');
+  }
+}
+
+function detachHook() { grapple.active = false; }
+
+function updateGame() {
+  generateWorld();
+
+  // Gravity
+  player.vy += 0.35;
+
+  if (grapple.active) {
+    // Spring grapple physics
+    let dx = player.x - grapple.anchorX;
+    let dy = player.y - grapple.anchorY;
+    let dist = Math.hypot(dx, dy);
+
+    let tension = 0.05 + saveData.tensionLvl * 0.02;
+    if (dist > grapple.length) {
+      let diff = dist - grapple.length;
+      player.vx -= (dx / dist) * diff * tension;
+      player.vy -= (dy / dist) * diff * tension;
+    }
+  }
+
+  player.x += player.vx;
+  player.y += player.vy;
+  distance = Math.floor(player.x / 10);
+
+  if (distance > saveData.best) {
+    saveData.best = distance;
+    saveStorage();
+  }
+
+  // Magnet Coins
+  coins.forEach(c => {
+    if (!c.collected) {
+      let d = Math.hypot(c.x - player.x, c.y - player.y);
+      let magDist = 60 + saveData.magnetLvl * 30;
+      if (d < magDist) {
+        c.x += (player.x - c.x) * 0.15;
+        c.y += (player.y - c.y) * 0.15;
+      }
+      if (d < player.radius + 10) {
+        c.collected = true;
+        saveData.coins += 5;
+        saveStorage();
+        playSound('coin');
+      }
+    }
+  });
+
+  // Fall off reset
+  if (player.y > H + 100) {
+    player.x = 100; player.y = 250;
+    player.vx = 5; player.vy = 0;
+    grapple.active = false;
+  }
+
+  // HUD
+  document.getElementById("distTxt").textContent = distance;
+  document.getElementById("bestTxt").textContent = saveData.best;
+  document.getElementById("coinsTxt").textContent = saveData.coins;
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.translate(-player.x + 150, 0);
+
+  // Draw Anchor Nodes
+  nodes.forEach(n => {
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, 8, 0, Math.PI * 2);
+    ctx.fillStyle = "#00f2fe";
+    ctx.shadowColor = "#00f2fe";
+    ctx.shadowBlur = 10;
+    ctx.fill();
+  });
+
+  // Draw Grapple Line
+  if (grapple.active) {
+    ctx.strokeStyle = "#ff007f";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(player.x, player.y);
+    ctx.lineTo(grapple.anchorX, grapple.anchorY);
+    ctx.stroke();
+  }
+
+  // Draw Coins
+  coins.forEach(c => {
+    if (!c.collected) {
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = "#ffb703";
+      ctx.shadowColor = "#ffb703";
+      ctx.shadowBlur = 8;
+      ctx.fill();
+    }
+  });
+
+  // Draw Player
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+  ctx.fillStyle = "#00f2fe";
+  ctx.shadowColor = "#00f2fe";
+  ctx.shadowBlur = 12;
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+// Shop UI
+const shopModal = document.getElementById("shopModal");
+document.getElementById("shopBtn").onclick = () => shopModal.style.display = "flex";
+document.getElementById("closeShopBtn").onclick = () => shopModal.style.display = "none";
+
+function updateShopCosts() {
+  document.getElementById("up1Cost").textContent = 50 * saveData.tensionLvl;
+  document.getElementById("up2Cost").textContent = 80 * saveData.magnetLvl;
+}
+
+document.getElementById("buyTensionBtn").onclick = () => {
+  let cost = 50 * saveData.tensionLvl;
+  if (saveData.coins >= cost) {
+    saveData.coins -= cost;
+    saveData.tensionLvl++;
+    saveStorage();
+    updateShopCosts();
+  }
+};
+document.getElementById("buyMagnetBtn").onclick = () => {
+  let cost = 80 * saveData.magnetLvl;
+  if (saveData.coins >= cost) {
+    saveData.coins -= cost;
+    saveData.magnetLvl++;
+    saveStorage();
+    updateShopCosts();
+  }
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", (e) => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("shopTxt").textContent = dict.shop;
+  document.getElementById("up1Title").textContent = dict.up1Title;
+  document.getElementById("up1Desc").textContent = dict.up1Desc;
+  document.getElementById("up2Title").textContent = dict.up2Title;
+  document.getElementById("up2Desc").textContent = dict.up2Desc;
+  document.getElementById("closeShopBtn").textContent = dict.close;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+updateShopCosts();
+initLang();
+updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
