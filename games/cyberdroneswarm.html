@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Cyber Swarm Commander</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐝</text></svg>">
+<style>
+:root {
+  --bg: #050814;
+  --panel: rgba(13, 20, 41, 0.88);
+  --border: rgba(0, 242, 254, 0.3);
+  --primary: #00f2fe;
+  --accent: #ff007f;
+  --gold: #ffb703;
+  --green: #39ff14;
+  --text: #f0fdfa;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(10, 15, 30, 0.92);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+  z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand h1 { font-size: 1.25rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px var(--primary); }
+.controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;
+  text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 242, 254, 0.2); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #38bdf8; color: #000; }
+.btn-accent { background: var(--accent); color: #fff; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 24px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+select option { background: #0f172a; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0d152d 0%, #050814 100%);
+  box-shadow: 0 0 30px rgba(0, 242, 254, 0.15); display: block; touch-action: none;
+}
+
+.overlay {
+  position: absolute; inset: 0; pointer-events: none;
+  display: flex; flex-direction: column; justify-content: space-between; padding: 12px;
+}
+.hud-top {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; gap: 10px;
+}
+.hud-card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+  padding: 6px 14px; font-weight: 700; display: flex; align-items: center; gap: 10px;
+  font-size: 0.85rem; backdrop-filter: blur(8px);
+}
+.hp-bar-bg { width: 120px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
+.hp-bar-fill { height: 100%; width: 100%; background: var(--primary); box-shadow: 0 0 8px var(--primary); transition: width 0.2s; }
+
+/* Shop / Upgrade Modal */
+.modal-overlay {
+  position: absolute; inset: 0; background: rgba(5, 7, 18, 0.92);
+  backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center;
+  z-index: 20; pointer-events: auto;
+}
+.modal-card {
+  background: #0f172a; border: 1px solid var(--primary); border-radius: 20px;
+  padding: 24px; width: 90%; max-width: 440px; text-align: center;
+  box-shadow: 0 0 40px rgba(0, 242, 254, 0.2); display: flex; flex-direction: column; gap: 14px;
+}
+.modal-card h2 { font-size: 1.5rem; color: #fff; text-shadow: 0 0 10px var(--primary); }
+
+.upgrade-grid { display: flex; flex-direction: column; gap: 10px; }
+.upgrade-item {
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px;
+  padding: 10px; display: flex; align-items: center; justify-content: space-between;
+}
+.upgrade-info { text-align: left; }
+.upgrade-title { font-weight: 700; font-size: 0.9rem; color: var(--text); }
+.upgrade-desc { font-size: 0.75rem; color: #aaa; }
+
+.touch-controls {
+  position: absolute; bottom: 16px; right: 16px; display: none;
+  grid-template-columns: repeat(3, 46px); gap: 6px; pointer-events: auto;
+}
+.touch-btn {
+  width: 46px; height: 46px; background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border); border-radius: 12px; display: flex;
+  align-items: center; justify-content: center; color: #fff; font-size: 1.1rem;
+  user-select: none; -webkit-user-select: none;
+}
+.touch-btn:active { background: rgba(0, 242, 254, 0.3); }
+
+@media (max-width: 768px) {
+  .touch-controls { display: grid; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:22px;">🐝</span>
+    <h1 id="titleTxt">Cyber Swarm Commander</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <button id="shopBtn" class="btn btn-primary">🛠️ <span id="shopTxt">Upgrades</span></button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="hud-card">
+        <span style="color:var(--primary);">CORE HP:</span>
+        <div class="hp-bar-bg"><div class="hp-bar-fill" id="coreHp"></div></div>
+      </div>
+
+      <div class="hud-card" style="color:var(--gold);">
+        ⚡ WAVE: <span id="waveTxt">1</span> | DRONES: <span id="droneCount">0</span>
+      </div>
+
+      <div class="hud-card" style="color:var(--green);">
+        💎 MATTER: <span id="matterTxt">0</span>
+      </div>
+    </div>
+
+    <div class="touch-controls">
+      <div></div><div class="touch-btn" id="btnUp">▲</div><div></div>
+      <div class="touch-btn" id="btnLeft">◄</div><div class="touch-btn" id="btnAttack">⚔️</div><div class="touch-btn" id="btnRight">►</div>
+      <div></div><div class="touch-btn" id="btnDown">▼</div><div></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="shopModal" style="display:none;">
+    <div class="modal-card">
+      <h2 id="modalHead">Swarm Tech Upgrades</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Enhance your drone flocking algorithms and core defenses!</p>
+
+      <div class="upgrade-grid">
+        <div class="upgrade-item">
+          <div class="upgrade-info">
+            <div class="upgrade-title" id="up1Title">Drone Speed & Thrusters</div>
+            <div class="upgrade-desc" id="up1Desc">Increase drone response velocity</div>
+          </div>
+          <button class="btn btn-primary" id="buySpeedBtn">💎 <span id="up1Cost">50</span></button>
+        </div>
+
+        <div class="upgrade-item">
+          <div class="upgrade-info">
+            <div class="upgrade-title" id="up2Title">Plasma Laser Power</div>
+            <div class="upgrade-desc" id="up2Desc">Boost swarm laser strike damage</div>
+          </div>
+          <button class="btn btn-primary" id="buyPowerBtn">💎 <span id="up2Cost">80</span></button>
+        </div>
+
+        <div class="upgrade-item">
+          <div class="upgrade-info">
+            <div class="upgrade-title" id="up3Title">Spawn Drone Unit</div>
+            <div class="upgrade-desc" id="up3Desc">Add +2 tactical combat drones</div>
+          </div>
+          <button class="btn btn-accent" id="buyDroneBtn">💎 <span id="up3Cost">100</span></button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="justify-content:center; padding:10px; margin-top:8px;" id="closeShopBtn">Close Upgrades</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Swarm Commander", home: "Home", shop: "Upgrades", up1Title: "Drone Speed", up1Desc: "Increase drone velocity", up2Title: "Plasma Damage", up2Desc: "Boost laser strike power", up3Title: "Spawn Drones", up3Desc: "Add +2 combat drones", close: "Resume Battle" },
+  hy: { title: "Սայբեր Ռոբոտ Երամ", home: "Գլխավոր", shop: "Բարելավումներ", up1Title: "Արագություն", up1Desc: "Մեծացնել դրոնների արագությունը", up2Title: "Լազերային Վնաս", up2Desc: "Ուժեղացնել հարվածի ուժը", up3Title: "Ավելացնել Դրոն", up3Desc: "Ավելացնել +2 մարտական դրոն", close: "Շարունակել" },
+  ru: { title: "Сайбер Рой Командир", home: "Главная", shop: "Улучшения", up1Title: "Скорость Дронов", up1Desc: "Увеличить скорость дронов", up2Title: "Урон Лазера", up2Desc: "Увеличить урон роя", up3Title: "Призвать Дронов", up3Desc: "Добавить +2 дрона", close: "Продолжить Бой" },
+  es: { title: "Cyber Swarm Commander", home: "Inicio", shop: "Mejoras", up1Title: "Velocidad Drone", up1Desc: "Mayor velocidad de respuesta", up2Title: "Daño Láser", up2Desc: "Aumentar poder de ataque", up3Title: "Sumar Drones", up3Desc: "+2 drones de combate", close: "Reanudar" },
+  fr: { title: "Cyber Swarm Commander", home: "Accueil", shop: "Améliorations", up1Title: "Vitesse Drones", up1Desc: "Augmenter la vitesse", up2Title: "Dégâts Laser", up2Desc: "Augmenter la puissance", up3Title: "Ajouter Drones", up3Desc: "+2 drones de combat", close: "Reprendre" },
+  de: { title: "Cyber Swarm Commander", home: "Startseite", shop: "Upgrades", up1Title: "Drohnentempo", up1Desc: "Erhöht Reaktionsgeschwindigkeit", up2Title: "Laser-Schaden", up2Desc: "Erhöht Angriffskraft", up3Title: "Drohnen Rufen", up3Desc: "+2 Kampfdrohnen", close: "Weiterkämpfen" },
+  it: { title: "Cyber Swarm Commander", home: "Home", shop: "Potenziamenti", up1Title: "Velocità Droni", up1Desc: "Aumenta velocità", up2Title: "Danno Laser", up2Desc: "Aumenta potenza", up3Title: "Recluta Droni", up3Desc: "+2 droni da combattimento", close: "Riprendi" },
+  pt: { title: "Cyber Swarm Commander", home: "Início", shop: "Melhorias", up1Title: "Velocidade Drone", up1Desc: "Aumentar velocidade", up2Title: "Dano Laser", up2Desc: "Aumentar poder", up3Title: "Criar Drones", up3Desc: "+2 drones de combate", close: "Continuar" },
+  tr: { title: "Cyber Swarm Commander", home: "Ana Sayfa", shop: "Geliştirmeler", up1Title: "Hız Yükseltme", up1Desc: "Drone hızını artır", up2Title: "Lazer Hasarı", up2Desc: "Saldırı gücünü artır", up3Title: "Drone Ekle", up3Desc: "+2 savaş dronu", close: "Devam Et" },
+  ja: { title: "サイバースウォームコマンダー", home: "ホーム", shop: "アップグレード", up1Title: "ドローン速度", up1Desc: "ドローンの移動速度を強化", up2Title: "レーザー威力", up2Desc: "スウォーム攻撃力を強化", up3Title: "ドローン召喚", up3Desc: "+2の戦闘ドローンを追加", close: "戦闘再開" },
+  zh: { title: "赛博蜂群指挥官", home: "主页", shop: "科技升级", up1Title: "无人机速度", up1Desc: "提升无人机移动速度", up2Title: "激光伤害", up2Desc: "增强蜂群攻击火力", up3Title: "召唤无人机", up3Desc: "增加 +2 战斗无人机", close: "继续战斗" }
+};
+
+const LANG_LIST = [
+  ["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"],
+  ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"],
+  ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]
+];
+
+let lang = "en";
+let sound = true;
+
+// Storage
+let saveData = JSON.parse(localStorage.getItem("cyberSwarmData") || '{"matter":100, "drones":8, "speedLvl":1, "powerLvl":1, "wave":1}');
+function saveStorage() { localStorage.setItem("cyberSwarmData", JSON.stringify(saveData)); }
+
+// Canvas
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 800, H = 550;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 50;
+  let aspect = 16 / 10;
+  let w = maxW;
+  let h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width;
+  H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio API
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'laser') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.exponentialRampToValueAtTime(150, now + 0.1);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.1);
+  } else if (type === 'hit') {
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(100, now);
+    osc.frequency.exponentialRampToValueAtTime(30, now + 0.15);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.15);
+  }
+}
+
+// Entities
+let core = { x: W / 2, y: H / 2, radius: 30, hp: 100 };
+let drones = [];
+let enemies = [];
+let lasers = [];
+let particles = [];
+let targetPos = { x: W / 2, y: H / 2 };
+let wave = saveData.wave;
+let waveTimer = 0;
+
+class Drone {
+  constructor(x, y) {
+    this.x = x; this.y = y;
+    this.vx = 0; this.vy = 0;
+    this.radius = 5;
+    this.shootCooldown = 0;
+  }
+  update() {
+    // Flocking behavior towards target
+    let maxSpeed = 3 + saveData.speedLvl * 0.8;
+    let dx = targetPos.x - this.x;
+    let dy = targetPos.y - this.y;
+    let dist = Math.hypot(dx, dy);
+
+    if (dist > 20) {
+      this.vx += (dx / dist) * 0.4;
+      this.vy += (dy / dist) * 0.4;
+    }
+
+    // Cohesion / Separation from other drones
+    drones.forEach(d => {
+      if (d !== this) {
+        let ddx = this.x - d.x;
+        let ddy = this.y - d.y;
+        let ddist = Math.hypot(ddx, ddy);
+        if (ddist < 18 && ddist > 0) {
+          this.vx += (ddx / ddist) * 0.3;
+          this.vy += (ddy / ddist) * 0.3;
+        }
+      }
+    });
+
+    this.vx *= 0.88; this.vy *= 0.88;
+    this.x += this.vx; this.y += this.vy;
+
+    if (this.shootCooldown > 0) this.shootCooldown--;
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = "#00f2fe";
+    ctx.shadowColor = "#00f2fe";
+    ctx.shadowBlur = 8;
+    ctx.fill();
+  }
+}
+
+class Enemy {
+  constructor() {
+    let angle = Math.random() * Math.PI * 2;
+    let dist = Math.max(W, H) * 0.6;
+    this.x = W / 2 + Math.cos(angle) * dist;
+    this.y = H / 2 + Math.sin(angle) * dist;
+    this.hp = 20 + wave * 10;
+    this.maxHp = this.hp;
+    this.speed = 1 + Math.random() * 0.8;
+    this.radius = 12;
+  }
+  update() {
+    let dx = W / 2 - this.x;
+    let dy = H / 2 - this.y;
+    let dist = Math.hypot(dx, dy);
+    this.x += (dx / dist) * this.speed;
+    this.y += (dy / dist) * this.speed;
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = "#ff007f";
+    ctx.shadowColor = "#ff007f";
+    ctx.shadowBlur = 10;
+    ctx.fill();
+  }
+}
+
+class Laser {
+  constructor(x, y, tx, ty) {
+    this.x = x; this.y = y;
+    let angle = Math.atan2(ty - y, tx - x);
+    this.vx = Math.cos(angle) * 12;
+    this.vy = Math.sin(angle) * 12;
+    this.alive = true;
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.alive = false;
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffb703";
+    ctx.fill();
+  }
+}
+
+class Particle {
+  constructor(x, y, color) {
+    this.x = x; this.y = y;
+    this.vx = (Math.random() - 0.5) * 6;
+    this.vy = (Math.random() - 0.5) * 6;
+    this.life = 1.0;
+    this.color = color;
+  }
+  update() { this.x += this.vx; this.y += this.vy; this.life -= 0.04; }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.globalAlpha = Math.max(0, this.life);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+// Init Drones
+function syncDrones() {
+  while (drones.length < saveData.drones) {
+    drones.push(new Drone(W / 2 + (Math.random() - 0.5) * 40, H / 2 + (Math.random() - 0.5) * 40));
+  }
+}
+
+// Controls & Aim
+canvas.addEventListener("mousemove", (e) => {
+  const rect = canvas.getBoundingClientRect();
+  targetPos.x = (e.clientX - rect.left) * (W / rect.width);
+  targetPos.y = (e.clientY - rect.top) * (H / rect.height);
+});
+canvas.addEventListener("touchmove", (e) => {
+  if (e.touches[0]) {
+    const rect = canvas.getBoundingClientRect();
+    targetPos.x = (e.touches[0].clientX - rect.left) * (W / rect.width);
+    targetPos.y = (e.touches[0].clientY - rect.top) * (H / rect.height);
+  }
+});
+
+let keys = {};
+window.addEventListener("keydown", (e) => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
+
+function bindTouch(id, dx, dy) {
+  const btn = document.getElementById(id);
+  btn.addEventListener("touchstart", (e) => { e.preventDefault(); targetPos.x += dx * 40; targetPos.y += dy * 40; });
+}
+bindTouch("btnUp", 0, -1); bindTouch("btnDown", 0, 1);
+bindTouch("btnLeft", -1, 0); bindTouch("btnRight", 1, 0);
+
+function spawnWave() {
+  let count = 4 + wave * 3;
+  for (let i = 0; i < count; i++) enemies.push(new Enemy());
+}
+
+function updateGame() {
+  // Movement keys
+  if (keys['w'] || keys['arrowup']) targetPos.y -= 5;
+  if (keys['s'] || keys['arrowdown']) targetPos.y += 5;
+  if (keys['a'] || keys['arrowleft']) targetPos.x -= 5;
+  if (keys['d'] || keys['arrowright']) targetPos.x += 5;
+
+  // Keep target in bounds
+  targetPos.x = Math.max(20, Math.min(W - 20, targetPos.x));
+  targetPos.y = Math.max(20, Math.min(H - 20, targetPos.y));
+
+  syncDrones();
+  drones.forEach(d => d.update());
+
+  // Wave Spawner
+  if (enemies.length === 0) {
+    waveTimer++;
+    if (waveTimer > 100) {
+      waveTimer = 0;
+      wave++;
+      saveData.wave = wave;
+      saveStorage();
+      spawnWave();
+    }
+  }
+
+  // Drones attack nearby enemies
+  drones.forEach(d => {
+    if (d.shootCooldown <= 0) {
+      let nearest = null, minDist = 220;
+      enemies.forEach(e => {
+        let dist = Math.hypot(e.x - d.x, e.y - d.y);
+        if (dist < minDist) { minDist = dist; nearest = e; }
+      });
+      if (nearest) {
+        lasers.push(new Laser(d.x, d.y, nearest.x, nearest.y));
+        d.shootCooldown = 15;
+        playSound('laser');
+      }
+    }
+  });
+
+  // Update Lasers
+  for (let i = lasers.length - 1; i >= 0; i--) {
+    let l = lasers[i];
+    l.update();
+
+    for (let j = enemies.length - 1; j >= 0; j--) {
+      let e = enemies[j];
+      if (Math.hypot(l.x - e.x, l.y - e.y) < e.radius + 4) {
+        l.alive = false;
+        e.hp -= 8 + saveData.powerLvl * 4;
+        playSound('hit');
+        createExplosion(e.x, e.y, "#ffb703");
+
+        if (e.hp <= 0) {
+          enemies.splice(j, 1);
+          saveData.matter += 15;
+          saveStorage();
+        }
+        break;
+      }
+    }
+
+    if (!l.alive) lasers.splice(i, 1);
+  }
+
+  // Update Enemies
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    let e = enemies[i];
+    e.update();
+
+    // Hit Core
+    if (Math.hypot(e.x - W / 2, e.y - H / 2) < core.radius + e.radius) {
+      core.hp = Math.max(0, core.hp - 15);
+      createExplosion(e.x, e.y, "#ff007f");
+      enemies.splice(i, 1);
+      playSound('hit');
+    }
+  }
+
+  // Particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    particles[i].update();
+    if (particles[i].life <= 0) particles.splice(i, 1);
+  }
+
+  // Respawn Core
+  if (core.hp <= 0) {
+    setTimeout(() => { core.hp = 100; }, 1500);
+  }
+
+  // HUD
+  document.getElementById("coreHp").style.width = `${core.hp}%`;
+  document.getElementById("waveTxt").textContent = wave;
+  document.getElementById("droneCount").textContent = drones.length;
+  document.getElementById("matterTxt").textContent = saveData.matter;
+}
+
+function createExplosion(x, y, color) {
+  for (let i = 0; i < 12; i++) particles.push(new Particle(x, y, color));
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Core Base
+  ctx.beginPath();
+  ctx.arc(W / 2, H / 2, core.radius, 0, Math.PI * 2);
+  ctx.fillStyle = "#00f2fe";
+  ctx.shadowColor = "#00f2fe";
+  ctx.shadowBlur = 20;
+  ctx.fill();
+
+  // Target Crosshair
+  ctx.strokeStyle = "rgba(0, 242, 254, 0.5)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(targetPos.x, targetPos.y, 14, 0, Math.PI * 2);
+  ctx.moveTo(targetPos.x - 20, targetPos.y); ctx.lineTo(targetPos.x + 20, targetPos.y);
+  ctx.moveTo(targetPos.x, targetPos.y - 20); ctx.lineTo(targetPos.x, targetPos.y + 20);
+  ctx.stroke();
+
+  drones.forEach(d => d.draw());
+  enemies.forEach(e => e.draw());
+  lasers.forEach(l => l.draw());
+  particles.forEach(p => p.draw());
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+// Shop UI
+const shopModal = document.getElementById("shopModal");
+document.getElementById("shopBtn").onclick = () => shopModal.style.display = "flex";
+document.getElementById("closeShopBtn").onclick = () => shopModal.style.display = "none";
+
+function updateShopCosts() {
+  document.getElementById("up1Cost").textContent = 50 * saveData.speedLvl;
+  document.getElementById("up2Cost").textContent = 80 * saveData.powerLvl;
+  document.getElementById("up3Cost").textContent = 100 + (saveData.drones - 8) * 40;
+}
+
+document.getElementById("buySpeedBtn").onclick = () => {
+  let cost = 50 * saveData.speedLvl;
+  if (saveData.matter >= cost) {
+    saveData.matter -= cost;
+    saveData.speedLvl++;
+    saveStorage();
+    updateShopCosts();
+  }
+};
+document.getElementById("buyPowerBtn").onclick = () => {
+  let cost = 80 * saveData.powerLvl;
+  if (saveData.matter >= cost) {
+    saveData.matter -= cost;
+    saveData.powerLvl++;
+    saveStorage();
+    updateShopCosts();
+  }
+};
+document.getElementById("buyDroneBtn").onclick = () => {
+  let cost = 100 + (saveData.drones - 8) * 40;
+  if (saveData.matter >= cost) {
+    saveData.matter -= cost;
+    saveData.drones += 2;
+    saveStorage();
+    updateShopCosts();
+  }
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", (e) => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("shopTxt").textContent = dict.shop;
+  document.getElementById("up1Title").textContent = dict.up1Title;
+  document.getElementById("up1Desc").textContent = dict.up1Desc;
+  document.getElementById("up2Title").textContent = dict.up2Title;
+  document.getElementById("up2Desc").textContent = dict.up2Desc;
+  document.getElementById("up3Title").textContent = dict.up3Title;
+  document.getElementById("up3Desc").textContent = dict.up3Desc;
+  document.getElementById("closeShopBtn").textContent = dict.close;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+spawnWave();
+updateShopCosts();
+initLang();
+updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
