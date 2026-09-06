@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Cosmic Gravity Slingshot</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌌</text></svg>">
+<style>
+:root {
+  --bg: #050814;
+  --panel: rgba(13, 20, 38, 0.9);
+  --border: rgba(0, 242, 254, 0.3);
+  --primary: #00f2fe;
+  --accent: #9d4edd;
+  --gold: #ffb703;
+  --green: #39ff14;
+  --text: #f0fdfa;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(10, 15, 30, 0.92);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+  z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand h1 { font-size: 1.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px var(--primary); }
+.controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;
+  text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 242, 254, 0.2); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #38bdf8; }
+select.btn { outline: none; appearance: none; padding-right: 24px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+select option { background: #0f172a; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0d152a 0%, #050814 100%);
+  box-shadow: 0 0 30px rgba(0, 242, 254, 0.15); display: block; touch-action: none;
+}
+
+.hud-top {
+  position: absolute; top: 12px; left: 16px; right: 16px;
+  display: flex; justify-content: space-between; align-items: center;
+  pointer-events: none; z-index: 5;
+}
+.hud-card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+  padding: 6px 14px; backdrop-filter: blur(8px); pointer-events: auto;
+  font-weight: 700; font-size: 0.88rem; color: var(--gold);
+}
+
+.shop-panel {
+  position: absolute; bottom: 16px; left: 16px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+  padding: 10px; display: flex; gap: 8px; backdrop-filter: blur(8px);
+  z-index: 5; flex-wrap: wrap;
+}
+
+.modal-overlay {
+  position: absolute; inset: 0; background: rgba(5, 8, 20, 0.88);
+  backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center;
+  z-index: 20; pointer-events: auto;
+}
+.modal-card {
+  background: #0f172a; border: 1px solid var(--primary); border-radius: 20px;
+  padding: 24px; width: 90%; max-width: 400px; text-align: center;
+  box-shadow: 0 0 40px rgba(0, 242, 254, 0.2); display: flex; flex-direction: column; gap: 14px;
+}
+.modal-card h2 { font-size: 1.5rem; color: #fff; text-shadow: 0 0 10px var(--primary); }
+
+@media (max-width: 600px) {
+  .shop-panel { font-size: 0.75rem; padding: 6px; }
+  .btn { padding: 4px 8px; font-size: 0.75rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:22px;">🌌</span>
+    <h1 id="titleTxt">Cosmic Slingshot</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="hud-top">
+    <div class="hud-card"><span id="lvlTxt">Level</span>: <span id="lvlVal">1</span> / 25</div>
+    <div class="hud-card"><span id="stardustTxt">Stardust</span>: <span id="stardustVal">0</span> ✨</div>
+    <div class="hud-card"><span id="shotsTxt">Shots</span>: <span id="shotsVal">0</span></div>
+  </div>
+
+  <div class="shop-panel">
+    <button class="btn" id="upgPredictBtn">🔮 <span id="upgPredictTxt">Trajectory +1</span> (<span id="costPredictVal">30</span> ✨)</button>
+    <button class="btn" id="upgThrustBtn">🚀 <span id="upgThrustTxt">Speed +15%</span> (<span id="costThrustVal">50</span> ✨)</button>
+    <button class="btn" id="resetProbeBtn">🔄 <span id="resetTxt">Reset Probe</span></button>
+  </div>
+
+  <div class="modal-overlay" id="levelModal" style="display:none;">
+    <div class="modal-card">
+      <h2 id="modalHead">Level Complete!</h2>
+      <p id="modalDesc" style="color:#aaa; font-size:0.9rem;">You navigated the gravitational anomalies!</p>
+      <button class="btn btn-primary" style="justify-content:center; padding:10px;" id="nextLvlBtn">Next Level ➔</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cosmic Slingshot", home: "Home", lvl: "Level", stardust: "Stardust", shots: "Shots", upgPredict: "Trajectory", upgThrust: "Speed", reset: "Reset Probe", winHead: "Sector Cleared!", winDesc: "Great shot! Planetary orbit reached successfully.", next: "Next Level ➔", restart: "Restart Level" },
+  hy: { title: "Տիեզերական Պարսատիկ", home: "Գլխավոր", lvl: "Մակարդակ", stardust: "Աստղափոշի", shots: "Կրակոցներ", upgPredict: "Հետագիծ", upgThrust: "Արագություն", reset: "Վերաբեռնել", winHead: "Սեկտորը Մաքրված է!", winDesc: "Հիանալի կրակոց! Մոլորակային ուղեծիրը նվաճված է:", next: "Հաջորդ Մակարդակ ➔", restart: "Կրկնել Մակարդակը" },
+  ru: { title: "Космический Рогатка", home: "Главная", lvl: "Уровень", stardust: "Звездная пыль", shots: "Выстрелы", upgPredict: "Траектория", upgThrust: "Скорость", reset: "Сброс Пробы", winHead: "Сектор Очищен!", winDesc: "Отличный выстрел! Вы вышли на орбиту.", next: "Следующий Уровень ➔", restart: "Переиграть" },
+  es: { title: "Tirachinas Cósmico", home: "Inicio", lvl: "Nivel", stardust: "Polvo Estelar", shots: "Disparos", upgPredict: "Trayectoria", upgThrust: "Velocidad", reset: "Reiniciar", winHead: "¡Sector Completado!", winDesc: "¡Gran tiro! Órbita alcanzada con éxito.", next: "Siguiente Nivel ➔", restart: "Reiniciar Nivel" },
+  fr: { title: "Lance-pierre Cosmique", home: "Accueil", lvl: "Niveau", stardust: "Poussière d'étoile", shots: "Tirs", upgPredict: "Trajectoire", upgThrust: "Vitesse", reset: "Réinitialiser", winHead: "Secteur Réussi !", winDesc: "Super tir ! Orbite atteinte avec succès.", next: "Niveau Suivant ➔", restart: "Recommencer" },
+  de: { title: "Kosmische Schleuder", home: "Startseite", lvl: "Level", stardust: "Sternenstaub", shots: "Schüsse", upgPredict: "Trajektorie", upgThrust: "Geschwindigkeit", reset: "Reset Probe", winHead: "Sektor Geklärt!", winDesc: "Toller Schuss! Umlaufbahn erfolgreich erreicht.", next: "Nächstes Level ➔", restart: "Level Neustarten" },
+  it: { title: "Fionda Cosmica", home: "Home", lvl: "Livello", stardust: "Polvere di Stelle", shots: "Tiri", upgPredict: "Traiettoria", upgThrust: "Velocità", reset: "Azzera Sonda", winHead: "Settore Completato!", winDesc: "Ottimo tiro! Orbita raggiunta con successo.", next: "Prossimo Livello ➔", restart: "Ricomincia" },
+  pt: { title: "Estilingue Cósmico", home: "Início", lvl: "Nível", stardust: "Poeira Estelar", shots: "Disparos", upgPredict: "Trajetória", upgThrust: "Velocidade", reset: "Reiniciar", winHead: "Setor Concluído!", winDesc: "Ótimo tiro! Órbita alcançada com sucesso.", next: "Próximo Nível ➔", restart: "Reiniciar Nível" },
+  tr: { title: "Kozmik Sapan", home: "Ana Sayfa", lvl: "Seviye", stardust: "Yıldız Tozu", shots: "Atışlar", upgPredict: "Yörünge", upgThrust: "Hız", reset: "Sondayı Sıfırla", winHead: "Sektör Temizlendi!", winDesc: "Harika atış! Gezegen yörüngesine ulaşıldı.", next: "Sonraki Seviye ➔", restart: "Yeniden Başlat" },
+  ja: { title: "コズミックスリングショット", home: "ホーム", lvl: "レベル", stardust: "スターダスト", shots: "ショット", upgPredict: "軌道予測", upgThrust: "スピード", reset: "リセット", winHead: "セクタークリア！", winDesc: "ナイスショット！軌道に到達しました。", next: "次のレベル ➔", restart: "やり直す" },
+  zh: { title: "宇宙引力弹弓", home: "主页", lvl: "关卡", stardust: "星尘", shots: "发射", upgPredict: "轨迹预测", upgThrust: "速度", reset: "重置探测器", winHead: "星区已通关！", winDesc: "完美的发射！已成功进入目标轨道。", next: "下一关 ➔", restart: "重新开始" }
+};
+
+const LANG_LIST = [
+  ["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"],
+  ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"],
+  ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]
+];
+
+let lang = "en";
+let sound = true;
+
+// Storage
+let saveData = JSON.parse(localStorage.getItem("cosmicSlingshotData") || '{"level":1, "stardust":0, "predictLvl":1, "thrustLvl":1}');
+function saveStorage() { localStorage.setItem("cosmicSlingshotData", JSON.stringify(saveData)); }
+
+// Canvas
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 800, H = 500;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 50;
+  let aspect = 16 / 10;
+  let w = maxW;
+  let h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width;
+  H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Audio
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'launch') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(200, now);
+    osc.frequency.exponentialRampToValueAtTime(800, now + 0.2);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.2);
+  } else if (type === 'star') {
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.15);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.15);
+  } else if (type === 'goal') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(400, now);
+    osc.frequency.setValueAtTime(600, now + 0.1);
+    osc.frequency.setValueAtTime(900, now + 0.2);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.4);
+  } else if (type === 'crash') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(150, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.25);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.25);
+  }
+}
+
+// Entities
+class Probe {
+  constructor(x, y) {
+    this.startX = x; this.startY = y;
+    this.x = x; this.y = y;
+    this.vx = 0; this.vy = 0;
+    this.radius = 8;
+    this.inFlight = false;
+    this.trail = [];
+  }
+  reset() {
+    this.x = this.startX; this.y = this.startY;
+    this.vx = 0; this.vy = 0;
+    this.inFlight = false;
+    this.trail = [];
+  }
+  update(planets) {
+    if (!this.inFlight) return;
+
+    this.trail.push({ x: this.x, y: this.y });
+    if (this.trail.length > 40) this.trail.shift();
+
+    // Gravity pulls
+    planets.forEach(p => {
+      let dx = p.x - this.x;
+      let dy = p.y - this.y;
+      let dist = Math.hypot(dx, dy);
+      if (dist > p.radius) {
+        let force = (p.mass * 120) / (dist * dist);
+        this.vx += (dx / dist) * force;
+        this.vy += (dy / dist) * force;
+      }
+    });
+
+    this.x += this.vx;
+    this.y += this.vy;
+
+    // Bounds check
+    if (this.x < -50 || this.x > W + 50 || this.y < -50 || this.y > H + 50) {
+      playSound('crash');
+      this.reset();
+    }
+  }
+  draw() {
+    // Draw trail
+    ctx.beginPath();
+    this.trail.forEach((t, i) => {
+      if (i === 0) ctx.moveTo(t.x, t.y);
+      else ctx.lineTo(t.x, t.y);
+    });
+    ctx.strokeStyle = "rgba(0, 242, 254, 0.4)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw probe
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = "#00f2fe";
+    ctx.shadowColor = "#00f2fe";
+    ctx.shadowBlur = 12;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
+class Planet {
+  constructor(x, y, radius, mass, color, isGoal = false) {
+    this.x = x; this.y = y;
+    this.radius = radius;
+    this.mass = mass;
+    this.color = color;
+    this.isGoal = isGoal;
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = this.isGoal ? 20 : 10;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Atmosphere ring
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius + 6, 0, Math.PI * 2);
+    ctx.strokeStyle = this.isGoal ? "#39ff14" : "rgba(255,255,255,0.2)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+class Star {
+  constructor(x, y) {
+    this.x = x; this.y = y;
+    this.radius = 7;
+    this.collected = false;
+  }
+  draw() {
+    if (this.collected) return;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffb703";
+    ctx.shadowColor = "#ffb703";
+    ctx.shadowBlur = 10;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+
+let probe = new Probe(80, H / 2);
+let planets = [];
+let stars = [];
+let isDragging = false;
+let dragX = 0, dragY = 0;
+let shotsCount = 0;
+
+function generateLevel(lvl) {
+  planets = [];
+  stars = [];
+  probe.reset();
+  probe.startX = 80; probe.startY = H / 2; probe.reset();
+
+  // Goal planet at right side
+  let goal = new Planet(W - 100, H / 2 + (Math.sin(lvl) * 80), 28, 0, "#39ff14", true);
+  planets.push(goal);
+
+  // Blackhole / Gravity anomalies
+  let count = Math.min(6, 1 + Math.floor(lvl / 3));
+  for (let i = 0; i < count; i++) {
+    let px = 200 + (i * (W - 350) / count) + Math.sin(i * 3 + lvl) * 30;
+    let py = 100 + ((i % 2 === 0 ? 1 : -1) * 100) + H / 3;
+    let mass = 15 + (i % 3) * 10;
+    let col = i % 2 === 0 ? "#9d4edd" : "#ff007f";
+    planets.push(new Planet(px, py, 18 + mass * 0.4, mass, col));
+  }
+
+  // Collectible stars
+  for (let i = 0; i < 3; i++) {
+    let sx = 180 + i * 160;
+    let sy = H / 2 + Math.sin(i + lvl) * 120;
+    stars.push(new Star(sx, sy));
+  }
+}
+
+// Slingshot Controls
+canvas.addEventListener("pointerdown", (e) => {
+  if (probe.inFlight) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (W / rect.width);
+  const my = (e.clientY - rect.top) * (H / rect.height);
+
+  if (Math.hypot(mx - probe.x, my - probe.y) < 40) {
+    isDragging = true;
+    dragX = mx; dragY = my;
+  }
+});
+
+canvas.addEventListener("pointermove", (e) => {
+  if (!isDragging) return;
+  const rect = canvas.getBoundingClientRect();
+  dragX = (e.clientX - rect.left) * (W / rect.width);
+  dragY = (e.clientY - rect.top) * (H / rect.height);
+});
+
+canvas.addEventListener("pointerup", () => {
+  if (!isDragging) return;
+  isDragging = false;
+
+  let dx = probe.startX - dragX;
+  let dy = probe.startY - dragY;
+  let speedMult = 0.12 * (1 + saveData.thrustLvl * 0.15);
+
+  probe.vx = dx * speedMult;
+  probe.vy = dy * speedMult;
+  probe.inFlight = true;
+  shotsCount++;
+  playSound('launch');
+});
+
+function drawTrajectory() {
+  if (!isDragging) return;
+
+  let dx = probe.startX - dragX;
+  let dy = probe.startY - dragY;
+  let speedMult = 0.12 * (1 + saveData.thrustLvl * 0.15);
+
+  let simX = probe.startX;
+  let simY = probe.startY;
+  let simVx = dx * speedMult;
+  let simVy = dy * speedMult;
+
+  let steps = 40 + saveData.predictLvl * 35;
+
+  ctx.beginPath();
+  ctx.moveTo(simX, simY);
+
+  for (let s = 0; s < steps; s++) {
+    planets.forEach(p => {
+      let pdx = p.x - simX;
+      let pdy = p.y - simY;
+      let dist = Math.hypot(pdx, pdy);
+      if (dist > p.radius) {
+        let force = (p.mass * 120) / (dist * dist);
+        simVx += (pdx / dist) * force;
+        simVy += (pdy / dist) * force;
+      }
+    });
+
+    simX += simVx;
+    simY += simVy;
+    ctx.lineTo(simX, simY);
+  }
+
+  ctx.strokeStyle = "rgba(255, 183, 3, 0.7)";
+  ctx.setLineDash([6, 6]);
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function updateGame() {
+  probe.update(planets);
+
+  // Collect stars
+  stars.forEach(s => {
+    if (!s.collected && Math.hypot(probe.x - s.x, probe.y - s.y) < probe.radius + s.radius) {
+      s.collected = true;
+      saveData.stardust += 10;
+      saveStorage();
+      playSound('star');
+    }
+  });
+
+  // Collision with planets
+  planets.forEach(p => {
+    if (Math.hypot(probe.x - p.x, probe.y - p.y) < probe.radius + p.radius) {
+      if (p.isGoal) {
+        playSound('goal');
+        saveData.stardust += 30;
+        saveData.level = Math.min(25, saveData.level + 1);
+        saveStorage();
+        document.getElementById("levelModal").style.display = "flex";
+      } else {
+        playSound('crash');
+        probe.reset();
+      }
+    }
+  });
+
+  // Update HUD
+  document.getElementById("lvlVal").textContent = saveData.level;
+  document.getElementById("stardustVal").textContent = saveData.stardust;
+  document.getElementById("shotsVal").textContent = shotsCount;
+
+  // Shop button states
+  let costP = 30 * saveData.predictLvl;
+  let costT = 50 * saveData.thrustLvl;
+  document.getElementById("costPredictVal").textContent = costP;
+  document.getElementById("costThrustVal").textContent = costT;
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Background stars
+  ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+  for (let i = 0; i < 30; i++) {
+    let sx = (i * 97) % W;
+    let sy = (i * 131) % H;
+    ctx.fillRect(sx, sy, 2, 2);
+  }
+
+  planets.forEach(p => p.draw());
+  stars.forEach(s => s.draw());
+  probe.draw();
+  drawTrajectory();
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+// Upgrades
+document.getElementById("upgPredictBtn").onclick = () => {
+  let cost = 30 * saveData.predictLvl;
+  if (saveData.stardust >= cost) {
+    saveData.stardust -= cost;
+    saveData.predictLvl++;
+    saveStorage();
+  }
+};
+
+document.getElementById("upgThrustBtn").onclick = () => {
+  let cost = 50 * saveData.thrustLvl;
+  if (saveData.stardust >= cost) {
+    saveData.stardust -= cost;
+    saveData.thrustLvl++;
+    saveStorage();
+  }
+};
+
+document.getElementById("resetProbeBtn").onclick = () => probe.reset();
+
+document.getElementById("nextLvlBtn").onclick = () => {
+  document.getElementById("levelModal").style.display = "none";
+  generateLevel(saveData.level);
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", (e) => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("lvlTxt").textContent = dict.lvl;
+  document.getElementById("stardustTxt").textContent = dict.stardust;
+  document.getElementById("shotsTxt").textContent = dict.shots;
+  document.getElementById("upgPredictTxt").textContent = dict.upgPredict;
+  document.getElementById("upgThrustTxt").textContent = dict.upgThrust;
+  document.getElementById("resetTxt").textContent = dict.reset;
+  document.getElementById("modalHead").textContent = dict.winHead;
+  document.getElementById("modalDesc").textContent = dict.winDesc;
+  document.getElementById("nextLvlBtn").textContent = dict.next;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang();
+updateLang();
+generateLevel(saveData.level);
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>

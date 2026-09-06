@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Cyber Sky Taxi Courier</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚕</text></svg>">
+<style>
+:root {
+  --bg: #070914;
+  --panel: rgba(15, 23, 42, 0.9);
+  --border: rgba(0, 242, 254, 0.3);
+  --primary: #00f2fe;
+  --accent: #ff007f;
+  --gold: #ffb703;
+  --green: #39ff14;
+  --text: #f0fdfa;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(10, 15, 30, 0.92);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+  z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand h1 { font-size: 1.2rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px var(--primary); }
+.controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;
+  text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 242, 254, 0.2); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #38bdf8; }
+select.btn { outline: none; appearance: none; padding-right: 24px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+select option { background: #0f172a; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0f172a 0%, #070914 100%);
+  box-shadow: 0 0 30px rgba(0, 242, 254, 0.15); display: block; touch-action: none;
+}
+
+.hud-top {
+  position: absolute; top: 12px; left: 16px; right: 16px;
+  display: flex; justify-content: space-between; align-items: center;
+  pointer-events: none; z-index: 5; gap: 10px; flex-wrap: wrap;
+}
+.hud-card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+  padding: 6px 14px; backdrop-filter: blur(8px); pointer-events: auto;
+  font-weight: 700; font-size: 0.85rem; color: var(--gold);
+}
+.bar-bg { width: 80px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; display: inline-block; vertical-align: middle; }
+.bar-fill { height: 100%; transition: width 0.1s; }
+
+.shop-panel {
+  position: absolute; bottom: 16px; left: 16px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+  padding: 8px; display: flex; gap: 8px; backdrop-filter: blur(8px);
+  z-index: 5; flex-wrap: wrap;
+}
+
+.touch-controls {
+  position: absolute; bottom: 16px; right: 16px; display: none;
+  grid-template-columns: repeat(3, 46px); gap: 6px; pointer-events: auto; z-index: 5;
+}
+.touch-btn {
+  width: 46px; height: 46px; background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border); border-radius: 12px; display: flex;
+  align-items: center; justify-content: center; color: #fff; font-size: 1.1rem;
+}
+.touch-btn:active { background: rgba(0, 242, 254, 0.3); }
+
+@media (max-width: 768px) {
+  .touch-controls { display: grid; }
+  .shop-panel { font-size: 0.75rem; padding: 6px; }
+  .btn { padding: 4px 8px; font-size: 0.75rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:22px;">🚕</span>
+    <h1 id="titleTxt">Cyber Sky Taxi</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="hud-top">
+    <div class="hud-card"><span id="creditsTxt">Credits</span>: <span id="creditsVal">0</span> 💰</div>
+    <div class="hud-card">
+      <span id="batteryTxt">Battery</span>:
+      <div class="bar-bg"><div class="bar-fill" id="batFill" style="background:#00f2fe; width:100%;"></div></div>
+    </div>
+    <div class="hud-card">
+      <span id="hullTxt">Hull</span>:
+      <div class="bar-bg"><div class="bar-fill" id="hullFill" style="background:#39ff14; width:100%;"></div></div>
+    </div>
+    <div class="hud-card"><span id="statusTxt">Status</span>: <span id="statusVal" style="color:var(--primary);">Idle</span></div>
+  </div>
+
+  <div class="shop-panel">
+    <button class="btn" id="upgBatBtn">🔋 <span id="upgBatTxt">Max Battery</span> (<span id="costBatVal">40</span> 💰)</button>
+    <button class="btn" id="upgHullBtn">🛡️ <span id="upgHullTxt">Armor Hull</span> (<span id="costHullVal">50</span> 💰)</button>
+    <button class="btn" id="upgEngBtn">⚡ <span id="upgEngTxt">Engine Thruster</span> (<span id="costEngVal">60</span> 💰)</button>
+  </div>
+
+  <div class="touch-controls">
+    <div></div><div class="touch-btn" id="btnUp">▲</div><div></div>
+    <div class="touch-btn" id="btnLeft">◄</div><div class="touch-btn" id="btnDown">▼</div><div class="touch-btn" id="btnRight">►</div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Sky Taxi", home: "Home", credits: "Credits", battery: "Battery", hull: "Hull", status: "Status", upgBat: "Battery", upgHull: "Hull", upgEng: "Engine", statusIdle: "Pick up VIP passenger!", statusOnBoard: "Fly to Drop-off Zone!", statusRecharging: "Recharging..." },
+  hy: { title: "Սայբեր Տաքսի Courier", home: "Գլխավոր", credits: "Կրեդիտներ", battery: "Մարտկոց", hull: "Զրահ", status: "Կարգավիճակ", upgBat: "Մարտկոց", upgHull: "Զրահ", upgEng: "Շարժիչ", statusIdle: "Վերցրեք VIP ուղևորին!", statusOnBoard: "Թռչեք դեպի Իջեցման Գոտի!", statusRecharging: "Լիցքավորում..." },
+  ru: { title: "Сайбер Небесное Такси", home: "Главная", credits: "Кредиты", battery: "Батарея", hull: "Корпус", status: "Статус", upgBat: "Батарея", upgHull: "Корпус", upgEng: "Двигатель", statusIdle: "Заберите VIP пассажира!", statusOnBoard: "Летите к зоне высадки!", statusRecharging: "Зарядка..." },
+  es: { title: "Taxi Aéreo Ciber", home: "Inicio", credits: "Créditos", battery: "Batería", hull: "Casco", status: "Estado", upgBat: "Batería", upgHull: "Casco", upgEng: "Motor", statusIdle: "¡Recoge al pasajero VIP!", statusOnBoard: "¡Vuela a la zona de entrega!", statusRecharging: "Recargando..." },
+  fr: { title: "Cyber Sky Taxi", home: "Accueil", credits: "Crédits", battery: "Batterie", hull: "Coque", status: "Statut", upgBat: "Batterie", upgHull: "Coque", upgEng: "Moteur", statusIdle: "Prenez le passager VIP !", statusOnBoard: "Volez vers la zone de dépôt !", statusRecharging: "Recharge..." },
+  de: { title: "Cyber Sky Taxi", home: "Startseite", credits: "Credits", battery: "Batterie", hull: "Hülle", status: "Status", upgBat: "Batterie", upgHull: "Hülle", upgEng: "Motor", statusIdle: "Hole VIP-Passagier ab!", statusOnBoard: "Fliege zur Zielzone!", statusRecharging: "Aufladen..." },
+  it: { title: "Taxi Volante Cyber", home: "Home", credits: "Crediti", battery: "Batteria", hull: "Scafo", status: "Stato", upgBat: "Batteria", upgHull: "Scafo", upgEng: "Motore", statusIdle: "Prendi il passeggero VIP!", statusOnBoard: "Vola alla zona di arrivo!", statusRecharging: "Ricarica..." },
+  pt: { title: "Cyber Táxi Aéreo", home: "Início", credits: "Créditos", battery: "Bateria", hull: "Casco", status: "Status", upgBat: "Bateria", upgHull: "Casco", upgEng: "Motor", statusIdle: "Pegue o passageiro VIP!", statusOnBoard: "Voa até a zona de desembarque!", statusRecharging: "Recarregando..." },
+  tr: { title: "Siber Uçan Taksi", home: "Ana Sayfa", credits: "Kredi", battery: "Batarya", hull: "Gövde", status: "Durum", upgBat: "Batarya", upgHull: "Gövde", upgEng: "Motor", statusIdle: "VIP yolcuyu al!", statusOnBoard: "Bırakma bölgesine uç!", statusRecharging: "Şarj oluyor..." },
+  ja: { title: "サイバースカイタクシー", home: "ホーム", credits: "クレジット", battery: "バッテリー", hull: "装甲", status: "ステータス", upgBat: "バッテリー", upgHull: "装甲", upgEng: "エンジン", statusIdle: "VIP乗客を乗せてください！", statusOnBoard: "目的地へ飛行してください！", statusRecharging: "充電中..." },
+  zh: { title: "赛博空中出租车", home: "主页", credits: "点数", battery: "电池", hull: "装甲", status: "状态", upgBat: "电池", upgHull: "装甲", upgEng: "引擎", statusIdle: "接载VIP乘客！", statusOnBoard: "飞往下客区域！", statusRecharging: "充电中..." }
+};
+
+const LANG_LIST = [
+  ["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"],
+  ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"],
+  ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]
+];
+
+let lang = "en";
+let sound = true;
+
+// Storage
+let saveData = JSON.parse(localStorage.getItem("cyberTaxiData") || '{"credits":0, "batLvl":1, "hullLvl":1, "engLvl":1}');
+function saveStorage() { localStorage.setItem("cyberTaxiData", JSON.stringify(saveData)); }
+
+// Canvas
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 800, H = 500;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 50;
+  let aspect = 16 / 10;
+  let w = maxW;
+  let h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width;
+  H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Audio
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'pickup') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(400, now);
+    osc.frequency.exponentialRampToValueAtTime(800, now + 0.15);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.15);
+  } else if (type === 'drop') {
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(500, now);
+    osc.frequency.setValueAtTime(700, now + 0.1);
+    osc.frequency.setValueAtTime(1000, now + 0.2);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.35);
+  } else if (type === 'bump') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(120, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now); osc.stop(now + 0.15);
+  }
+}
+
+// Entities
+class Taxi {
+  constructor(x, y) {
+    this.x = x; this.y = y;
+    this.vx = 0; this.vy = 0;
+    this.w = 32; this.h = 18;
+    this.battery = 100;
+    this.maxBattery = 100;
+    this.hull = 100;
+    this.maxHull = 100;
+    this.hasPassenger = false;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vx *= 0.92;
+    this.vy *= 0.92;
+
+    if (Math.abs(this.vx) > 0.1 || Math.abs(this.vy) > 0.1) {
+      this.battery = Math.max(0, this.battery - 0.05);
+    }
+  }
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+
+    // Cab body
+    ctx.fillStyle = "#ffb703";
+    ctx.shadowColor = "#ffb703";
+    ctx.shadowBlur = 10;
+    ctx.fillRect(-this.w / 2, -this.h / 2, this.w, this.h);
+
+    // Thruster glow
+    ctx.fillStyle = "#00f2fe";
+    ctx.shadowColor = "#00f2fe";
+    ctx.shadowBlur = 8;
+    ctx.fillRect(-this.w / 2 - 6, -4, 6, 8);
+
+    // Roof light
+    ctx.fillStyle = this.hasPassenger ? "#ff007f" : "#39ff14";
+    ctx.fillRect(-4, -this.h / 2 - 4, 8, 4);
+
+    ctx.restore();
+  }
+}
+
+class Building {
+  constructor(x, w, h) {
+    this.x = x; this.w = w; this.h = h;
+  }
+  draw() {
+    ctx.fillStyle = "#0f172a";
+    ctx.strokeStyle = "rgba(0, 242, 254, 0.4)";
+    ctx.lineWidth = 2;
+    ctx.fillRect(this.x, H - this.h, this.w, this.h);
+    ctx.strokeRect(this.x, H - this.h, this.w, this.h);
+
+    // Windows
+    ctx.fillStyle = "rgba(255, 183, 3, 0.3)";
+    for (let wy = H - this.h + 15; wy < H - 20; wy += 25) {
+      for (let wx = this.x + 10; wx < this.x + this.w - 15; wx += 20) {
+        ctx.fillRect(wx, wy, 8, 12);
+      }
+    }
+  }
+}
+
+class Zone {
+  constructor(x, y, w, type) {
+    this.x = x; this.y = y; this.w = w;
+    this.type = type; // "pickup", "drop", "recharge"
+  }
+  draw() {
+    ctx.fillStyle = this.type === "pickup" ? "rgba(0, 242, 254, 0.3)" : (this.type === "drop" ? "rgba(255, 0, 127, 0.3)" : "rgba(57, 255, 20, 0.3)");
+    ctx.strokeStyle = this.type === "pickup" ? "#00f2fe" : (this.type === "drop" ? "#ff007f" : "#39ff14");
+    ctx.lineWidth = 2;
+    ctx.fillRect(this.x, this.y, this.w, 10);
+    ctx.strokeRect(this.x, this.y, this.w, 10);
+  }
+}
+
+let taxi = new Taxi(100, 100);
+let buildings = [];
+let zones = [];
+let keys = {};
+
+function initCity() {
+  buildings = [
+    new Building(0, 120, 180),
+    new Building(160, 140, 260),
+    new Building(340, 130, 200),
+    new Building(510, 150, 290),
+    new Building(690, 110, 170)
+  ];
+
+  zones = [
+    new Zone(20, H - 190, 80, "pickup"),
+    new Zone(530, H - 300, 100, "drop"),
+    new Zone(360, H - 210, 80, "recharge")
+  ];
+}
+
+window.addEventListener("keydown", (e) => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
+
+function bindTouch(id, keyName) {
+  const btn = document.getElementById(id);
+  btn.addEventListener("touchstart", (e) => { e.preventDefault(); keys[keyName] = true; });
+  btn.addEventListener("touchend", (e) => { e.preventDefault(); keys[keyName] = false; });
+}
+bindTouch("btnUp", "w");
+bindTouch("btnDown", "s");
+bindTouch("btnLeft", "a");
+bindTouch("btnRight", "d");
+
+function updateGame() {
+  let thrust = 0.5 * (1 + saveData.engLvl * 0.15);
+  if (taxi.battery > 0) {
+    if (keys['w'] || keys['arrowup']) taxi.vy -= thrust;
+    if (keys['s'] || keys['arrowdown']) taxi.vy += thrust;
+    if (keys['a'] || keys['arrowleft']) taxi.vx -= thrust;
+    if (keys['d'] || keys['arrowright']) taxi.vx += thrust;
+  }
+
+  // Gravity
+  taxi.vy += 0.08;
+  taxi.update();
+
+  // Screen bounds
+  if (taxi.x < 20) { taxi.x = 20; taxi.vx = 0; }
+  if (taxi.x > W - 20) { taxi.x = W - 20; taxi.vx = 0; }
+  if (taxi.y < 20) { taxi.y = 20; taxi.vy = 0; }
+  if (taxi.y > H - 20) { taxi.y = H - 20; taxi.vy = 0; }
+
+  // Building collision
+  buildings.forEach(b => {
+    if (taxi.x > b.x && taxi.x < b.x + b.w && taxi.y + 10 > H - b.h) {
+      taxi.y = H - b.h - 10;
+      if (Math.abs(taxi.vy) > 2) {
+        playSound('bump');
+        taxi.hull = Math.max(0, taxi.hull - 10);
+      }
+      taxi.vy = 0;
+    }
+  });
+
+  // Zone checks
+  zones.forEach(z => {
+    if (taxi.x > z.x && taxi.x < z.x + z.w && Math.abs(taxi.y - z.y) < 20) {
+      if (z.type === "pickup" && !taxi.hasPassenger) {
+        taxi.hasPassenger = true;
+        playSound('pickup');
+      } else if (z.type === "drop" && taxi.hasPassenger) {
+        taxi.hasPassenger = false;
+        saveData.credits += 25;
+        saveStorage();
+        playSound('drop');
+      } else if (z.type === "recharge") {
+        taxi.battery = Math.min(taxi.maxBattery, taxi.battery + 0.8);
+      }
+    }
+  });
+
+  // Dynamic values
+  taxi.maxBattery = 100 + saveData.batLvl * 25;
+  taxi.maxHull = 100 + saveData.hullLvl * 30;
+
+  // HUD updates
+  document.getElementById("creditsVal").textContent = saveData.credits;
+  document.getElementById("batFill").style.width = `${(taxi.battery / taxi.maxBattery) * 100}%`;
+  document.getElementById("hullFill").style.width = `${(taxi.hull / taxi.maxHull) * 100}%`;
+
+  const dict = I18N[lang] || I18N.en;
+  let statusText = taxi.hasPassenger ? dict.statusOnBoard : dict.statusIdle;
+  document.getElementById("statusVal").textContent = statusText;
+
+  // Shop costs
+  document.getElementById("costBatVal").textContent = 40 * saveData.batLvl;
+  document.getElementById("costHullVal").textContent = 50 * saveData.hullLvl;
+  document.getElementById("costEngVal").textContent = 60 * saveData.engLvl;
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  buildings.forEach(b => b.draw());
+  zones.forEach(z => z.draw());
+  taxi.draw();
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+// Shop Actions
+document.getElementById("upgBatBtn").onclick = () => {
+  let cost = 40 * saveData.batLvl;
+  if (saveData.credits >= cost) {
+    saveData.credits -= cost;
+    saveData.batLvl++;
+    saveStorage();
+  }
+};
+
+document.getElementById("upgHullBtn").onclick = () => {
+  let cost = 50 * saveData.hullLvl;
+  if (saveData.credits >= cost) {
+    saveData.credits -= cost;
+    saveData.hullLvl++;
+    saveStorage();
+  }
+};
+
+document.getElementById("upgEngBtn").onclick = () => {
+  let cost = 60 * saveData.engLvl;
+  if (saveData.credits >= cost) {
+    saveData.credits -= cost;
+    saveData.engLvl++;
+    saveStorage();
+  }
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", (e) => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("creditsTxt").textContent = dict.credits;
+  document.getElementById("batteryTxt").textContent = dict.battery;
+  document.getElementById("hullTxt").textContent = dict.hull;
+  document.getElementById("statusTxt").textContent = dict.status;
+  document.getElementById("upgBatTxt").textContent = dict.upgBat;
+  document.getElementById("upgHullTxt").textContent = dict.upgHull;
+  document.getElementById("upgEngTxt").textContent = dict.upgEng;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang();
+updateLang();
+initCity();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
