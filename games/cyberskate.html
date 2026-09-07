@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🛹 Cyber Skate Extreme</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛹</text></svg>">
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(10, 16, 35, 0.92);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --secondary: #ff0055;
+  --accent: #ffcc00;
+  --text: #f0f6fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 26, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #33f3ff; color: #000; }
+.btn-accent { background: var(--secondary); color: #fff; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0a1128 0%, #02050f 100%);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.18); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; }
+.hud-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 8px 14px; display: flex; flex-direction: column; gap: 2px; backdrop-filter: blur(10px); }
+.hud-val { font-size: 1.1rem; font-weight: 900; color: var(--primary); text-shadow: 0 0 8px var(--primary); }
+
+.trick-banner {
+  position: absolute; top: 22%; left: 50%; transform: translateX(-50%);
+  font-size: 1.5rem; font-weight: 900; color: var(--accent); text-shadow: 0 0 15px var(--accent);
+  opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none; text-align: center;
+}
+
+/* Touch Controls */
+.touch-controls { position: absolute; bottom: 16px; right: 16px; left: 16px; display: flex; justify-content: space-between; pointer-events: auto; }
+.d-pad { display: flex; gap: 8px; }
+.action-btns { display: flex; gap: 8px; }
+.t-btn { width: 50px; height: 50px; background: rgba(255,255,255,0.12); border: 1px solid var(--border); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; font-weight: 800; }
+.t-btn:active { background: rgba(0, 240, 255, 0.4); }
+
+/* Modal */
+.modal-overlay { position: absolute; inset: 0; background: rgba(3, 5, 15, 0.9); backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #0a0f24; border: 1px solid var(--primary); border-radius: 22px; padding: 26px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 0 40px rgba(0,240,255,0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.6rem; color: #fff; text-shadow: 0 0 12px var(--primary); }
+
+@media (max-width: 768px) {
+  .t-btn { width: 44px; height: 44px; font-size: 1rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🛹</span>
+    <h1 id="titleTxt">Cyber Skate Extreme</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="shopBtn" class="btn">🛹 <span id="shopTxt">Decks</span></button>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="hud-card">
+        <span style="font-size:0.75rem; color:#aaa;" id="scoreLbl">SCORE</span>
+        <span class="hud-val" id="scoreVal">0</span>
+      </div>
+      <div class="hud-card">
+        <span style="font-size:0.75rem; color:#aaa;" id="multLbl">MULTIPLIER</span>
+        <span class="hud-val" style="color:var(--accent);" id="multVal">x1</span>
+      </div>
+      <div class="hud-card">
+        <span style="font-size:0.75rem; color:#aaa;" id="coinsLbl">CYBER CREDITS</span>
+        <span class="hud-val" style="color:#00ff88;" id="coinsVal">0</span>
+      </div>
+    </div>
+
+    <div class="trick-banner" id="trickBanner">KICKFLIP + 360 SPIN!</div>
+
+    <div class="touch-controls">
+      <div class="d-pad">
+        <div class="t-btn" id="btnDuck">▼</div>
+        <div class="t-btn" id="btnPush">►</div>
+      </div>
+      <div class="action-btns">
+        <div class="t-btn" id="btnOllie" style="background:rgba(0,240,255,0.3); border-color:var(--primary);">🦘</div>
+        <div class="t-btn" id="btnFlip" style="background:rgba(255,0,85,0.3); border-color:var(--secondary);">🌀</div>
+        <div class="t-btn" id="btnGrab" style="background:rgba(255,204,0,0.3); border-color:var(--accent);">✋</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="startModal">
+    <div class="modal-card">
+      <h2 id="modalHead">🛹 Cyber Skate Extreme</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Ride through futuristic neon cityscapes! Perform Ollie, Kickflips, Grinds & 360 tricks to earn huge combo scores!</p>
+
+      <div style="display:flex; justify-content:space-around; background:rgba(255,255,255,0.05); padding:10px; border-radius:12px;">
+        <div>🪙 <span id="startCoins">0</span></div>
+        <div>🏆 <span id="startHigh">0</span></div>
+      </div>
+
+      <button class="btn btn-primary" style="justify-content:center; padding:12px;" id="startBtn">🚀 START SKATING</button>
+    </div>
+  </div>
+
+  <!-- Shop Modal -->
+  <div class="modal-overlay" id="shopModal" style="display:none;">
+    <div class="modal-card">
+      <h2>🛹 Cyber Deck Shop</h2>
+      <div id="deckList" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0;"></div>
+      <button class="btn btn-primary" style="justify-content:center;" id="closeShopBtn">Close</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Skate Extreme", home: "Home", shop: "Decks", start: "🚀 START SKATING", score: "SCORE", mult: "MULTIPLIER", credits: "CYBER CREDITS", gameOver: "CRASHED! Final Score: ", reStart: "RETRY" },
+  hy: { title: "Կիբեռ Սքեյթ Էքստրիմ", home: "Գլխավոր", shop: "Տախտակներ", start: "🚀 ՍԿՍԵԼ ԽԱՂԸ", score: "ՄԻԱՎՈՐ", mult: "ԲԱԶՄԱՊԱՏԿԻՉ", credits: "ԿՐԵԴԻՏՆԵՐ", gameOver: "ՎԹԱՐ! Վերջնական միավոր: ", reStart: "ԿՐԿՆԵԼ" },
+  ru: { title: "Кибер Скейт Экстрим", home: "Главная", shop: "Скейты", start: "🚀 НАЧАТЬ КАТАТЬСЯ", score: "СЧЕТ", mult: "МНОЖИТЕЛЬ", credits: "КРЕДИТЫ", gameOver: "АВАРИЯ! Финальный счет: ", reStart: "ПОВТОРИТЬ" },
+  es: { title: "Cyber Skate Extremo", home: "Inicio", shop: "Tablas", start: "🚀 EMPEZAR", score: "PUNTOS", mult: "MULTIPLICADOR", credits: "CRÉDITOS", gameOver: "¡CHOQUE! Puntuación: ", reStart: "REINTENTAR" },
+  fr: { title: "Cyber Skate Extrême", home: "Accueil", shop: "Planches", start: "🚀 COMMENCER", score: "SCORE", mult: "MULTIPLIER", credits: "CRÉDITS", gameOver: "CRASH ! Score final : ", reStart: "REJOUER" },
+  de: { title: "Cyber Skate Extreme", home: "Startseite", shop: "Decks", start: "🚀 SKATEN STARTEN", score: "PUNKTE", mult: "MULTIPLIKATOR", credits: "KREDITE", gameOver: "CRASH! Endpunktzahl: ", reStart: "NOCHMAL" },
+  it: { title: "Cyber Skate Extreme", home: "Home", shop: "Tavole", start: "🚀 INIZIA SKATE", score: "PUNTI", mult: "MOLTIPLICATORE", credits: "CREDITI", gameOver: "CRASH! Punteggio finale: ", reStart: "RIPROVA" },
+  pt: { title: "Cyber Skate Extremo", home: "Início", shop: "Shapes", start: "🚀 COMEÇAR", score: "PONTOS", mult: "MULTIPLICADOR", credits: "CRÉDITOS", gameOver: "COLISÃO! Pontuação: ", reStart: "TENTAR DE NOVO" },
+  tr: { title: "Cyber Skate Ekstrim", home: "Ana Sayfa", shop: "Kaykaylar", start: "🚀 BAŞLA", score: "SKOR", mult: "ÇARPAN", credits: "KREDİLER", gameOver: "KAZA! Toplam Skor: ", reStart: "TEKRAR DENE" },
+  ja: { title: "サイバースケートエクストリーム", home: "ホーム", shop: "デッキ", start: "🚀 スケート開始", score: "スコア", mult: "倍率", credits: "クレジット", gameOver: "クラッシュ！スコア: ", reStart: "リトライ" },
+  zh: { title: "赛博极限滑板", home: "主页", shop: "滑板", start: "🚀 开始滑行", score: "得分", mult: "倍率", credits: "积分", gameOver: "撞毁！最终得分: ", reStart: "重试" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+const DECKS = [
+  { id: 'neon', name: 'Neon Runner', cost: 0, speed: 1.0, pop: 1.0, color: '#00f0ff' },
+  { id: 'plasma', name: 'Plasma Beast', cost: 120, speed: 1.2, pop: 1.15, color: '#ff0055' },
+  { id: 'quantum', name: 'Quantum Gold', cost: 300, speed: 1.4, pop: 1.3, color: '#ffcc00' },
+  { id: 'void', name: 'Void Phantom', cost: 550, speed: 1.6, pop: 1.5, color: '#b400ff' }
+];
+
+let lang = "en";
+let sound = true;
+let isPlaying = false;
+
+let score = 0;
+let multiplier = 1;
+let coins = parseInt(localStorage.getItem("cs_coins") || "0");
+let highScore = parseInt(localStorage.getItem("cs_high") || "0");
+let equippedDeck = localStorage.getItem("cs_deck") || "neon";
+let unlockedDecks = JSON.parse(localStorage.getItem("cs_unlocked") || '["neon"]');
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 900, H = 500;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio sound generator
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'ollie') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(600, now + 0.12);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+  } else if (type === 'flip') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.15);
+    gain.gain.setValueAtTime(0.35, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+  } else if (type === 'grind') {
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(180, now + 0.1);
+    gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+  } else if (type === 'crash') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(500, now); osc.frequency.exponentialRampToValueAtTime(40, now + 0.4);
+    gain.gain.setValueAtTime(0.5, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.5);
+}
+
+class Skater {
+  constructor() {
+    this.x = 120;
+    this.y = H - 100;
+    this.vy = 0;
+    this.rotation = 0;
+    this.isGrounded = true;
+    this.isGrinding = false;
+    this.isDucking = false;
+    this.trickName = "";
+  }
+  getDeck() {
+    return DECKS.find(d => d.id === equippedDeck) || DECKS[0];
+  }
+  jump() {
+    if (this.isGrounded || this.isGrinding) {
+      let deck = this.getDeck();
+      this.vy = -12 * deck.pop;
+      this.isGrounded = false;
+      this.isGrinding = false;
+      playSound('ollie');
+    }
+  }
+  flip() {
+    if (!this.isGrounded) {
+      this.rotation += Math.PI * 2;
+      score += 150 * multiplier;
+      showTrick("KICKFLIP 360! +150");
+      playSound('flip');
+    }
+  }
+  grab() {
+    if (!this.isGrounded) {
+      score += 200 * multiplier;
+      showTrick("INDY GRAB! +200");
+      playSound('flip');
+    }
+  }
+  update() {
+    let groundY = H - 100;
+    if (!this.isGrounded && !this.isGrinding) {
+      this.vy += 0.55; // gravity
+      this.y += this.vy;
+      if (this.y >= groundY) {
+        this.y = groundY;
+        this.vy = 0;
+        this.isGrounded = true;
+        this.rotation = 0;
+      }
+    }
+  }
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rotation);
+
+    let deck = this.getDeck();
+
+    // Skateboard Deck
+    ctx.fillStyle = deck.color;
+    ctx.shadowColor = deck.color; ctx.shadowBlur = 12;
+    ctx.beginPath(); ctx.roundRect(-25, 8, 50, 8, 4); ctx.fill();
+
+    // Wheels
+    ctx.fillStyle = "#fff"; ctx.shadowBlur = 0;
+    ctx.beginPath(); ctx.arc(-16, 18, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(16, 18, 4, 0, Math.PI * 2); ctx.fill();
+
+    // Skater Body
+    let bodyY = this.isDucking ? 2 : -22;
+    ctx.fillStyle = "#00f0ff"; ctx.shadowColor = "#00f0ff"; ctx.shadowBlur = 8;
+    ctx.fillRect(-8, bodyY, 16, 24);
+
+    // Skater Head
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.arc(0, bodyY - 10, 8, 0, Math.PI * 2); ctx.fill();
+
+    ctx.restore();
+  }
+}
+
+class Obstacle {
+  constructor(x, type) {
+    this.x = x;
+    this.type = type; // 'box', 'rail', 'credit'
+    this.width = type === 'rail' ? 120 : 35;
+    this.height = type === 'rail' ? 25 : 35;
+    this.y = type === 'rail' ? H - 125 : H - 100 - this.height;
+    this.passed = false;
+  }
+  update(speed) {
+    this.x -= speed;
+  }
+  draw() {
+    ctx.save();
+    if (this.type === 'box') {
+      ctx.fillStyle = "#ff0055"; ctx.shadowColor = "#ff0055"; ctx.shadowBlur = 10;
+      ctx.fillRect(this.x, this.y, this.width, this.height);
+    } else if (this.type === 'rail') {
+      ctx.fillStyle = "#ffcc00"; ctx.shadowColor = "#ffcc00"; ctx.shadowBlur = 12;
+      ctx.fillRect(this.x, this.y, this.width, 6);
+      ctx.fillRect(this.x + 10, this.y + 6, 6, 20);
+      ctx.fillRect(this.x + this.width - 16, this.y + 6, 6, 20);
+    } else if (this.type === 'credit') {
+      ctx.fillStyle = "#00ff88"; ctx.shadowColor = "#00ff88"; ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.arc(this.x, H - 130, 10, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+let skater = new Skater();
+let obstacles = [];
+let gameSpeed = 6;
+let keys = {};
+
+function showTrick(name) {
+  const banner = document.getElementById("trickBanner");
+  banner.textContent = name;
+  banner.style.opacity = "1";
+  banner.style.transform = "translateX(-50%) scale(1.2)";
+  setTimeout(() => {
+    banner.style.opacity = "0";
+    banner.style.transform = "translateX(-50%) scale(1.0)";
+  }, 750);
+}
+
+window.addEventListener("keydown", e => {
+  keys[e.key.toLowerCase()] = true;
+  if (e.key === " " || e.key.toLowerCase() === "w" || e.key === "ArrowUp") skater.jump();
+  if (e.key.toLowerCase() === "j" || e.key.toLowerCase() === "x") skater.flip();
+  if (e.key.toLowerCase() === "k" || e.key.toLowerCase() === "c") skater.grab();
+});
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+document.getElementById("btnOllie").onclick = () => skater.jump();
+document.getElementById("btnFlip").onclick = () => skater.flip();
+document.getElementById("btnGrab").onclick = () => skater.grab();
+
+function updateGame() {
+  if (!isPlaying) return;
+
+  skater.isDucking = keys['s'] || keys['arrowdown'];
+  if (keys['d'] || keys['arrowright']) gameSpeed = Math.min(12, gameSpeed + 0.05);
+
+  skater.update();
+
+  // Spawn Obstacles
+  if (obstacles.length === 0 || obstacles[obstacles.length - 1].x < W - 250) {
+    let r = Math.random();
+    let type = r < 0.4 ? 'box' : r < 0.75 ? 'rail' : 'credit';
+    obstacles.push(new Obstacle(W + 50, type));
+  }
+
+  for (let i = obstacles.length - 1; i >= 0; i--) {
+    let obs = obstacles[i];
+    obs.update(gameSpeed);
+
+    // Rail Grind check
+    if (obs.type === 'rail' && skater.x >= obs.x && skater.x <= obs.x + obs.width && skater.y + 16 >= obs.y && skater.y + 16 <= obs.y + 12) {
+      if (!skater.isGrinding) {
+        skater.isGrinding = true; skater.vy = 0; skater.y = obs.y - 16;
+        score += 100 * multiplier;
+        showTrick("RAIL GRIND! +100");
+        playSound('grind');
+      }
+    } else if (obs.type === 'rail' && skater.isGrinding && (skater.x > obs.x + obs.width)) {
+      skater.isGrinding = false;
+    }
+
+    // Credit collection
+    if (obs.type === 'credit' && Math.abs(skater.x - obs.x) < 25 && Math.abs(skater.y - (H - 130)) < 25) {
+      coins += 10;
+      localStorage.setItem("cs_coins", coins);
+      obstacles.splice(i, 1);
+      continue;
+    }
+
+    // Box Collision Crash
+    if (obs.type === 'box' && Math.abs(skater.x - obs.x) < 25 && skater.y + 16 > obs.y) {
+      handleCrash(); return;
+    }
+
+    if (obs.x < -100) obstacles.splice(i, 1);
+  }
+
+  score += Math.floor(gameSpeed * 0.2);
+  document.getElementById("scoreVal").textContent = score;
+  document.getElementById("coinsVal").textContent = coins;
+}
+
+function handleCrash() {
+  isPlaying = false;
+  playSound('crash');
+  if (score > highScore) { highScore = score; localStorage.setItem("cs_high", highScore); }
+  let dict = I18N[lang] || I18N.en;
+  alert(dict.gameOver + score);
+  document.getElementById("startModal").style.display = "flex";
+}
+
+function drawBackground() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Ground Neon Line
+  let gy = H - 90;
+  ctx.strokeStyle = "#00f0ff"; ctx.lineWidth = 3; ctx.shadowColor = "#00f0ff"; ctx.shadowBlur = 10;
+  ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+}
+
+function drawGame() {
+  drawBackground();
+  obstacles.forEach(o => o.draw());
+  skater.draw();
+}
+
+function gameLoop() {
+  updateGame(); drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+document.getElementById("startBtn").onclick = () => {
+  score = 0; multiplier = 1; gameSpeed = 6; obstacles = [];
+  skater = new Skater();
+  isPlaying = true;
+  document.getElementById("startModal").style.display = "none";
+};
+
+document.getElementById("shopBtn").onclick = () => renderShop();
+document.getElementById("closeShopBtn").onclick = () => document.getElementById("shopModal").style.display = "none";
+
+function renderShop() {
+  const list = document.getElementById("deckList");
+  list.innerHTML = "";
+  DECKS.forEach(d => {
+    const isUnlocked = unlockedDecks.includes(d.id);
+    const isEquipped = equippedDeck === d.id;
+    const div = document.createElement("div");
+    div.style.cssText = `background:rgba(255,255,255,0.06); padding:10px; border-radius:12px; border:1px solid ${d.color}; display:flex; flex-direction:column; gap:4px; align-items:center;`;
+    div.innerHTML = `
+      <div style="font-weight:700; color:${d.color};">${d.name}</div>
+      <div style="font-size:0.75rem; color:#aaa;">Spd: x${d.speed} | Pop: x${d.pop}</div>
+      ${isEquipped ? `<button class="btn btn-primary" disabled>Equipped</button>` :
+        isUnlocked ? `<button class="btn btn-primary" onclick="equipDeck('${d.id}')">Equip</button>` :
+        `<button class="btn btn-accent" onclick="buyDeck('${d.id}', ${d.cost})">🪙 ${d.cost}</button>`}
+    `;
+    list.appendChild(div);
+  });
+  document.getElementById("shopModal").style.display = "flex";
+}
+
+window.equipDeck = (id) => {
+  equippedDeck = id; localStorage.setItem("cs_deck", id);
+  renderShop();
+};
+
+window.buyDeck = (id, cost) => {
+  if (coins >= cost) {
+    coins -= cost; localStorage.setItem("cs_coins", coins);
+    unlockedDecks.push(id); localStorage.setItem("cs_unlocked", JSON.stringify(unlockedDecks));
+    equippedDeck = id; localStorage.setItem("cs_deck", id);
+    renderShop();
+  } else {
+    alert("Not enough credits!");
+  }
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("shopTxt").textContent = dict.shop;
+  document.getElementById("startBtn").textContent = dict.start;
+  document.getElementById("scoreLbl").textContent = dict.score;
+  document.getElementById("multLbl").textContent = dict.mult;
+  document.getElementById("coinsLbl").textContent = dict.credits;
+  document.getElementById("startCoins").textContent = coins;
+  document.getElementById("startHigh").textContent = highScore;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang(); updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
