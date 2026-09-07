@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🩲 Cyber Sumo Ring 1v1 P2P</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🩲</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(10, 16, 35, 0.92);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --secondary: #ff0055;
+  --accent: #ffcc00;
+  --text: #f0f6fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 26, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #33f3ff; color: #000; }
+.btn-accent { background: var(--secondary); color: #fff; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0a1128 0%, #02050f 100%);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.18); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; }
+.fighter-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 8px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 180px; backdrop-filter: blur(10px); }
+.bar-wrap { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; position: relative; }
+.bar-fill { height: 100%; transition: width 0.15s ease-out; }
+.stamina-fill { background: linear-gradient(90deg, #00f0ff, #0088ff); }
+
+.timer-box { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px 16px; font-size: 1.4rem; font-weight: 900; color: #fff; text-shadow: 0 0 10px var(--primary); backdrop-filter: blur(10px); text-align: center; }
+
+/* Chat Box */
+.chat-box { position: absolute; bottom: 16px; left: 16px; width: 260px; height: 160px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; display: flex; flex-direction: column; pointer-events: auto; backdrop-filter: blur(10px); z-index: 5; }
+.chat-messages { flex: 1; padding: 8px; overflow-y: auto; font-size: 0.78rem; display: flex; flex-direction: column; gap: 4px; scrollbar-width: thin; }
+.chat-msg { word-break: break-word; }
+.chat-msg.system { color: var(--accent); font-style: italic; }
+.chat-msg.me { color: var(--primary); }
+.chat-msg.peer { color: var(--secondary); }
+.chat-input-row { display: flex; border-top: 1px solid var(--border); }
+.chat-input { flex: 1; background: transparent; border: none; color: #fff; padding: 6px 8px; font-size: 0.8rem; outline: none; }
+
+/* Touch Controls */
+.touch-controls { position: absolute; bottom: 16px; right: 16px; display: none; gap: 10px; pointer-events: auto; }
+.d-pad { display: grid; grid-template-columns: repeat(3, 44px); gap: 4px; }
+.action-btns { display: flex; gap: 6px; }
+.t-btn { width: 44px; height: 44px; background: rgba(255,255,255,0.12); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.1rem; font-weight: 800; }
+.t-btn:active { background: rgba(0, 240, 255, 0.4); }
+
+/* Modal */
+.modal-overlay { position: absolute; inset: 0; background: rgba(3, 5, 15, 0.9); backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #0a0f24; border: 1px solid var(--primary); border-radius: 22px; padding: 26px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 0 40px rgba(0,240,255,0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.6rem; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.input-field { background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; color: #fff; font-size: 0.95rem; text-align: center; font-weight: 700; outline: none; letter-spacing: 2px; }
+
+@media (max-width: 768px) {
+  .chat-box { width: 200px; height: 130px; }
+  .touch-controls { display: flex; }
+  .fighter-card { min-width: 120px; padding: 6px 10px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🩲</span>
+    <h1 id="titleTxt">Cyber Sumo Ring 1v1 P2P</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="shopBtn" class="btn">🛡️ <span id="shopTxt">Armor</span></button>
+    <button id="sndBtn" class="btn">🔊</button>
+    <button id="micBtn" class="btn">🎙️ <span id="micTxt">Mic Off</span></button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="fighter-card">
+        <span style="color:var(--primary); font-weight:800; font-size:0.85rem;" id="p1NameLbl">CYBER YOKO</span>
+        <div class="bar-wrap"><div class="bar-fill stamina-fill" id="p1EnergyBar" style="width:100%;"></div></div>
+      </div>
+
+      <div class="timer-box">
+        <div style="font-size:0.7rem; color:var(--accent);" id="roundLbl">DOHYO RING</div>
+        <span id="timerVal">90</span>
+      </div>
+
+      <div class="fighter-card">
+        <span style="color:var(--secondary); font-weight:800; font-size:0.85rem;" id="p2NameLbl">TITAN SUMO</span>
+        <div class="bar-wrap"><div class="bar-fill stamina-fill" id="p2EnergyBar" style="width:100%; background:linear-gradient(90deg, #ff0055, #ff5500);"></div></div>
+      </div>
+    </div>
+
+    <div class="chat-box" id="chatBox">
+      <div class="chat-messages" id="chatMsgs">
+        <div class="chat-msg system" id="welcomeChatMsg">Welcome to Cyber Sumo Ring! Charge, Slap, Push & Ring-Out your rival!</div>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." maxlength="80">
+        <button class="btn btn-primary" style="border-radius:0 13px 13px 0;" id="sendChatBtn">Send</button>
+      </div>
+    </div>
+
+    <div class="touch-controls">
+      <div class="d-pad">
+        <div></div><div class="t-btn" id="btnUp">▲</div><div></div>
+        <div class="t-btn" id="btnLeft">◄</div><div class="t-btn" id="btnDown">▼</div><div class="t-btn" id="btnRight">►</div>
+      </div>
+      <div class="action-btns">
+        <div class="t-btn" id="btnPush" style="background:rgba(0,240,255,0.3); border-color:var(--primary);">💥</div>
+        <div class="t-btn" id="btnSlap" style="background:rgba(255,0,85,0.3); border-color:var(--secondary);">✋</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="lobbyModal">
+    <div class="modal-card">
+      <h2 id="modalHead">🩲 Cyber Sumo Ring 1v1</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Enter the futuristic cyber Dohyo ring! Push AI bots or battle online rivals over WebRTC P2P to force ring-outs!</p>
+
+      <div style="display:flex; justify-content:space-around; background:rgba(255,255,255,0.05); padding:10px; border-radius:12px;">
+        <div>🪙 <span id="coinsVal">0</span></div>
+        <div>🏆 <span id="winsVal">0</span></div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <button class="btn btn-primary" style="justify-content:center; padding:12px;" id="startAiBtn">🤖 Sumo vs AI Bot</button>
+        <button class="btn btn-accent" style="justify-content:center; padding:12px;" id="hostRoomBtn">🌐 Host Dohyo (P2P)</button>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="roomCodeInput" class="input-field" placeholder="CODE" style="width:120px; text-transform:uppercase;">
+          <button class="btn" style="flex:1; justify-content:center; background:rgba(0,240,255,0.2);" id="joinRoomBtn">🔗 Join Dohyo</button>
+        </div>
+      </div>
+
+      <div id="connectionStatus" style="font-size:0.8rem; color:var(--accent); display:none;">Initializing...</div>
+    </div>
+  </div>
+
+  <!-- Shop Modal -->
+  <div class="modal-overlay" id="shopModal" style="display:none;">
+    <div class="modal-card">
+      <h2>🛡️ Cyber Sumo Armor Shop</h2>
+      <div id="armorList" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0;"></div>
+      <button class="btn btn-primary" style="justify-content:center;" id="closeShopBtn">Close</button>
+    </div>
+  </div>
+</main>
+
+<audio id="remoteAudio" autoplay></audio>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Sumo Ring 1v1 P2P", home: "Home", shop: "Armor", playAi: "🤖 Sumo vs AI Bot", hostRoom: "🌐 Host Dohyo (P2P)", joinRoom: "🔗 Join Dohyo", micOff: "Mic Off", micOn: "Mic On", welcomeMsg: "Welcome to Cyber Sumo Ring! Charge, Slap, Push & Ring-Out your rival!", copyCode: "Room Code: ", connected: "Challenger Connected!", connecting: "Connecting...", win: "RING-OUT VICTORY!", lose: "RING-OUT LOSS!", typeMsg: "Type a message..." },
+  hy: { title: "Կիբեռ Սումո Ռինգ 1v1 P2P", home: "Գլխավոր", shop: "Զրահ", playAi: "🤖 Մարտ AI Բոտի դեմ", hostRoom: "🌐 Ստեղծել Ռինգ (P2P)", joinRoom: "🔗 Միանալ Ռինգին", micOff: "Միկ. Անջատ", micOn: "Միկ. Միացված", welcomeMsg: "Բարի գալուստ Կիբեռ Սումո: Հրեք, հարվածեք և դուրս մղեք հակառակորդին!", copyCode: "Ռինգի Կոդ: ", connected: "Միացված է!", connecting: "Միանում է...", win: "ԴՈՒՐՍ ՄՂՄԱՆ ՀԱՂԹԱՆԱԿ!", lose: "ՊԱՐՏՈՒԹՅՈՒՆ!", typeMsg: "Գրեք..." },
+  ru: { title: "Кибер Сумо 1v1 P2P", home: "Главная", shop: "Броня", playAi: "🤖 Сумо против ИИ", hostRoom: "🌐 Создать Ринг (P2P)", joinRoom: "🔗 Войти на Ринг", micOff: "Мик Выкл", micOn: "Мик Вкл", welcomeMsg: "Добро пожаловать в Кибер Сумо! Толкайте, бейте и выталкивайте соперника за ринг!", copyCode: "Код ринга: ", connected: "Соперник подключен!", connecting: "Подключение...", win: "ПОБЕДА ВЫТАЛКИВАНИЕМ!", lose: "ВЫТАЛКНУТ ЗА РИНГ!", typeMsg: "Сообщение..." },
+  es: { title: "Cyber Sumo Ring 1v1 P2P", home: "Inicio", shop: "Armadura", playAi: "🤖 Sumo vs IA", hostRoom: "🌐 Crear Dohyo (P2P)", joinRoom: "🔗 Unirse al Dohyo", micOff: "Mic Apagado", micOn: "Mic Encendido", welcomeMsg: "¡Bienvenido a Cyber Sumo! ¡Empuja, golpea y saca del ring!", copyCode: "Código Ring: ", connected: "¡Rival Conectado!", connecting: "Conectando...", win: "¡VICTORIA POR EXPULSIÓN!", lose: "¡EXPULSADO DEL RING!", typeMsg: "Escribe..." },
+  fr: { title: "Cyber Sumo Ring 1v1 P2P", home: "Accueil", shop: "Armure", playAi: "🤖 Sumo vs IA", hostRoom: "🌐 Créer Dohyo (P2P)", joinRoom: "🔗 Rejoindre Dohyo", micOff: "Micro Off", micOn: "Micro On", welcomeMsg: "Bienvenue sur Cyber Sumo ! Poussez et éjectez votre adversaire !", copyCode: "Code Ring : ", connected: "Adversaire Connecté !", connecting: "Connexion...", win: "VICTOIRE PAR ÉJECTION !", lose: "ÉJECTÉ DU RING !", typeMsg: "Message..." },
+  de: { title: "Cyber Sumo Ring 1v1 P2P", home: "Startseite", shop: "Rüstung", playAi: "🤖 Sumo gegen KI", hostRoom: "🌐 Dohyo Erstellen (P2P)", joinRoom: "🔗 Dohyo Beitreten", micOff: "Mikro Aus", micOn: "Mikro An", welcomeMsg: "Willkommen beim Cyber Sumo! Stoßen und drängen Sie Ihren Gegner raus!", copyCode: "Ringcode: ", connected: "Gegner Verbunden!", connecting: "Verbinde...", win: "RING-OUT SIEG!", lose: "RAUSGEDRÄNGT!", typeMsg: "Nachricht..." },
+  it: { title: "Cyber Sumo Ring 1v1 P2P", home: "Home", shop: "Armatura", playAi: "🤖 Sumo vs IA", hostRoom: "🌐 Crea Dohyo (P2P)", joinRoom: "🔗 Unisciti al Dohyo", micOff: "Mic Off", micOn: "Mic On", welcomeMsg: "Benvenuto in Cyber Sumo! Spingi ed espelli l'avversario dal ring!", copyCode: "Codice Ring: ", connected: "Sfidante Connesso!", connecting: "Connessione...", win: "VITTORIA PER ESPULSIONE!", lose: "FUORI DAL RING!", typeMsg: "Messaggio..." },
+  pt: { title: "Cyber Sumô Ringue 1v1 P2P", home: "Início", shop: "Armadura", playAi: "🤖 Sumô vs IA", hostRoom: "🌐 Criar Dohyo (P2P)", joinRoom: "🔗 Entrar no Dohyo", micOff: "Mic Off", micOn: "Mic On", welcomeMsg: "Bem-vindo ao Cyber Sumô! Empurre e jogue o rival para fora!", copyCode: "Código Ringue: ", connected: "Oponente Conectado!", connecting: "Conectando...", win: "VITÓRIA POR EXPULSÃO!", lose: "FORA DO RINGUE!", typeMsg: "Mensagem..." },
+  tr: { title: "Cyber Sumo Ringi 1v1 P2P", home: "Ana Sayfa", shop: "Zırh", playAi: "🤖 Yapay Zekaya Karşı", hostRoom: "🌐 Dohyo Kur (P2P)", joinRoom: "🔗 Dohyo'ya Katıl", micOff: "Mik Kapalı", micOn: "Mik Açık", welcomeMsg: "Cyber Sumo Ringine Hoş Geldiniz! İtin ve rakibi dışarı atın!", copyCode: "Ring Kodu: ", connected: "Rakip Bağlandı!", connecting: "Bağlanıyor...", win: "RİNG DIŞI ZAFERİ!", lose: "RİNG DIŞINA ATILDINIZ!", typeMsg: "Mesaj..." },
+  ja: { title: "サイバー相撲 1v1 P2P", home: "ホーム", shop: "アーマー", playAi: "🤖 AIボットと相撲", hostRoom: "🌐 土俵作成 (P2P)", joinRoom: "🔗 土俵参加", micOff: "マイクOFF", micOn: "マイクON", welcomeMsg: "サイバー相撲へようこそ！押して突っぱって土俵際で寄り切れ！", copyCode: "リングコード: ", connected: "挑戦者が接続しました！", connecting: "接続中...", win: "寄り切り勝利！", lose: "土俵割れ負け…", typeMsg: "メッセージ..." },
+  zh: { title: "赛博相扑 1v1 P2P", home: "主页", shop: "装甲", playAi: "🤖 对战AI机器人", hostRoom: "🌐 创建土俵 (P2P)", joinRoom: "🔗 加入土俵", micOff: "麦克风关", micOn: "麦克风开", welcomeMsg: "欢迎来到赛博相扑！冲击、掌扑，将对手推出土俵！", copyCode: "拳台代码: ", connected: "对手已连接！", connecting: "连接中...", win: "推出土俵胜利！", lose: "被推出土俵！", typeMsg: "输入消息..." }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+const ARMORS = [
+  { id: 'cyan', name: 'Cyber Mesh', cost: 0, weight: 1.0, power: 1.0, color: '#00f0ff' },
+  { id: 'plasma', name: 'Plasma Plating', cost: 150, weight: 1.3, power: 1.2, color: '#ff0055' },
+  { id: 'gold', name: 'Quantum Core', cost: 350, weight: 1.6, power: 1.45, color: '#ffcc00' },
+  { id: 'void', name: 'Void Titan', cost: 600, weight: 2.0, power: 1.7, color: '#b400ff' }
+];
+
+let lang = "en";
+let sound = true;
+let micEnabled = false;
+let localStream = null;
+let peer = null, dataConn = null, audioCall = null;
+let mode = "ai";
+
+let coins = parseInt(localStorage.getItem("cs_sumo_coins") || "0");
+let wins = parseInt(localStorage.getItem("cs_sumo_wins") || "0");
+let equippedArmor = localStorage.getItem("cs_sumo_armor") || "cyan";
+let unlockedArmors = JSON.parse(localStorage.getItem("cs_sumo_unlocked") || '["cyan"]');
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 900, H = 500;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio sound generator
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'push') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+    gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+  } else if (type === 'slap') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(500, now); osc.frequency.exponentialRampToValueAtTime(150, now + 0.1);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+  } else if (type === 'ringout') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(650, now); osc.frequency.exponentialRampToValueAtTime(40, now + 0.5);
+    gain.gain.setValueAtTime(0.5, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.5);
+}
+
+class Sumo {
+  constructor(x, y, color, isP1) {
+    this.x = x;
+    this.y = y;
+    this.vx = 0;
+    this.vy = 0;
+    this.radius = 28;
+    this.color = color;
+    this.isP1 = isP1;
+    this.energy = 100;
+  }
+  getArmor() {
+    return ARMORS.find(a => a.id === equippedArmor) || ARMORS[0];
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vx *= 0.88; // friction
+    this.vy *= 0.88;
+    if (this.energy < 100) this.energy = Math.min(100, this.energy + 0.3);
+  }
+  draw() {
+    ctx.save();
+    let armor = this.getArmor();
+    let c = this.isP1 ? armor.color : this.color;
+
+    ctx.fillStyle = c; ctx.shadowColor = c; ctx.shadowBlur = 15;
+    ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = 4; ctx.strokeStyle = "#fff"; ctx.stroke();
+
+    // Mawashi belt representation
+    ctx.fillStyle = "#000";
+    ctx.fillRect(this.x - this.radius, this.y - 4, this.radius * 2, 8);
+
+    ctx.restore();
+  }
+}
+
+let p1 = new Sumo(W * 0.4, H * 0.5, "#00f0ff", true);
+let p2 = new Sumo(W * 0.6, H * 0.5, "#ff0055", false);
+let roundTime = 90;
+let keys = {};
+
+window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+function bindTouch(id, action) {
+  const el = document.getElementById(id);
+  el.addEventListener("touchstart", (e) => { e.preventDefault(); action(true); });
+  el.addEventListener("touchend", (e) => { e.preventDefault(); action(false); });
+}
+bindTouch("btnUp", v => keys['w'] = v);
+bindTouch("btnDown", v => keys['s'] = v);
+bindTouch("btnLeft", v => keys['a'] = v);
+bindTouch("btnRight", v => keys['d'] = v);
+bindTouch("btnPush", v => { if (v) pushAttack(p1, p2); });
+bindTouch("btnSlap", v => { if (v) slapAttack(p1, p2); });
+
+function pushAttack(attacker, defender) {
+  if (attacker.energy < 20) return;
+  attacker.energy -= 25;
+  let armor = attacker.getArmor();
+  let dx = defender.x - attacker.x;
+  let dy = defender.y - attacker.y;
+  let dist = Math.hypot(dx, dy);
+  if (dist < 70) {
+    defender.vx += (dx / dist) * 12 * armor.power;
+    defender.vy += (dy / dist) * 12 * armor.power;
+    playSound('push');
+  }
+}
+
+function slapAttack(attacker, defender) {
+  if (attacker.energy < 12) return;
+  attacker.energy -= 15;
+  let dx = defender.x - attacker.x;
+  let dy = defender.y - attacker.y;
+  let dist = Math.hypot(dx, dy);
+  if (dist < 70) {
+    defender.vx += (dx / dist) * 6;
+    defender.vy += (dy / dist) * 6;
+    playSound('slap');
+  }
+}
+
+function updateAi() {
+  let dx = p1.x - p2.x;
+  let dy = p1.y - p2.y;
+  let dist = Math.hypot(dx, dy);
+  if (dist > 10) {
+    p2.vx += (dx / dist) * 0.5;
+    p2.vy += (dy / dist) * 0.5;
+  }
+  if (dist < 65 && Math.random() < 0.05) {
+    pushAttack(p2, p1);
+  }
+}
+
+function updateGame() {
+  p1.update(); p2.update();
+
+  // Keyboard Movement
+  let spd = 0.8;
+  if (keys['w'] || keys['arrowup']) p1.vy -= spd;
+  if (keys['s'] || keys['arrowdown']) p1.vy += spd;
+  if (keys['a'] || keys['arrowleft']) p1.vx -= spd;
+  if (keys['d'] || keys['arrowright']) p1.vx += spd;
+
+  if (keys['j'] || keys['space']) { pushAttack(p1, p2); keys['j'] = false; keys['space'] = false; }
+  if (keys['k'] || keys['x']) { slapAttack(p1, p2); keys['k'] = false; keys['x'] = false; }
+
+  if (mode === 'ai') updateAi();
+
+  // Elastic Collision
+  let dx = p2.x - p1.x, dy = p2.y - p1.y;
+  let dist = Math.hypot(dx, dy);
+  let minDist = p1.radius + p2.radius;
+  if (dist < minDist && dist > 0) {
+    let overlap = minDist - dist;
+    let nx = dx / dist, ny = dy / dist;
+    p1.x -= nx * overlap * 0.5; p1.y -= ny * overlap * 0.5;
+    p2.x += nx * overlap * 0.5; p2.y += ny * overlap * 0.5;
+  }
+
+  // Ring Out Detection
+  let ringR = Math.min(W, H) * 0.38;
+  let cx = W * 0.5, cy = H * 0.5;
+
+  if (Math.hypot(p1.x - cx, p1.y - cy) > ringR) {
+    playSound('ringout'); handleRoundEnd(false);
+  } else if (Math.hypot(p2.x - cx, p2.y - cy) > ringR) {
+    playSound('ringout'); handleRoundEnd(true);
+  }
+
+  document.getElementById("p1EnergyBar").style.width = p1.energy + "%";
+  document.getElementById("p2EnergyBar").style.width = p2.energy + "%";
+
+  // P2P Sync
+  if (mode === "host" && dataConn && dataConn.open) {
+    dataConn.send({ type: 'sync', p1: { x: p1.x, y: p1.y }, p2: { x: p2.x, y: p2.y } });
+  } else if (mode === "client" && dataConn && dataConn.open) {
+    dataConn.send({ type: 'clientPos', x: p1.x, y: p1.y });
+  }
+}
+
+function handleRoundEnd(p1Won) {
+  if (p1Won) {
+    wins++; coins += 60;
+    localStorage.setItem("cs_sumo_wins", wins);
+    localStorage.setItem("cs_sumo_coins", coins);
+    updateStatsDisplay();
+    alert((I18N[lang] || I18N.en).win);
+  } else {
+    alert((I18N[lang] || I18N.en).lose);
+  }
+  resetMatch();
+}
+
+function resetMatch() {
+  p1.x = W * 0.4; p1.y = H * 0.5; p1.vx = 0; p1.vy = 0;
+  p2.x = W * 0.6; p2.y = H * 0.5; p2.vx = 0; p2.vy = 0;
+}
+
+function drawDohyo() {
+  ctx.clearRect(0, 0, W, H);
+
+  let cx = W * 0.5, cy = H * 0.5;
+  let ringR = Math.min(W, H) * 0.38;
+
+  // Dohyo Ring
+  ctx.fillStyle = "#0a1838";
+  ctx.beginPath(); ctx.arc(cx, cy, ringR, 0, Math.PI * 2); ctx.fill();
+  ctx.lineWidth = 6; ctx.strokeStyle = "#00f0ff";
+  ctx.shadowColor = "#00f0ff"; ctx.shadowBlur = 18; ctx.stroke();
+
+  // Center Lines
+  ctx.strokeStyle = "rgba(255,255,255,0.2)"; ctx.lineWidth = 3; ctx.shadowBlur = 0;
+  ctx.beginPath(); ctx.moveTo(cx - 30, cy - 20); ctx.lineTo(cx - 30, cy + 20); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx + 30, cy - 20); ctx.lineTo(cx + 30, cy + 20); ctx.stroke();
+}
+
+function drawGame() {
+  drawDohyo();
+  p1.draw(); p2.draw();
+}
+
+function gameLoop() {
+  updateGame(); drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+// PeerJS Setup
+function initPeer(customId = null) {
+  const statusEl = document.getElementById("connectionStatus");
+  statusEl.style.display = "block";
+  statusEl.textContent = (I18N[lang] || I18N.en).connecting;
+
+  peer = customId ? new Peer(customId) : new Peer();
+
+  peer.on('open', (id) => {
+    statusEl.textContent = (I18N[lang] || I18N.en).copyCode + id;
+    addChatMessage('system', `Dohyo created! Code: ${id}`);
+  });
+
+  peer.on('connection', (conn) => {
+    dataConn = conn; setupDataConn();
+  });
+
+  peer.on('call', (call) => {
+    audioCall = call;
+    if (localStream) call.answer(localStream);
+    else call.answer();
+    call.on('stream', (remoteStream) => {
+      document.getElementById("remoteAudio").srcObject = remoteStream;
+    });
+  });
+}
+
+function setupDataConn() {
+  dataConn.on('open', () => {
+    addChatMessage('system', (I18N[lang] || I18N.en).connected);
+    document.getElementById("lobbyModal").style.display = "none";
+  });
+  dataConn.on('data', (data) => {
+    if (data.type === 'chat') {
+      addChatMessage('peer', data.msg);
+    } else if (data.type === 'sync') {
+      p2.x = data.p1.x; p2.y = data.p1.y;
+      p1.x = data.p2.x; p1.y = data.p2.y;
+    } else if (data.type === 'clientPos') {
+      p2.x = data.x; p2.y = data.y;
+    }
+  });
+}
+
+function addChatMessage(sender, text) {
+  const msgs = document.getElementById("chatMsgs");
+  const div = document.createElement("div");
+  div.className = `chat-msg ${sender}`;
+  div.textContent = text;
+  msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+}
+
+document.getElementById("sendChatBtn").onclick = () => {
+  const input = document.getElementById("chatInput");
+  const text = input.value.trim();
+  if (text) {
+    addChatMessage('me', text);
+    if (dataConn && dataConn.open) dataConn.send({ type: 'chat', msg: text });
+    input.value = "";
+  }
+};
+
+document.getElementById("micBtn").onclick = async () => {
+  if (!micEnabled) {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micEnabled = true;
+      document.getElementById("micTxt").textContent = (I18N[lang] || I18N.en).micOn;
+      if (dataConn && dataConn.peer) {
+        audioCall = peer.call(dataConn.peer, localStream);
+        audioCall.on('stream', s => document.getElementById("remoteAudio").srcObject = s);
+      }
+    } catch (e) { alert("Microphone access failed."); }
+  } else {
+    if (localStream) localStream.getTracks().forEach(t => t.stop());
+    micEnabled = false;
+    document.getElementById("micTxt").textContent = (I18N[lang] || I18N.en).micOff;
+  }
+};
+
+document.getElementById("startAiBtn").onclick = () => {
+  mode = "ai";
+  document.getElementById("lobbyModal").style.display = "none";
+};
+
+document.getElementById("hostRoomBtn").onclick = () => {
+  mode = "host";
+  initPeer("SUMO-" + Math.floor(1000 + Math.random() * 9000));
+};
+
+document.getElementById("joinRoomBtn").onclick = () => {
+  let code = document.getElementById("roomCodeInput").value.trim().toUpperCase();
+  if (!code) return;
+  mode = "client";
+  initPeer();
+  peer.on('open', () => {
+    dataConn = peer.connect(code);
+    setupDataConn();
+  });
+};
+
+document.getElementById("shopBtn").onclick = () => renderShop();
+document.getElementById("closeShopBtn").onclick = () => document.getElementById("shopModal").style.display = "none";
+
+function renderShop() {
+  const list = document.getElementById("armorList");
+  list.innerHTML = "";
+  ARMORS.forEach(a => {
+    const isUnlocked = unlockedArmors.includes(a.id);
+    const isEquipped = equippedArmor === a.id;
+    const div = document.createElement("div");
+    div.style.cssText = `background:rgba(255,255,255,0.06); padding:10px; border-radius:12px; border:1px solid ${a.color}; display:flex; flex-direction:column; gap:4px; align-items:center;`;
+    div.innerHTML = `
+      <div style="font-weight:700; color:${a.color};">${a.name}</div>
+      <div style="font-size:0.75rem; color:#aaa;">Weight: x${a.weight} | Power: x${a.power}</div>
+      ${isEquipped ? `<button class="btn btn-primary" disabled>Equipped</button>` :
+        isUnlocked ? `<button class="btn btn-primary" onclick="equipArmor('${a.id}')">Equip</button>` :
+        `<button class="btn btn-accent" onclick="buyArmor('${a.id}', ${a.cost})">🪙 ${a.cost}</button>`}
+    `;
+    list.appendChild(div);
+  });
+  document.getElementById("shopModal").style.display = "flex";
+}
+
+window.equipArmor = (id) => {
+  equippedArmor = id; localStorage.setItem("cs_sumo_armor", id);
+  renderShop();
+};
+
+window.buyArmor = (id, cost) => {
+  if (coins >= cost) {
+    coins -= cost; localStorage.setItem("cs_sumo_coins", coins);
+    unlockedArmors.push(id); localStorage.setItem("cs_sumo_unlocked", JSON.stringify(unlockedArmors));
+    equippedArmor = id; localStorage.setItem("cs_sumo_armor", id);
+    updateStatsDisplay(); renderShop();
+  } else {
+    alert("Not enough coins!");
+  }
+};
+
+function updateStatsDisplay() {
+  document.getElementById("coinsVal").textContent = coins;
+  document.getElementById("winsVal").textContent = wins;
+}
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("shopTxt").textContent = dict.shop;
+  document.getElementById("startAiBtn").textContent = dict.playAi;
+  document.getElementById("hostRoomBtn").textContent = dict.hostRoom;
+  document.getElementById("joinRoomBtn").textContent = dict.joinRoom;
+  document.getElementById("micTxt").textContent = micEnabled ? dict.micOn : dict.micOff;
+  document.getElementById("chatInput").placeholder = dict.typeMsg;
+  document.getElementById("welcomeChatMsg").textContent = dict.welcomeMsg;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+updateStatsDisplay(); initLang(); updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>

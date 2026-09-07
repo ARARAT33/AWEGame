@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🎳 Cyber Bowling Alley</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎳</text></svg>">
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(10, 16, 35, 0.92);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --secondary: #ff0055;
+  --accent: #ffcc00;
+  --text: #f0f6fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 26, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #33f3ff; color: #000; }
+.btn-accent { background: var(--secondary); color: #fff; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0a1128 0%, #02050f 100%);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.18); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; }
+.hud-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 8px 14px; display: flex; flex-direction: column; gap: 2px; backdrop-filter: blur(10px); }
+.hud-val { font-size: 1.1rem; font-weight: 900; color: var(--primary); text-shadow: 0 0 8px var(--primary); }
+
+.strike-banner {
+  position: absolute; top: 25%; left: 50%; transform: translateX(-50%);
+  font-size: 2rem; font-weight: 900; color: var(--accent); text-shadow: 0 0 20px var(--accent);
+  opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none; text-align: center;
+}
+
+/* Touch Controls */
+.touch-controls { position: absolute; bottom: 16px; right: 16px; left: 16px; display: flex; justify-content: space-between; pointer-events: auto; }
+.d-pad { display: flex; gap: 8px; }
+.action-btns { display: flex; gap: 8px; }
+.t-btn { width: 50px; height: 50px; background: rgba(255,255,255,0.12); border: 1px solid var(--border); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; font-weight: 800; }
+.t-btn:active { background: rgba(0, 240, 255, 0.4); }
+
+/* Modal */
+.modal-overlay { position: absolute; inset: 0; background: rgba(3, 5, 15, 0.9); backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #0a0f24; border: 1px solid var(--primary); border-radius: 22px; padding: 26px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 0 40px rgba(0,240,255,0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.6rem; color: #fff; text-shadow: 0 0 12px var(--primary); }
+
+@media (max-width: 768px) {
+  .t-btn { width: 44px; height: 44px; font-size: 1rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🎳</span>
+    <h1 id="titleTxt">Cyber Bowling Alley</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="shopBtn" class="btn">🔮 <span id="shopTxt">Balls</span></button>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="hud-card">
+        <span style="font-size:0.75rem; color:#aaa;" id="frameLbl">FRAME</span>
+        <span class="hud-val" id="frameVal">1 / 10</span>
+      </div>
+      <div class="hud-card">
+        <span style="font-size:0.75rem; color:#aaa;" id="scoreLbl">SCORE</span>
+        <span class="hud-val" id="scoreVal">0</span>
+      </div>
+      <div class="hud-card">
+        <span style="font-size:0.75rem; color:#aaa;" id="coinsLbl">CYBER CREDITS</span>
+        <span class="hud-val" style="color:#00ff88;" id="coinsVal">0</span>
+      </div>
+    </div>
+
+    <div class="strike-banner" id="strikeBanner">STRIKE! 💥</div>
+
+    <div class="touch-controls">
+      <div class="d-pad">
+        <div class="t-btn" id="btnLeft">◄</div>
+        <div class="t-btn" id="btnRight">►</div>
+      </div>
+      <div class="action-btns">
+        <div class="t-btn" id="btnSpinL" style="background:rgba(255,0,85,0.3); border-color:var(--secondary);">↩️</div>
+        <div class="t-btn" id="btnSpinR" style="background:rgba(255,204,0,0.3); border-color:var(--accent);">↪️</div>
+        <div class="t-btn" id="btnRoll" style="background:rgba(0,240,255,0.3); border-color:var(--primary);">🚀</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="startModal">
+    <div class="modal-card">
+      <h2 id="modalHead">🎳 Cyber Bowling Alley</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Bowl across 10 intense cyberpunk frames! Adjust trajectory, apply hook spin, and smash all 10 pins for ultimate STRIKES!</p>
+
+      <div style="display:flex; justify-content:space-around; background:rgba(255,255,255,0.05); padding:10px; border-radius:12px;">
+        <div>🪙 <span id="startCoins">0</span></div>
+        <div>🏆 <span id="startHigh">0</span></div>
+      </div>
+
+      <button class="btn btn-primary" style="justify-content:center; padding:12px;" id="startBtn">🚀 START BOWL</button>
+    </div>
+  </div>
+
+  <!-- Shop Modal -->
+  <div class="modal-overlay" id="shopModal" style="display:none;">
+    <div class="modal-card">
+      <h2>🔮 Cyber Bowling Ball Shop</h2>
+      <div id="ballList" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0;"></div>
+      <button class="btn btn-primary" style="justify-content:center;" id="closeShopBtn">Close</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Bowling Alley", home: "Home", shop: "Balls", start: "🚀 START BOWL", score: "SCORE", frame: "FRAME", credits: "CYBER CREDITS", gameOver: "GAME OVER! Final Score: ", reStart: "RETRY" },
+  hy: { title: "Կիբեռ Բոուլինգ", home: "Գլխավոր", shop: "Գնդակներ", start: "🚀 ՍԿՍԵԼ ԽԱՂԸ", score: "ՄԻԱՎՈՐ", frame: "ՌԱՈՒՆԴ", credits: "ԿՐԵԴԻՏՆԵՐ", gameOver: "ԽԱՂՆ ԱՎԱՐՏՎԵՑ! Վերջնական միավոր: ", reStart: "ԿՐԿՆԵԼ" },
+  ru: { title: "Кибер Боулинг", home: "Главная", shop: "Шары", start: "🚀 НАЧАТЬ ИГРУ", score: "СЧЕТ", frame: "ФРЕЙМ", credits: "КРЕДИТЫ", gameOver: "ИГРА ОКОНЧЕНА! Финальный счет: ", reStart: "ПОВТОРИТЬ" },
+  es: { title: "Cyber Bowling", home: "Inicio", shop: "Bolas", start: "🚀 EMPEZAR", score: "PUNTOS", frame: "MARCO", credits: "CRÉDITOS", gameOver: "¡JUEGO TERMINADO! Puntuación: ", reStart: "REINTENTAR" },
+  fr: { title: "Cyber Bowling", home: "Accueil", shop: "Boules", start: "🚀 COMMENCER", score: "SCORE", frame: "FRAME", credits: "CRÉDITS", gameOver: "FIN DE PARTIE ! Score final : ", reStart: "REJOUER" },
+  de: { title: "Cyber Bowling", home: "Startseite", shop: "Bälle", start: "🚀 BOWLEN STARTEN", score: "PUNKTE", frame: "FRAME", credits: "KREDITE", gameOver: "SPIEL OVER! Endpunktzahl: ", reStart: "NOCHMAL" },
+  it: { title: "Cyber Bowling", home: "Home", shop: "Palle", start: "🚀 INIZIA", score: "PUNTI", frame: "FRAME", credits: "CREDITI", gameOver: "PARTITA FINITA! Punteggio finale: ", reStart: "RIPROVA" },
+  pt: { title: "Cyber Boliche", home: "Início", shop: "Bolas", start: "🚀 COMEÇAR", score: "PONTOS", frame: "RODADA", credits: "CRÉDITOS", gameOver: "FIM DE JOGO! Pontuação: ", reStart: "TENTAR DE NOVO" },
+  tr: { title: "Cyber Brolling", home: "Ana Sayfa", shop: "Toplar", start: "🚀 BAŞLA", score: "SKOR", frame: "TUR", credits: "KREDİLER", gameOver: "OUN BİTTİ! Toplam Skor: ", reStart: "TEKRAR DENE" },
+  ja: { title: "サイバーボウリング", home: "ホーム", shop: "ボール", start: "🚀 ボウリング開始", score: "スコア", frame: "フレーム", credits: "クレジット", gameOver: "ゲームオーバー！スコア: ", reStart: "リトライ" },
+  zh: { title: "赛博保龄球", home: "主页", shop: "球具", start: "🚀 开始开球", score: "得分", frame: "轮次", credits: "积分", gameOver: "游戏结束！最终得分: ", reStart: "重试" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+const BALLS = [
+  { id: 'cyan', name: 'Neon Sphere', cost: 0, weight: 1.0, spin: 1.0, color: '#00f0ff' },
+  { id: 'plasma', name: 'Plasma Pulse', cost: 120, weight: 1.25, spin: 1.2, color: '#ff0055' },
+  { id: 'gold', name: 'Quantum Core', cost: 300, weight: 1.5, spin: 1.4, color: '#ffcc00' },
+  { id: 'void', name: 'Void Orb', cost: 550, weight: 1.8, spin: 1.6, color: '#b400ff' }
+];
+
+let lang = "en";
+let sound = true;
+let isPlaying = false;
+
+let frame = 1;
+let rollInFrame = 1;
+let score = 0;
+let coins = parseInt(localStorage.getItem("cbw_coins") || "0");
+let highScore = parseInt(localStorage.getItem("cbw_high") || "0");
+let equippedBall = localStorage.getItem("cbw_ball") || "cyan";
+let unlockedBalls = JSON.parse(localStorage.getItem("cbw_unlocked") || '["cyan"]');
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 900, H = 500;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio sound generator
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'roll') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(120, now); osc.frequency.linearRampToValueAtTime(180, now + 0.6);
+    gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+  } else if (type === 'hit') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(500, now); osc.frequency.exponentialRampToValueAtTime(80, now + 0.25);
+    gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+  } else if (type === 'strike') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(700, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.5);
+    gain.gain.setValueAtTime(0.5, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.6);
+}
+
+class Ball {
+  constructor() {
+    this.x = W * 0.5;
+    this.y = H - 80;
+    this.vx = 0;
+    this.vy = 0;
+    this.spin = 0;
+    this.isRolling = false;
+  }
+  getProps() {
+    return BALLS.find(b => b.id === equippedBall) || BALLS[0];
+  }
+  roll() {
+    if (!this.isRolling) {
+      this.vy = -11;
+      this.isRolling = true;
+      playSound('roll');
+    }
+  }
+  update() {
+    if (this.isRolling) {
+      let p = this.getProps();
+      this.vx += this.spin * 0.05 * p.spin;
+      this.x += this.vx;
+      this.y += this.vy;
+    }
+  }
+  draw() {
+    let p = this.getProps();
+    ctx.save();
+    ctx.fillStyle = p.color; ctx.shadowColor = p.color; ctx.shadowBlur = 12;
+    ctx.beginPath(); ctx.arc(this.x, this.y, 16, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.arc(this.x - 4, this.y - 4, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+}
+
+class Pin {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.isDown = false;
+    this.vx = 0;
+    this.vy = 0;
+  }
+  update() {
+    if (this.isDown) {
+      this.x += this.vx;
+      this.y += this.vy;
+    }
+  }
+  draw() {
+    if (this.isDown && (this.x < 0 || this.x > W || this.y < 0)) return;
+    ctx.save();
+    ctx.fillStyle = this.isDown ? "#555" : "#fff";
+    ctx.shadowColor = "#ff0055"; ctx.shadowBlur = this.isDown ? 0 : 8;
+    ctx.beginPath(); ctx.arc(this.x, this.y, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#ff0055";
+    ctx.fillRect(this.x - 6, this.y - 2, 12, 4);
+    ctx.restore();
+  }
+}
+
+let ball = new Ball();
+let pins = [];
+
+function setupPins() {
+  pins = [];
+  let startY = 120;
+  let rows = 4;
+  let pinId = 0;
+  for (let r = 0; r < rows; r++) {
+    let count = r + 1;
+    let startX = W * 0.5 - (r * 18);
+    for (let c = 0; c < count; c++) {
+      pins.push(new Pin(startX + c * 36, startY - r * 22));
+    }
+  }
+}
+
+function showBanner(txt) {
+  const b = document.getElementById("strikeBanner");
+  b.textContent = txt; b.style.opacity = "1"; b.style.transform = "translateX(-50%) scale(1.2)";
+  setTimeout(() => { b.style.opacity = "0"; b.style.transform = "translateX(-50%) scale(1.0)"; }, 800);
+}
+
+document.getElementById("btnLeft").onclick = () => { if (!ball.isRolling) ball.x = Math.max(W * 0.3, ball.x - 8); };
+document.getElementById("btnRight").onclick = () => { if (!ball.isRolling) ball.x = Math.min(W * 0.7, ball.x + 8); };
+document.getElementById("btnSpinL").onclick = () => { if (!ball.isRolling) ball.spin = Math.max(-2, ball.spin - 0.5); };
+document.getElementById("btnSpinR").onclick = () => { if (!ball.isRolling) ball.spin = Math.min(2, ball.spin + 0.5); };
+document.getElementById("btnRoll").onclick = () => ball.roll();
+
+function updateGame() {
+  if (!isPlaying) return;
+
+  ball.update();
+
+  let knockedThisRoll = 0;
+  pins.forEach(p => {
+    p.update();
+    if (!p.isDown && Math.abs(ball.x - p.x) < 22 && Math.abs(ball.y - p.y) < 22) {
+      p.isDown = true;
+      p.vx = (p.x - ball.x) * 0.2;
+      p.vy = (p.y - ball.y) * 0.2;
+      knockedThisRoll++;
+      playSound('hit');
+    }
+  });
+
+  // End roll check
+  if (ball.isRolling && (ball.y < 40 || ball.x < W * 0.2 || ball.x > W * 0.8)) {
+    let downCount = pins.filter(p => p.isDown).length;
+    score += downCount * 10;
+    coins += downCount * 2;
+    localStorage.setItem("cbw_coins", coins);
+
+    if (rollInFrame === 1 && downCount === 10) {
+      showBanner("STRIKE! 💥"); playSound('strike');
+      nextFrame();
+    } else if (rollInFrame === 2 || downCount === 10) {
+      if (downCount === 10) showBanner("SPARE! ✨");
+      nextFrame();
+    } else {
+      rollInFrame = 2;
+      resetBall();
+    }
+  }
+
+  document.getElementById("scoreVal").textContent = score;
+  document.getElementById("coinsVal").textContent = coins;
+  document.getElementById("frameVal").textContent = `${frame} / 10`;
+}
+
+function resetBall() {
+  ball.isRolling = false; ball.x = W * 0.5; ball.y = H - 80; ball.vx = 0; ball.vy = 0; ball.spin = 0;
+}
+
+function nextFrame() {
+  frame++;
+  rollInFrame = 1;
+  resetBall();
+  setupPins();
+
+  if (frame > 10) {
+    isPlaying = false;
+    if (score > highScore) { highScore = score; localStorage.setItem("cbw_high", highScore); }
+    let dict = I18N[lang] || I18N.en;
+    alert(dict.gameOver + score);
+    document.getElementById("startModal").style.display = "flex";
+  }
+}
+
+function drawLane() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Bowling Lane Floor
+  ctx.fillStyle = "#0c1838";
+  ctx.beginPath();
+  ctx.moveTo(W * 0.2, H); ctx.lineTo(W * 0.8, H);
+  ctx.lineTo(W * 0.65, 50); ctx.lineTo(W * 0.35, 50);
+  ctx.fill();
+
+  // Lane Borders
+  ctx.strokeStyle = "#00f0ff"; ctx.lineWidth = 3; ctx.shadowColor = "#00f0ff"; ctx.shadowBlur = 10;
+  ctx.beginPath(); ctx.moveTo(W * 0.2, H); ctx.lineTo(W * 0.35, 50); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W * 0.8, H); ctx.lineTo(W * 0.65, 50); ctx.stroke();
+
+  // Aim Guideline
+  if (!ball.isRolling) {
+    ctx.strokeStyle = "rgba(0,240,255,0.4)"; ctx.setLineDash([6, 6]);
+    ctx.beginPath(); ctx.moveTo(ball.x, ball.y); ctx.lineTo(ball.x + ball.spin * 30, 80); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+function drawGame() {
+  drawLane();
+  pins.forEach(p => p.draw());
+  ball.draw();
+}
+
+function gameLoop() {
+  updateGame(); drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+document.getElementById("startBtn").onclick = () => {
+  score = 0; frame = 1; rollInFrame = 1;
+  resetBall(); setupPins();
+  isPlaying = true;
+  document.getElementById("startModal").style.display = "none";
+};
+
+document.getElementById("shopBtn").onclick = () => renderShop();
+document.getElementById("closeShopBtn").onclick = () => document.getElementById("shopModal").style.display = "none";
+
+function renderShop() {
+  const list = document.getElementById("ballList");
+  list.innerHTML = "";
+  BALLS.forEach(b => {
+    const isUnlocked = unlockedBalls.includes(b.id);
+    const isEquipped = equippedBall === b.id;
+    const div = document.createElement("div");
+    div.style.cssText = `background:rgba(255,255,255,0.06); padding:10px; border-radius:12px; border:1px solid ${b.color}; display:flex; flex-direction:column; gap:4px; align-items:center;`;
+    div.innerHTML = `
+      <div style="font-weight:700; color:${b.color};">${b.name}</div>
+      <div style="font-size:0.75rem; color:#aaa;">Weight: x${b.weight} | Spin: x${b.spin}</div>
+      ${isEquipped ? `<button class="btn btn-primary" disabled>Equipped</button>` :
+        isUnlocked ? `<button class="btn btn-primary" onclick="equipBall('${b.id}')">Equip</button>` :
+        `<button class="btn btn-accent" onclick="buyBall('${b.id}', ${b.cost})">🪙 ${b.cost}</button>`}
+    `;
+    list.appendChild(div);
+  });
+  document.getElementById("shopModal").style.display = "flex";
+}
+
+window.equipBall = (id) => {
+  equippedBall = id; localStorage.setItem("cbw_ball", id);
+  renderShop();
+};
+
+window.buyBall = (id, cost) => {
+  if (coins >= cost) {
+    coins -= cost; localStorage.setItem("cbw_coins", coins);
+    unlockedBalls.push(id); localStorage.setItem("cbw_unlocked", JSON.stringify(unlockedBalls));
+    equippedBall = id; localStorage.setItem("cbw_ball", id);
+    renderShop();
+  } else {
+    alert("Not enough credits!");
+  }
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("shopTxt").textContent = dict.shop;
+  document.getElementById("startBtn").textContent = dict.start;
+  document.getElementById("scoreLbl").textContent = dict.score;
+  document.getElementById("frameLbl").textContent = dict.frame;
+  document.getElementById("coinsLbl").textContent = dict.credits;
+  document.getElementById("startCoins").textContent = coins;
+  document.getElementById("startHigh").textContent = highScore;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang(); updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
