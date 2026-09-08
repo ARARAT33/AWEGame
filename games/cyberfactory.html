@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>⚙️ Cyber Factory Automation Grid</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚙️</text></svg>">
+<style>
+:root {
+  --bg: #030814;
+  --panel: rgba(10, 18, 38, 0.92);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --secondary: #39ff14;
+  --accent: #ffcc00;
+  --text: #f0f6fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 26, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #091226 0%, #020510 100%);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.18); display: block; touch-action: none; cursor: pointer;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; }
+.stats-bar { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px 16px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 16px; font-size: 0.9rem; backdrop-filter: blur(10px); }
+
+/* Building Selector Bar */
+.build-bar { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 8px 16px; display: flex; gap: 10px; pointer-events: auto; backdrop-filter: blur(10px); z-index: 5; }
+.build-btn { background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 12px; padding: 6px 12px; color: #fff; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.build-btn.active { background: var(--primary); color: #000; border-color: #00f0ff; }
+
+/* Modal */
+.modal-overlay { position: absolute; inset: 0; background: rgba(3, 5, 15, 0.88); backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #0a0f24; border: 1px solid var(--primary); border-radius: 22px; padding: 26px; width: 90%; max-width: 460px; text-align: center; box-shadow: 0 0 40px rgba(0,240,255,0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.6rem; color: #fff; text-shadow: 0 0 12px var(--primary); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">⚙️</span>
+    <h1 id="titleTxt">Cyber Factory Automation Grid</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="stats-bar">
+        <span>⚡ POWER: <span id="powerVal" style="color:var(--secondary);">0</span> kW</span>
+        <span>🪙 CREDITS: <span id="creditsVal" style="color:var(--accent);">100</span></span>
+        <span>⚙️ NODES: <span id="nodesVal" style="color:#fff;">0</span></span>
+      </div>
+      <div>
+        <button class="btn btn-primary" id="sellAllBtn">💰 Market Trade All</button>
+      </div>
+    </div>
+
+    <div class="build-bar">
+      <button class="build-btn active" id="btnGen" data-type="generator">⚡ Generator ($30)</button>
+      <button class="build-btn" id="btnSynth" data-type="synth">🔮 Quantum Synth ($50)</button>
+      <button class="build-btn" id="btnProc" data-type="processor">💎 Core Processor ($80)</button>
+      <button class="build-btn" id="btnDelete" data-type="delete" style="border-color:#ff0055; color:#ff0055;">🗑️ Dismantle</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="startModal">
+    <div class="modal-card">
+      <h2 id="modalHead">⚙️ Cyber Factory Automation Grid</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Place power generators, quantum synthesizers, and core processors on the grid! Automate energy generation, refine raw plasma, and build a mega cyber factory economy!</p>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <button class="btn btn-primary" style="justify-content:center; padding:12px; font-size:1rem;" id="startBtn">🚀 Initialize Grid</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Factory Automation Grid", home: "Home", start: "🚀 Initialize Grid", trade: "💰 Market Trade All", power: "POWER", credits: "CREDITS", nodes: "NODES", gen: "⚡ Generator ($30)", synth: "🔮 Quantum Synth ($50)", proc: "💎 Core Processor ($80)", del: "🗑️ Dismantle" },
+  hy: { title: "Կիբեռ Գործարան Ավտոմատացում", home: "Գլխավոր", start: "🚀 Սկսել Գործարանը", trade: "💰 Վաճառել Ապրանքները", power: "ԷՆԵՐԳԻԱ", credits: "ԿՐԵԴԻՏՆԵՐ", nodes: "ՀԱՆԳՈՒՅՑՆԵՐ", gen: "⚡ Գեներատոր ($30)", synth: "🔮 Սինթեզատոր ($50)", proc: "💎 Պրոցեսոր ($80)", del: "🗑️ Քանդել" },
+  ru: { title: "Кибер Фабрика Сеть Автоматизации", home: "Главная", start: "🚀 Запустить Завод", trade: "💰 Продать Продукцию", power: "ЭНЕРГИЯ", credits: "КРЕДИТЫ", nodes: "УЗЛЫ", gen: "⚡ Генератор ($30)", synth: "🔮 Синтезатор ($50)", proc: "💎 Процессор ($80)", del: "🗑️ Демонтаж" },
+  es: { title: "Cyber Factory Automation Grid", home: "Inicio", start: "🚀 Iniciar Red", trade: "💰 Comerciar Todo", power: "ENERGÍA", credits: "CRÉDITOS", nodes: "NODOS", gen: "⚡ Generador ($30)", synth: "🔮 Sintetizador ($50)", proc: "💎 Procesador ($80)", del: "🗑️ Desmantelar" },
+  fr: { title: "Cyber Factory Automation Grid", home: "Accueil", start: "🚀 Initialiser", trade: "💰 Vendre Tout", power: "ÉNERGIE", credits: "CRÉDITS", nodes: "NOEUDS", gen: "⚡ Générateur ($30)", synth: "🔮 Synthétiseur ($50)", proc: "💎 Processeur ($80)", del: "🗑️ Démanteler" },
+  de: { title: "Cyber Factory Automation Grid", home: "Startseite", start: "🚀 Fabrik Starten", trade: "💰 Alles Verkaufen", power: "ENERGIE", credits: "KREDITE", nodes: "KNOTEN", gen: "⚡ Generator ($30)", synth: "🔮 Synthesizer ($50)", proc: "💎 Prozessor ($80)", del: "🗑️ Abrüsten" },
+  it: { title: "Cyber Factory Automation Grid", home: "Home", start: "🚀 Inizializza Rete", trade: "💰 Vendi Tutto", power: "ENERGIA", credits: "CREDITI", nodes: "NODI", gen: "⚡ Generatore ($30)", synth: "🔮 Sintetizzatore ($50)", proc: "💎 Processore ($80)", del: "🗑️ Smantella" },
+  pt: { title: "Cyber Factory Automation Grid", home: "Início", start: "🚀 Inicializar", trade: "💰 Vender Tudo", power: "ENERGIA", credits: "CRÉDITOS", nodes: "NÓS", gen: "⚡ Gerador ($30)", synth: "🔮 Sintetizador ($50)", proc: "💎 Processador ($80)", del: "🗑️ Desmantelar" },
+  tr: { title: "Cyber Fabrika Otomasyon Ağı", home: "Ana Sayfa", start: "🚀 Fabrikayı Başlat", trade: "💰 Tümünü Sat", power: "GÜÇ", credits: "KREDİ", nodes: "DÜĞÜMLER", gen: "⚡ Jeneratör ($30)", synth: "🔮 Sentezleyici ($50)", proc: "💎 İşlemci ($80)", del: "🗑️ Sök" },
+  ja: { title: "サイバーファクトリーオートメーション", home: "ホーム", start: "🚀 グリッド起動", trade: "💰 売却取引", power: "電力", credits: "クレジット", nodes: "ノード", gen: "⚡ 発電機 ($30)", synth: "🔮 合成機 ($50)", proc: "💎 プロセッサー ($80)", del: "🗑️ 解体" },
+  zh: { title: "赛博工厂自动化网络", home: "主页", start: "🚀 初始化网络", trade: "💰 市场交易", power: "电力", credits: "积分", nodes: "节点", gen: "⚡ 发电机 ($30)", synth: "🔮 合成器 ($50)", proc: "💎 处理器 ($80)", del: "🗑️ 拆除" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+let credits = parseInt(localStorage.getItem("cfa_credits") || "100");
+let totalPower = 0;
+let buildTool = "generator";
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 960, H = 540;
+let cols = 16, rows = 9;
+let cellSize = 55;
+let grid = Array(cols).fill(null).map(() => Array(rows).fill(null));
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+  cellSize = Math.floor(W / cols);
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio sound effects
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'build') {
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+  } else if (type === 'delete') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+  } else if (type === 'trade') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(523, now); osc.frequency.setValueAtTime(783, now + 0.1);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.22);
+}
+
+// Grid Interactions
+canvas.addEventListener("click", e => {
+  let rect = canvas.getBoundingClientRect();
+  let mx = (e.clientX - rect.left) * (W / rect.width);
+  let my = (e.clientY - rect.top) * (H / rect.height);
+
+  let c = Math.floor(mx / cellSize);
+  let r = Math.floor(my / cellSize);
+
+  if (c >= 0 && c < cols && r >= 0 && r < rows) {
+    if (buildTool === "delete") {
+      if (grid[c][r]) {
+        grid[c][r] = null;
+        playSound('delete');
+      }
+    } else {
+      let cost = buildTool === "generator" ? 30 : buildTool === "synth" ? 50 : 80;
+      if (!grid[c][r] && credits >= cost) {
+        credits -= cost;
+        grid[c][r] = { type: buildTool, timer: 0 };
+        localStorage.setItem("cfa_credits", credits);
+        document.getElementById("creditsVal").textContent = credits;
+        playSound('build');
+      }
+    }
+  }
+});
+
+function updateFactory() {
+  let nodeCount = 0;
+  totalPower = 0;
+
+  for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < rows; r++) {
+      let cell = grid[c][r];
+      if (cell) {
+        nodeCount++;
+        cell.timer++;
+        if (cell.type === "generator") {
+          totalPower += 15;
+          if (cell.timer % 120 === 0) { credits += 5; }
+        } else if (cell.type === "synth") {
+          totalPower += 35;
+          if (cell.timer % 100 === 0) { credits += 15; }
+        } else if (cell.type === "processor") {
+          totalPower += 80;
+          if (cell.timer % 80 === 0) { credits += 35; }
+        }
+      }
+    }
+  }
+
+  localStorage.setItem("cfa_credits", credits);
+  document.getElementById("powerVal").textContent = totalPower;
+  document.getElementById("creditsVal").textContent = credits;
+  document.getElementById("nodesVal").textContent = nodeCount;
+}
+
+function drawGrid() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw Grid Lines
+  ctx.strokeStyle = "rgba(0, 240, 255, 0.12)"; ctx.lineWidth = 1;
+  for (let c = 0; c <= cols; c++) {
+    ctx.beginPath(); ctx.moveTo(c * cellSize, 0); ctx.lineTo(c * cellSize, H); ctx.stroke();
+  }
+  for (let r = 0; r <= rows; r++) {
+    ctx.beginPath(); ctx.moveTo(0, r * cellSize); ctx.lineTo(W, r * cellSize); ctx.stroke();
+  }
+
+  // Draw Factory Nodes
+  for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < rows; r++) {
+      let cell = grid[c][r];
+      if (cell) {
+        let x = c * cellSize + cellSize / 2;
+        let y = r * cellSize + cellSize / 2;
+
+        ctx.save();
+        ctx.beginPath(); ctx.arc(x, y, cellSize * 0.35, 0, Math.PI * 2);
+        if (cell.type === "generator") {
+          ctx.fillStyle = "#39ff14"; ctx.shadowColor = "#39ff14"; ctx.shadowBlur = 15;
+        } else if (cell.type === "synth") {
+          ctx.fillStyle = "#00f0ff"; ctx.shadowColor = "#00f0ff"; ctx.shadowBlur = 15;
+        } else if (cell.type === "processor") {
+          ctx.fillStyle = "#ffcc00"; ctx.shadowColor = "#ffcc00"; ctx.shadowBlur = 15;
+        }
+        ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#fff"; ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
+}
+
+function gameLoop() {
+  updateFactory(); drawGrid();
+  requestAnimationFrame(gameLoop);
+}
+
+document.querySelectorAll(".build-btn").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".build-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    buildTool = btn.dataset.type;
+  };
+});
+
+document.getElementById("sellAllBtn").onclick = () => {
+  let bonus = totalPower * 2;
+  credits += bonus;
+  localStorage.setItem("cfa_credits", credits);
+  document.getElementById("creditsVal").textContent = credits;
+  playSound('trade');
+};
+
+document.getElementById("startBtn").onclick = () => {
+  document.getElementById("startModal").style.display = "none";
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("startBtn").textContent = dict.start;
+  document.getElementById("sellAllBtn").textContent = dict.trade;
+  document.getElementById("btnGen").textContent = dict.gen;
+  document.getElementById("btnSynth").textContent = dict.synth;
+  document.getElementById("btnProc").textContent = dict.proc;
+  document.getElementById("btnDelete").textContent = dict.del;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+document.getElementById("creditsVal").textContent = credits;
+
+initLang(); updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
