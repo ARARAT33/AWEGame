@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🌀 Cyber Portal Runner</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌀</text></svg>">
+<style>
+:root {
+  --bg: #040914;
+  --panel: rgba(12, 20, 42, 0.92);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --secondary: #ff8800;
+  --accent: #a855f7;
+  --text: #f0f6fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 26, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-accent { background: var(--secondary); color: #fff; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0a1329 0%, #030611 100%);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.18); display: block; touch-action: none; cursor: crosshair;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; }
+.stats-bar { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px 16px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 16px; font-size: 0.9rem; backdrop-filter: blur(10px); }
+
+/* Touch Overlay */
+.touch-controls { position: absolute; bottom: 16px; right: 16px; display: none; gap: 10px; pointer-events: auto; }
+.d-pad { display: grid; grid-template-columns: repeat(3, 44px); gap: 4px; }
+.action-btns { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
+.t-btn { width: 44px; height: 44px; background: rgba(255,255,255,0.12); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.1rem; font-weight: 800; }
+.t-btn:active { background: rgba(0, 240, 255, 0.4); }
+
+/* Modal */
+.modal-overlay { position: absolute; inset: 0; background: rgba(3, 5, 15, 0.88); backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #0a0f24; border: 1px solid var(--primary); border-radius: 22px; padding: 26px; width: 90%; max-width: 460px; text-align: center; box-shadow: 0 0 40px rgba(0,240,255,0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.6rem; color: #fff; text-shadow: 0 0 12px var(--primary); }
+
+@media (max-width: 768px) {
+  .touch-controls { display: flex; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🌀</span>
+    <h1 id="titleTxt">Cyber Portal Runner</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="stats-bar">
+        <span>LEVEL: <span id="levelVal" style="color:#fff;">1</span> / 25</span>
+        <span>🪙 ENERGY: <span id="coinsVal" style="color:var(--accent);">0</span></span>
+        <span>🌌 QUANTUM WARPS: <span id="warpsVal" style="color:var(--secondary);">0</span></span>
+      </div>
+      <div>
+        <button class="btn btn-primary" id="resetLvlBtn">🔄 Reset Level</button>
+      </div>
+    </div>
+
+    <div class="touch-controls">
+      <div class="d-pad">
+        <div></div><div class="t-btn" id="btnUp">▲</div><div></div>
+        <div class="t-btn" id="btnLeft">◄</div><div class="t-btn" id="btnDown">▼</div><div class="t-btn" id="btnRight">►</div>
+      </div>
+      <div class="action-btns">
+        <div class="t-btn" id="btnPortalBlue" style="background:rgba(0,240,255,0.3); border-color:var(--primary);">🔵</div>
+        <div class="t-btn" id="btnPortalOrange" style="background:rgba(255,136,0,0.3); border-color:var(--secondary);">🟠</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="startModal">
+    <div class="modal-card">
+      <h2 id="modalHead">🌀 Cyber Portal Runner</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Shoot Blue & Orange spatial portals to manipulate gravity momentum, solve platforming puzzles, avoid laser grids, and reach the quantum exit core!</p>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <button class="btn btn-primary" style="justify-content:center; padding:12px; font-size:1rem;" id="startBtn">🚀 Start Journey</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Portal Runner", home: "Home", start: "🚀 Start Journey", reset: "🔄 Reset Level", level: "LEVEL", energy: "ENERGY", warps: "QUANTUM WARPS", win: "🎉 LEVEL COMPLETE!", completeAll: "🏆 ALL 25 SECTORS CLEARED!" },
+  hy: { title: "Կիբեռ Պորտալ Վազորդ", home: "Գլխավոր", start: "🚀 Սկսել Խաղը", reset: "🔄 Վերասկսել Մակարդակը", level: "ՄԱԿԱՐԴԱԿ", energy: "ԷՆԵՐԳԻԱ", warps: "ՔՎԱՆՏԱՅԻՆ ՊՈՐՏԱԼՆԵՐ", win: "🎉 ՄԱԿԱՐԴԱԿԸ ԱՆՑՎԱԾ Է!", completeAll: "🏆 ԲՈԼՈՐ 25 ՄԱԿԱՐԴԱԿՆԵՐԸ ԱՆՑՎԱԾ ԵՆ!" },
+  ru: { title: "Кибер Портал Раннер", home: "Главная", start: "🚀 Начать Игру", reset: "🔄 Перезапустить Уровень", level: "УРОВЕНЬ", energy: "ЭНЕРГИЯ", warps: "КВАНТОВЫЕ ВАРПЫ", win: "🎉 УРОВЕНЬ ПРОЙДЕН!", completeAll: "🏆 ВСЕ 25 СЕКТОРОВ ПРОЙДЕНЫ!" },
+  es: { title: "Cyber Portal Runner", home: "Inicio", start: "🚀 Iniciar Viaje", reset: "🔄 Reiniciar Nivel", level: "NIVEL", energy: "ENERGÍA", warps: "SALTO CUÁNTICO", win: "🎉 ¡NIVEL COMPLETADO!", completeAll: "🏆 ¡TODOS LOS SECTORES COMPLETADOS!" },
+  fr: { title: "Cyber Portal Runner", home: "Accueil", start: "🚀 Commencer", reset: "🔄 Réinitialiser Niveau", level: "NIVEAU", energy: "ÉNERGIE", warps: "SAUTS QUANTIK", win: "🎉 NIVEAU TERMINÉ !", completeAll: "🏆 TOUS LES SECTEURS TERMINÉS !" },
+  de: { title: "Cyber Portal Runner", home: "Startseite", start: "🚀 Reise Starten", reset: "🔄 Level Zurücksetzen", level: "LEVEL", energy: "ENERGIE", warps: "QUANTEN WARPS", win: "🎉 LEVEL ABGESCHLOSSEN!", completeAll: "🏆 ALLE 25 SEKTOREN ABGESCHLOSSEN!" },
+  it: { title: "Cyber Portal Runner", home: "Home", start: "🚀 Inizia Viaggio", reset: "🔄 Riavvia Livello", level: "LIVELLO", energy: "ENERGIA", warps: "WARP QUANTISTICI", win: "🎉 LIVELLO COMPLETATO!", completeAll: "🏆 TUTTI I SECTORI COMPLETATI!" },
+  pt: { title: "Cyber Portal Runner", home: "Início", start: "🚀 Iniciar Jornada", reset: "🔄 Reiniciar Nível", level: "NÍVEL", energy: "ENERGIA", warps: "SALTO QUÂNTICO", win: "🎉 NÍVEL CONCLUÍDO!", completeAll: "🏆 TODOS OS SETORES CONCLUÍDOS!" },
+  tr: { title: "Cyber Portal Runner", home: "Ana Sayfa", start: "🚀 Yolculuğa Başla", reset: "🔄 Bölümü Sıfırla", level: "BÖLÜM", energy: "ENERPİ", warps: "KUANTUM IP IŞINLARI", win: "🎉 BÖLÜM TAMAMLANDI!", completeAll: "🏆 TÜM 25 SEKTÖR TAMAMLANDI!" },
+  ja: { title: "サイバーポータルランナー", home: "ホーム", start: "🚀 旅を始める", reset: "🔄 リセット", level: "レベル", energy: "エネルギ", warps: "ワープ回数", win: "🎉 レベルクリア！", completeAll: "🏆 全25セクター制覇！" },
+  zh: { title: "赛博传送门跑者", home: "主页", start: "🚀 开始旅程", reset: "🔄 重置关卡", level: "关卡", energy: "能量", warps: "量子跃迁", win: "🎉 关卡完成！", completeAll: "🏆 通关全部25个区域！" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+let coins = parseInt(localStorage.getItem("cpr_coins") || "0");
+let warps = parseInt(localStorage.getItem("cpr_warps") || "0");
+let currentLevel = parseInt(localStorage.getItem("cpr_level") || "1");
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 960, H = 540;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio synthesizer
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'jump') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(250, now); osc.frequency.exponentialRampToValueAtTime(600, now + 0.12);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+  } else if (type === 'portal') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(700, now); osc.frequency.exponentialRampToValueAtTime(300, now + 0.15);
+    gain.gain.setValueAtTime(0.25, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+  } else if (type === 'teleport') {
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(900, now + 0.2);
+    gain.gain.setValueAtTime(0.35, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+  } else if (type === 'coin') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.setValueAtTime(900, now + 0.08);
+    gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.16);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.25);
+}
+
+class Player {
+  constructor() {
+    this.r = 16;
+    this.reset();
+  }
+  reset() {
+    this.x = 80; this.y = H - 120;
+    this.vx = 0; this.vy = 0;
+    this.grounded = false;
+  }
+  update(platforms, hazards) {
+    this.vy += 0.55; // Gravity
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vx *= 0.88;
+
+    this.grounded = false;
+
+    // Platform Collisions
+    for (let p of platforms) {
+      if (this.x + this.r > p.x && this.x - this.r < p.x + p.w &&
+          this.y + this.r > p.y && this.y - this.r < p.y + p.h) {
+        if (this.vy > 0 && this.y - this.vy + this.r <= p.y) {
+          this.y = p.y - this.r;
+          this.vy = 0;
+          this.grounded = true;
+        } else if (this.vy < 0 && this.y - this.vy - this.r >= p.y + p.h) {
+          this.y = p.y + p.h + this.r;
+          this.vy = 0;
+        } else if (this.vx > 0) {
+          this.x = p.x - this.r;
+        } else if (this.vx < 0) {
+          this.x = p.x + p.w + this.r;
+        }
+      }
+    }
+
+    // Hazard Collisions
+    for (let h of hazards) {
+      if (Math.hypot(this.x - h.x, this.y - h.y) < this.r + h.r) {
+        this.reset();
+      }
+    }
+
+    // Screen Bounds
+    if (this.y > H + 50) this.reset();
+    if (this.x < this.r) this.x = this.r;
+    if (this.x > W - this.r) this.x = W - this.r;
+  }
+  draw() {
+    ctx.save();
+    ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = "#00f0ff"; ctx.shadowColor = "#00f0ff"; ctx.shadowBlur = 18;
+    ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.stroke();
+    ctx.restore();
+  }
+}
+
+class Portal {
+  constructor(color) {
+    this.x = -100; this.y = -100;
+    this.color = color;
+    this.active = false;
+  }
+  draw() {
+    if (!this.active) return;
+    ctx.save();
+    ctx.beginPath(); ctx.ellipse(this.x, this.y, 10, 26, 0, 0, Math.PI * 2);
+    ctx.fillStyle = this.color; ctx.shadowColor = this.color; ctx.shadowBlur = 25;
+    ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.stroke();
+    ctx.restore();
+  }
+}
+
+let player = new Player();
+let portalBlue = new Portal("#00f0ff");
+let portalOrange = new Portal("#ff8800");
+
+let platforms = [];
+let hazards = [];
+let coinsList = [];
+let exitGate = { x: W - 100, y: 120, r: 24 };
+
+function generateLevel(lvl) {
+  platforms = [
+    { x: 40, y: H - 60, w: 200, h: 30 },
+    { x: W - 240, y: 180, w: 200, h: 30 }
+  ];
+  hazards = [];
+  coinsList = [];
+
+  // Procedural platforms based on level tier
+  let count = 3 + Math.min(lvl, 8);
+  for (let i = 0; i < count; i++) {
+    let px = 200 + (i * 120) % (W - 350);
+    let py = 120 + (i * 90) % (H - 220);
+    platforms.push({ x: px, y: py, w: 110, h: 22 });
+
+    if (i % 2 === 0) hazards.push({ x: px + 55, y: py - 30, r: 12 });
+    coinsList.push({ x: px + 55, y: py - 60, collected: false });
+  }
+
+  exitGate.x = W - 120;
+  exitGate.y = 140;
+  player.reset();
+  portalBlue.active = false;
+  portalOrange.active = false;
+}
+
+let keys = {};
+window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+// Shoot Portals with mouse click
+canvas.addEventListener("mousedown", e => {
+  let rect = canvas.getBoundingClientRect();
+  let mx = (e.clientX - rect.left) * (W / rect.width);
+  let my = (e.clientY - rect.top) * (H / rect.height);
+
+  if (e.button === 0) { // Blue
+    portalBlue.x = mx; portalBlue.y = my; portalBlue.active = true;
+    playSound('portal');
+  } else if (e.button === 2) { // Orange
+    portalOrange.x = mx; portalOrange.y = my; portalOrange.active = true;
+    playSound('portal');
+  }
+});
+canvas.addEventListener("contextmenu", e => e.preventDefault());
+
+function bindTouch(id, action) {
+  const el = document.getElementById(id);
+  el.addEventListener("touchstart", (e) => { e.preventDefault(); action(true); });
+  el.addEventListener("touchend", (e) => { e.preventDefault(); action(false); });
+}
+bindTouch("btnUp", val => { if (val && player.grounded) { player.vy = -12; playSound('jump'); } });
+bindTouch("btnLeft", val => keys['a'] = val);
+bindTouch("btnRight", val => keys['d'] = val);
+bindTouch("btnDown", val => keys['s'] = val);
+
+document.getElementById("btnPortalBlue").onclick = () => {
+  portalBlue.x = player.x + 120; portalBlue.y = player.y; portalBlue.active = true; playSound('portal');
+};
+document.getElementById("btnPortalOrange").onclick = () => {
+  portalOrange.x = player.x - 120; portalOrange.y = player.y; portalOrange.active = true; playSound('portal');
+};
+
+function checkPortals() {
+  if (!portalBlue.active || !portalOrange.active) return;
+
+  let dBlue = Math.hypot(player.x - portalBlue.x, player.y - portalBlue.y);
+  if (dBlue < player.r + 20) {
+    player.x = portalOrange.x + 25;
+    player.y = portalOrange.y;
+    player.vx = 8;
+    warps++; localStorage.setItem("cpr_warps", warps);
+    document.getElementById("warpsVal").textContent = warps;
+    playSound('teleport');
+  }
+
+  let dOrange = Math.hypot(player.x - portalOrange.x, player.y - portalOrange.y);
+  if (dOrange < player.r + 20) {
+    player.x = portalBlue.x - 25;
+    player.y = portalBlue.y;
+    player.vx = -8;
+    warps++; localStorage.setItem("cpr_warps", warps);
+    document.getElementById("warpsVal").textContent = warps;
+    playSound('teleport');
+  }
+}
+
+function updateGame() {
+  if (keys['a'] || keys['arrowleft']) player.vx -= 1.2;
+  if (keys['d'] || keys['arrowright']) player.vx += 1.2;
+  if ((keys['w'] || keys['space'] || keys['arrowup']) && player.grounded) {
+    player.vy = -12; playSound('jump');
+  }
+
+  player.update(platforms, hazards);
+  checkPortals();
+
+  // Coins collect
+  coinsList.forEach(c => {
+    if (!c.collected && Math.hypot(player.x - c.x, player.y - c.y) < player.r + 14) {
+      c.collected = true;
+      coins += 10; localStorage.setItem("cpr_coins", coins);
+      document.getElementById("coinsVal").textContent = coins;
+      playSound('coin');
+    }
+  });
+
+  // Exit Check
+  if (Math.hypot(player.x - exitGate.x, player.y - exitGate.y) < player.r + exitGate.r) {
+    if (currentLevel < 25) {
+      currentLevel++;
+      localStorage.setItem("cpr_level", currentLevel);
+      document.getElementById("levelVal").textContent = currentLevel;
+      generateLevel(currentLevel);
+      alert((I18N[lang] || I18N.en).win);
+    } else {
+      alert((I18N[lang] || I18N.en).completeAll);
+    }
+  }
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Platforms
+  platforms.forEach(p => {
+    ctx.fillStyle = "rgba(0, 240, 255, 0.15)"; ctx.strokeStyle = "#00f0ff"; ctx.lineWidth = 2;
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.strokeRect(p.x, p.y, p.w, p.h);
+  });
+
+  // Hazards
+  hazards.forEach(h => {
+    ctx.beginPath(); ctx.arc(h.x, h.y, h.r, 0, Math.PI * 2);
+    ctx.fillStyle = "#ff0055"; ctx.shadowColor = "#ff0055"; ctx.shadowBlur = 15; ctx.fill();
+  });
+
+  // Energy Orbs
+  coinsList.forEach(c => {
+    if (!c.collected) {
+      ctx.beginPath(); ctx.arc(c.x, c.y, 8, 0, Math.PI * 2);
+      ctx.fillStyle = "#a855f7"; ctx.shadowColor = "#a855f7"; ctx.shadowBlur = 12; ctx.fill();
+    }
+  });
+
+  // Exit Gate
+  ctx.beginPath(); ctx.arc(exitGate.x, exitGate.y, exitGate.r, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(0, 255, 136, 0.3)"; ctx.strokeStyle = "#00ff88"; ctx.lineWidth = 3;
+  ctx.fill(); ctx.stroke();
+
+  portalBlue.draw();
+  portalOrange.draw();
+  player.draw();
+}
+
+function gameLoop() {
+  updateGame(); drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+document.getElementById("startBtn").onclick = () => {
+  document.getElementById("startModal").style.display = "none";
+};
+
+document.getElementById("resetLvlBtn").onclick = () => {
+  player.reset();
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("startBtn").textContent = dict.start;
+  document.getElementById("resetLvlBtn").textContent = dict.reset;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+document.getElementById("coinsVal").textContent = coins;
+document.getElementById("warpsVal").textContent = warps;
+document.getElementById("levelVal").textContent = currentLevel;
+
+initLang(); updateLang(); generateLevel(currentLevel);
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
