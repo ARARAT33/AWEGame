@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🏎️ Cyber Synth Rider Traffic Dodge</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏎️</text></svg>">
+<style>
+:root {
+  --bg: #03040e;
+  --panel: rgba(10, 14, 30, 0.92);
+  --border: rgba(0, 240, 255, 0.4);
+  --primary: #00f0ff;
+  --magenta: #ff007f;
+  --gold: #ffcc00;
+  --text: #e6f7ff;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 14px; background: rgba(8, 10, 24, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px; flex-shrink: 0;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 5px 10px; border-radius: 18px; font-size: 0.8rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; box-shadow: 0 0 10px rgba(0, 240, 255, 0.4); }
+.btn-primary:hover { background: #38ef7d; color: #000; }
+.btn-accent { background: var(--magenta); color: #fff; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 20px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; overflow: hidden; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0e1633 0%, #02030a 100%);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.2); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 10px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 980px; margin: 0 auto; pointer-events: auto; }
+
+.hud-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 6px 14px; display: flex; align-items: center; gap: 12px; backdrop-filter: blur(10px); font-size: 0.85rem; font-weight: 700; }
+
+/* Mobile Touch Overlay */
+.touch-controls { position: absolute; bottom: 14px; width: 100%; max-width: 960px; left: 50%; transform: translateX(-50%); display: none; justify-content: space-between; padding: 0 16px; pointer-events: auto; }
+.t-group { display: flex; gap: 8px; }
+.t-btn { width: 50px; height: 50px; background: rgba(255,255,255,0.12); border: 1px solid var(--border); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; font-weight: 800; touch-action: none; }
+.t-btn:active { background: rgba(0, 240, 255, 0.4); }
+
+/* Modals */
+.modal-overlay { position: absolute; inset: 0; background: rgba(2, 3, 10, 0.9); backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; padding: 12px; }
+.modal-card { background: #080c1f; border: 1px solid var(--primary); border-radius: 20px; padding: 22px; width: 100%; max-width: 440px; text-align: center; box-shadow: 0 0 40px rgba(0,240,255,0.3); display: flex; flex-direction: column; gap: 12px; max-height: 90vh; overflow-y: auto; }
+.modal-card h2 { font-size: 1.5rem; color: #fff; text-shadow: 0 0 12px var(--primary); }
+
+.shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+.shop-item { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.78rem; }
+.shop-item button { width: 100%; margin-top: 4px; }
+
+@media (max-width: 768px) {
+  .touch-controls { display: flex; }
+  .hud-card { padding: 4px 8px; font-size: 0.75rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:22px;">🏎️</span>
+    <h1 id="titleTxt">Cyber Synth Rider Traffic Dodge</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <button id="shopBtn" class="btn">⚡ <span id="shopTxt">Garage</span></button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="hud-card">
+        <span>⚡ <span id="speedVal">0</span> KM/H</span>
+        <span>🏆 <span id="scoreVal">0</span></span>
+      </div>
+
+      <div class="hud-card">
+        <span>🪙 <span id="creditsVal">0</span></span>
+        <span>⭐ HIGH: <span id="highVal">0</span></span>
+      </div>
+    </div>
+
+    <div class="touch-controls">
+      <div class="t-group">
+        <div class="t-btn" id="btnLeft">◄</div>
+        <div class="t-btn" id="btnRight">►</div>
+      </div>
+      <div class="t-group">
+        <div class="t-btn" id="btnBrake" style="background:rgba(255,0,85,0.3); border-color:var(--magenta);">🛑</div>
+        <div class="t-btn" id="btnNitro" style="background:rgba(0,240,255,0.3); border-color:var(--primary);">⚡</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAMEOVER MODAL -->
+  <div class="modal-overlay" id="gameOverModal" style="display:none;">
+    <div class="modal-card">
+      <h2 id="goHead">💥 CRASHED!</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="goDesc">High-speed traffic collision!</p>
+      <div style="font-size:1.2rem; color:var(--gold);" id="finalScoreTxt">Score: 0</div>
+      <button class="btn btn-primary" style="justify-content:center; padding:12px;" id="restartBtn">Ride Again 🏎️</button>
+    </div>
+  </div>
+
+  <!-- GARAGE SHOP MODAL -->
+  <div class="modal-overlay" id="shopModal" style="display:none;">
+    <div class="modal-card">
+      <h2>⚡ <span id="shopTitleTxt">Cyber Garage Foundry</span></h2>
+      <p style="color:#aaa; font-size:0.82rem;" id="shopDescTxt">Upgrade your cyber bike performance!</p>
+
+      <div class="shop-grid">
+        <div class="shop-item">
+          <span style="font-weight:700; color:var(--primary);" id="itemSpdTxt">Top Speed</span>
+          <span id="spdLvlTxt">Lvl 1 (220 KM/H)</span>
+          <button class="btn btn-primary" id="buySpdBtn">Buy (100 🪙)</button>
+        </div>
+        <div class="shop-item">
+          <span style="font-weight:700; color:var(--magenta);" id="itemNitroTxt">Nitro Acceleration</span>
+          <span id="nitroLvlTxt">Lvl 1 (+15% Boost)</span>
+          <button class="btn btn-primary" id="buyNitroBtn">Buy (120 🪙)</button>
+        </div>
+        <div class="shop-item">
+          <span style="font-weight:700; color:var(--gold);" id="itemHandTxt">Handling</span>
+          <span id="handLvlTxt">Lvl 1 (+10% Steering)</span>
+          <button class="btn btn-primary" id="buyHandBtn">Buy (110 🪙)</button>
+        </div>
+        <div class="shop-item">
+          <span style="font-weight:700; color:#00ff66;" id="itemShieldTxt">Shield Hull</span>
+          <span id="shieldLvlTxt">Lvl 1 (1 Crash Defense)</span>
+          <button class="btn btn-primary" id="buyShieldBtn">Buy (150 🪙)</button>
+        </div>
+      </div>
+
+      <button class="btn btn-accent" style="justify-content:center; padding:10px; margin-top:8px;" id="closeShopBtn">Close Garage</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Synth Rider Traffic Dodge", home: "Home", shop: "Garage", go: "💥 CRASHED!", goDesc: "High-speed traffic collision!", ride: "Ride Again 🏎️" },
+  hy: { title: "Կիբեռ Մոտո Մրցարշավ", home: "Գլխավոր", shop: "Ավտոտնակ", go: "💥 ՎԹԱՐ!", goDesc: "Բախում մեքենայի հետ!", ride: "Կրկին Քշել 🏎️" },
+  ru: { title: "Кибер Мото Гонки", home: "Главная", shop: "Гараж", go: "💥 АВАРИЯ!", goDesc: "Столкновение на высокой скорости!", ride: "Ехать Снова 🏎️" },
+  es: { title: "Cyber Carrera en Tráfico", home: "Inicio", shop: "Garaje", go: "💥 ¡CHOQUE!", goDesc: "Colisión a alta velocidad!", ride: "Correr de Nuevo 🏎️" },
+  fr: { title: "Cyber Course Trafic Synth", home: "Accueil", shop: "Garage", go: "💥 CRASH !", goDesc: "Collision à grande vitesse !", ride: "Repartir 🏎️" },
+  de: { title: "Cyber Synth Rider", home: "Startseite", shop: "Garage", go: "💥 CRASH!", goDesc: "Highspeed-Kollision im Verkehr!", ride: "Nochmal Fahren 🏎️" },
+  it: { title: "Cyber Corsa nel Traffico", home: "Home", shop: "Garage", go: "💥 INCIDENTE!", goDesc: "Collisione ad alta velocità!", ride: "Corri Ancora 🏎️" },
+  pt: { title: "Cyber Corrida no Tráfego", home: "Início", shop: "Garagem", go: "💥 COLISÃO!", goDesc: "Batida em alta velocidade!", ride: "Correr De Novo 🏎️" },
+  tr: { title: "Cyber Trafik Motor Yarışı", home: "Ana Sayfa", shop: "Garaj", go: "💥 KAZA!", goDesc: "Yüksek hızda trafik çarpışması!", ride: "Tekrar Sür 🏎️" },
+  ja: { title: "サイバーシンセライダー", home: "ホーム", shop: "ガレージ", go: "💥 衝突！", goDesc: "高速交通障害に衝突しました！", ride: "再挑戦 🏎️" },
+  zh: { title: "赛博穿梭摩托骑手", home: "主页", shop: "车库", go: "💥 碰撞！", goDesc: "高速交通撞击！", ride: "再次骑行 🏎️" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+
+// Saved Stats & Upgrades
+let credits = parseInt(localStorage.getItem("cr_credits") || "0");
+let highScore = parseInt(localStorage.getItem("cr_highScore") || "0");
+let lvlSpd = parseInt(localStorage.getItem("cr_lvlSpd") || "1");
+let lvlNitro = parseInt(localStorage.getItem("cr_lvlNitro") || "1");
+let lvlHand = parseInt(localStorage.getItem("cr_lvlHand") || "1");
+let lvlShield = parseInt(localStorage.getItem("cr_lvlShield") || "1");
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 900, H = 550;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 50;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'engine') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(90, now);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+  } else if (type === 'crash') {
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.35);
+    gain.gain.setValueAtTime(0.4, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+  } else if (type === 'pass') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(500, now);
+    osc.frequency.exponentialRampToValueAtTime(1000, now + 0.12);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.4);
+}
+
+// Game Physics State
+let isPlaying = true;
+let score = 0;
+let distance = 0;
+let bikeX = 0; // -1 to 1 across 4 lanes
+let speed = 80; // KM/H
+let targetSpeed = 120 + (lvlSpd - 1) * 20;
+
+let trafficCars = [];
+let roadOffset = 0;
+let keys = {};
+let shieldHp = lvlShield - 1;
+
+window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+function bindTouch(id, k) {
+  const el = document.getElementById(id);
+  el.addEventListener("touchstart", e => { e.preventDefault(); keys[k] = true; });
+  el.addEventListener("touchend", e => { e.preventDefault(); keys[k] = false; });
+}
+bindTouch("btnLeft", 'a');
+bindTouch("btnRight", 'd');
+bindTouch("btnBrake", 's');
+bindTouch("btnNitro", 'w');
+
+function spawnTraffic() {
+  if (trafficCars.length < 6 && Math.random() < 0.04) {
+    let lane = Math.floor(Math.random() * 4); // 0, 1, 2, 3
+    let laneX = (lane - 1.5) * 0.45;
+    trafficCars.push({
+      x: laneX,
+      z: 600, // Distance ahead
+      speed: 40 + Math.random() * 50,
+      color: Math.random() < 0.5 ? 'var(--magenta)' : 'var(--gold)',
+      passed: false
+    });
+  }
+}
+
+function addCredits(amount) {
+  credits += amount;
+  localStorage.setItem("cr_credits", credits);
+  document.getElementById("creditsVal").textContent = credits;
+}
+
+function updateGame() {
+  if (!isPlaying) return;
+
+  // Steering
+  let steerSpeed = 0.035 * (1 + (lvlHand - 1) * 0.1);
+  if (keys['a'] || keys['arrowleft']) bikeX -= steerSpeed;
+  if (keys['d'] || keys['arrowright']) bikeX += steerSpeed;
+  bikeX = Math.max(-1, Math.min(1, bikeX));
+
+  // Speed Controls
+  let maxSpd = targetSpeed;
+  if (keys['w'] || keys['arrowup']) {
+    maxSpd *= 1.35 * (1 + (lvlNitro - 1) * 0.15); // Nitro
+    speed = Math.min(maxSpd, speed + 1.8);
+  } else if (keys['s'] || keys['arrowdown']) {
+    speed = Math.max(40, speed - 2.5); // Brake
+  } else {
+    speed += (maxSpd - speed) * 0.03;
+  }
+
+  roadOffset += speed * 0.15;
+  distance += speed * 0.01;
+  score = Math.floor(distance * 10);
+
+  if (Math.random() < 0.2) playSound('engine');
+
+  spawnTraffic();
+
+  // Update Traffic
+  for (let i = trafficCars.length - 1; i >= 0; i--) {
+    let car = trafficCars[i];
+    car.z -= (speed - car.speed) * 0.8;
+
+    // Near miss scoring
+    if (!car.passed && car.z < 60) {
+      car.passed = true;
+      if (Math.abs(car.x - bikeX) < 0.35) {
+        addCredits(10);
+        playSound('pass');
+      }
+    }
+
+    // Collision Check
+    if (car.z < 35 && car.z > -10 && Math.abs(car.x - bikeX) < 0.22) {
+      if (shieldHp > 0) {
+        shieldHp--;
+        trafficCars.splice(i, 1);
+        playSound('pass');
+      } else {
+        crash();
+        return;
+      }
+    }
+
+    if (car.z < -50) trafficCars.splice(i, 1);
+  }
+
+  // Update HUD
+  document.getElementById("speedVal").textContent = Math.floor(speed);
+  document.getElementById("scoreVal").textContent = score;
+
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem("cr_highScore", highScore);
+    document.getElementById("highVal").textContent = highScore;
+  }
+}
+
+function crash() {
+  isPlaying = false;
+  playSound('crash');
+  document.getElementById("finalScoreTxt").textContent = `Score: ${score}`;
+  document.getElementById("gameOverModal").style.display = "flex";
+}
+
+function restartGame() {
+  isPlaying = true;
+  distance = 0; score = 0; bikeX = 0;
+  trafficCars = [];
+  shieldHp = lvlShield - 1;
+  document.getElementById("gameOverModal").style.display = "none";
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  let horizonY = H * 0.42;
+
+  // Synthwave Sunset Grid
+  let grad = ctx.createLinearGradient(0, 0, 0, horizonY);
+  grad.addColorStop(0, '#03040e');
+  grad.addColorStop(1, '#3b0066');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, horizonY);
+
+  // Neon Sun
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(W / 2, horizonY - 10, 50, 0, Math.PI * 2);
+  ctx.fillStyle = "var(--magenta)";
+  ctx.shadowColor = "var(--magenta)";
+  ctx.shadowBlur = 30;
+  ctx.fill();
+  ctx.restore();
+
+  // Road Perspective Floor
+  ctx.fillStyle = "#0a0a1a";
+  ctx.fillRect(0, horizonY, W, H - horizonY);
+
+  // Road Lines
+  let topW = 60, botW = W * 0.75;
+  let cx = W / 2;
+
+  ctx.strokeStyle = "var(--primary)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(cx - topW, horizonY); ctx.lineTo(cx - botW, H);
+  ctx.moveTo(cx + topW, horizonY); ctx.lineTo(cx + botW, H);
+  ctx.stroke();
+
+  // Lane Dividers
+  for (let l = 1; l <= 3; l++) {
+    let ratio = l / 4;
+    let lxTop = cx - topW + ratio * (topW * 2);
+    let lxBot = cx - botW + ratio * (botW * 2);
+
+    ctx.strokeStyle = "rgba(0, 240, 255, 0.25)";
+    ctx.setLineDash([15, 15]);
+    ctx.beginPath();
+    ctx.moveTo(lxTop, horizonY); ctx.lineTo(lxBot, H);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // Draw Traffic Cars
+  trafficCars.sort((a, b) => b.z - a.z).forEach(car => {
+    let scale = 1 - car.z / 650;
+    if (scale <= 0) return;
+    let y = horizonY + scale * (H - horizonY);
+    let x = cx + car.x * (botW * scale);
+    let size = 30 * scale;
+
+    ctx.save();
+    ctx.fillStyle = car.color;
+    ctx.shadowColor = car.color;
+    ctx.shadowBlur = 12;
+    ctx.fillRect(x - size / 2, y - size, size, size * 0.7);
+    ctx.restore();
+  });
+
+  // Draw Bike Player
+  let playerX = cx + bikeX * (botW * 0.85);
+  let playerY = H - 55;
+
+  ctx.save();
+  ctx.fillStyle = "var(--primary)";
+  ctx.shadowColor = "var(--primary)";
+  ctx.shadowBlur = 20;
+  ctx.beginPath();
+  ctx.arc(playerX, playerY, 18, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Bike Exhaust Trail
+  ctx.fillStyle = "var(--magenta)";
+  ctx.fillRect(playerX - 6, playerY + 12, 12, 16);
+  ctx.restore();
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+document.getElementById("restartBtn").onclick = restartGame;
+
+// Shop Handlers
+document.getElementById("shopBtn").onclick = () => {
+  document.getElementById("shopModal").style.display = "flex";
+  updateShopUI();
+};
+document.getElementById("closeShopBtn").onclick = () => {
+  document.getElementById("shopModal").style.display = "none";
+};
+
+function updateShopUI() {
+  document.getElementById("spdLvlTxt").textContent = `Lvl ${lvlSpd} (${120 + (lvlSpd - 1) * 20} KM/H)`;
+  document.getElementById("nitroLvlTxt").textContent = `Lvl ${lvlNitro} (+${(lvlNitro - 1) * 15}%)`;
+  document.getElementById("handLvlTxt").textContent = `Lvl ${lvlHand} (+${(lvlHand - 1) * 10}%)`;
+  document.getElementById("shieldLvlTxt").textContent = `Lvl ${lvlShield} (${lvlShield - 1} Shield)`;
+}
+
+document.getElementById("buySpdBtn").onclick = () => {
+  let cost = lvlSpd * 100;
+  if (credits >= cost) {
+    credits -= cost; lvlSpd++;
+    localStorage.setItem("cr_credits", credits); localStorage.setItem("cr_lvlSpd", lvlSpd);
+    targetSpeed = 120 + (lvlSpd - 1) * 20;
+    document.getElementById("creditsVal").textContent = credits; updateShopUI();
+  }
+};
+document.getElementById("buyNitroBtn").onclick = () => {
+  let cost = lvlNitro * 120;
+  if (credits >= cost) {
+    credits -= cost; lvlNitro++;
+    localStorage.setItem("cr_credits", credits); localStorage.setItem("cr_lvlNitro", lvlNitro);
+    document.getElementById("creditsVal").textContent = credits; updateShopUI();
+  }
+};
+document.getElementById("buyHandBtn").onclick = () => {
+  let cost = lvlHand * 110;
+  if (credits >= cost) {
+    credits -= cost; lvlHand++;
+    localStorage.setItem("cr_credits", credits); localStorage.setItem("cr_lvlHand", lvlHand);
+    document.getElementById("creditsVal").textContent = credits; updateShopUI();
+  }
+};
+document.getElementById("buyShieldBtn").onclick = () => {
+  let cost = lvlShield * 150;
+  if (credits >= cost) {
+    credits -= cost; lvlShield++;
+    localStorage.setItem("cr_credits", credits); localStorage.setItem("cr_lvlShield", lvlShield);
+    shieldHp = lvlShield - 1;
+    document.getElementById("creditsVal").textContent = credits; updateShopUI();
+  }
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("shopTxt").textContent = dict.shop;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+document.getElementById("creditsVal").textContent = credits;
+document.getElementById("highVal").textContent = highScore;
+initLang();
+updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>

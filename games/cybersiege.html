@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🏰 Cyber Siege Castle Shatterer</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏰</text></svg>">
+<style>
+:root {
+  --bg: #070913;
+  --panel: rgba(14, 18, 36, 0.92);
+  --border: rgba(255, 100, 0, 0.4);
+  --primary: #ff6600;
+  --gold: #ffcc00;
+  --cyan: #00f0ff;
+  --red: #ff0055;
+  --text: #fff2e6;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 14px; background: rgba(10, 12, 26, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px; flex-shrink: 0;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 5px 10px; border-radius: 18px; font-size: 0.8rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(255, 102, 0, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #fff; border: none; font-weight: 700; box-shadow: 0 0 10px rgba(255, 102, 0, 0.4); }
+.btn-primary:hover { background: #ff8533; color: #fff; }
+.btn-accent { background: var(--gold); color: #000; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 20px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0e1224; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; overflow: hidden; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #18122c 0%, #06040d 100%);
+  box-shadow: 0 0 35px rgba(255, 102, 0, 0.2); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 10px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 980px; margin: 0 auto; pointer-events: auto; }
+
+.hud-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 6px 14px; display: flex; align-items: center; gap: 12px; backdrop-filter: blur(10px); font-size: 0.85rem; font-weight: 700; }
+
+.ammo-bar { display: flex; gap: 8px; pointer-events: auto; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 6px 12px; }
+.ammo-btn { background: rgba(255,255,255,0.08); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; color: #fff; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: 0.2s; }
+.ammo-btn.active { background: var(--primary); border-color: #fff; box-shadow: 0 0 10px var(--primary); }
+
+/* Modals */
+.modal-overlay { position: absolute; inset: 0; background: rgba(4, 3, 10, 0.9); backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; padding: 12px; }
+.modal-card { background: #120e26; border: 1px solid var(--primary); border-radius: 20px; padding: 22px; width: 100%; max-width: 440px; text-align: center; box-shadow: 0 0 40px rgba(255,102,0,0.3); display: flex; flex-direction: column; gap: 12px; max-height: 90vh; overflow-y: auto; }
+.modal-card h2 { font-size: 1.5rem; color: #fff; text-shadow: 0 0 12px var(--primary); }
+
+.shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+.shop-item { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.78rem; }
+.shop-item button { width: 100%; margin-top: 4px; }
+
+@media (max-width: 768px) {
+  .hud-card { padding: 4px 8px; font-size: 0.75rem; }
+  .ammo-bar { padding: 4px 8px; gap: 4px; }
+  .ammo-btn { padding: 4px 8px; font-size: 0.72rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:22px;">🏰</span>
+    <h1 id="titleTxt">Cyber Siege Castle Shatterer</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <button id="shopBtn" class="btn">⚡ <span id="shopTxt">Shop</span></button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="hud-card">
+        <span id="lvlLbl">STAGE 1</span>
+        <span>💎 <span id="rubiesVal">0</span></span>
+      </div>
+
+      <div class="ammo-bar">
+        <button class="ammo-btn active" id="ammo1Btn">💣 Cannonball (<span id="count1">3</span>)</button>
+        <button class="ammo-btn" id="ammo2Btn">💥 Cluster (<span id="count2">2</span>)</button>
+        <button class="ammo-btn" id="ammo3Btn">🌀 Gravity (<span id="count3">1</span>)</button>
+      </div>
+
+      <div class="hud-card">
+        <button class="btn btn-primary" id="resetBtn">🔄 Retry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEVEL COMPLETE / GAMEOVER MODAL -->
+  <div class="modal-overlay" id="resultModal" style="display:none;">
+    <div class="modal-card">
+      <h2 id="resultHead">🏆 Stage Clear!</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="resultDesc">Fortress destroyed!</p>
+      <div style="font-size:1.8rem; color:var(--gold);" id="starsTxt">⭐ ⭐ ⭐</div>
+      <button class="btn btn-primary" style="justify-content:center; padding:12px;" id="nextLvlBtn">Next Stage ➔</button>
+    </div>
+  </div>
+
+  <!-- SHOP MODAL -->
+  <div class="modal-overlay" id="shopModal" style="display:none;">
+    <div class="modal-card">
+      <h2>⚡ <span id="shopTitleTxt">Siege Foundry Shop</span></h2>
+      <p style="color:#aaa; font-size:0.82rem;" id="shopDescTxt">Upgrade your siege weapons with cyber rubies!</p>
+
+      <div class="shop-grid">
+        <div class="shop-item">
+          <span style="font-weight:700; color:var(--primary);" id="itemPowTxt">Cannon Velocity</span>
+          <span id="powLvlTxt">Lvl 1 (+10% Speed)</span>
+          <button class="btn btn-primary" id="buyPowBtn">Buy (100 💎)</button>
+        </div>
+        <div class="shop-item">
+          <span style="font-weight:700; color:var(--gold);" id="itemAmmoTxt">Bonus Ammo</span>
+          <span id="ammoLvlTxt">Lvl 1 (+1 Shot)</span>
+          <button class="btn btn-primary" id="buyAmmoBtn">Buy (120 💎)</button>
+        </div>
+        <div class="shop-item">
+          <span style="font-weight:700; color:var(--cyan);" id="itemGravTxt">Gravity Core</span>
+          <span id="gravLvlTxt">Lvl 1 (+20% Radius)</span>
+          <button class="btn btn-primary" id="buyGravBtn">Buy (150 💎)</button>
+        </div>
+        <div class="shop-item">
+          <span style="font-weight:700; color:var(--red);" id="itemBlastTxt">Blast Radius</span>
+          <span id="blastLvlTxt">Lvl 1 (+15% Explosion)</span>
+          <button class="btn btn-primary" id="buyBlastBtn">Buy (140 💎)</button>
+        </div>
+      </div>
+
+      <button class="btn btn-accent" style="justify-content:center; padding:10px; margin-top:8px;" id="closeShopBtn">Close Shop</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Siege Castle Shatterer", home: "Home", shop: "Shop", clear: "🏆 Stage Clear!", fail: "💀 Siege Failed!", clearDesc: "Cyber fortress destroyed!", failDesc: "Out of ammo! Try upgrading or aim better.", next: "Next Stage ➔", retry: "Retry Stage 🔄" },
+  hy: { title: "Կիբեռ Ամրոցի Կործանում", home: "Գլխավոր", shop: "Խանութ", clear: "🏆 Փուլը Հաղթահարված է!", fail: "💀 Ամրոցը չկործանվեց!", clearDesc: "Կիբեռ ամրոցը ոչնչացված է!", failDesc: "Փամփուշտները վերջացան:", next: "Հաջորդ Փուլ ➔", retry: "Կրկնել 🔄" },
+  ru: { title: "Кибер Осада Замка", home: "Главная", shop: "Магазин", clear: "🏆 Уровень Пройден!", fail: "💀 Осада Провалена!", clearDesc: "Кибер крепость уничтожена!", failDesc: "Закончились снаряды!", next: "Следующий ➔", retry: "Заново 🔄" },
+  es: { title: "Cyber Sitio al Castillo", home: "Inicio", shop: "Tienda", clear: "🏆 ¡Nivel Completado!", fail: "💀 ¡Sitio Fallido!", clearDesc: "¡Fortaleza cyber destruida!", failDesc: "¡Sin munición!", next: "Siguiente ➔", retry: "Reintentar 🔄" },
+  fr: { title: "Cyber Siège du Château", home: "Accueil", shop: "Boutique", clear: "🏆 Étape Réussie !", fail: "💀 Échec du Siège !", clearDesc: "Forteresse cyber détruite !", failDesc: "Plus de munitions !", next: "Suivant ➔", retry: "Recommencer 🔄" },
+  de: { title: "Cyber Belagerung", home: "Startseite", shop: "Shop", clear: "🏆 Level Geschafft!", fail: "💀 Belagerung Fehlgeschlagen!", clearDesc: "Festung zerstört!", failDesc: "Keine Munition mehr!", next: "Weiter ➔", retry: "Neustart 🔄" },
+  it: { title: "Cyber Assedio al Castello", home: "Home", shop: "Negozio", clear: "🏆 Livello Completato!", fail: "💀 Assedio Fallito!", clearDesc: "Fortezza distrutta!", failDesc: "Munizioni finite!", next: "Prossimo ➔", retry: "Riprova 🔄" },
+  pt: { title: "Cyber Cerco ao Castelo", home: "Início", shop: "Loja", clear: "🏆 Etapa Concluída!", fail: "💀 Cerco Falhou!", clearDesc: "Fortaleza destruída!", failDesc: "Sem munição!", next: "Próximo ➔", retry: "Tentar De Novo 🔄" },
+  tr: { title: "Cyber Kale Kuşatması", home: "Ana Sayfa", shop: "Mağaza", clear: "🏆 Bölüm Geçildi!", fail: "💀 Kuşatma Başarısız!", clearDesc: "Siber kale yok edildi!", failDesc: "Cephane bitti!", next: "Sonraki ➔", retry: "Tekrar 🔄" },
+  ja: { title: "サイバーキャッスルシージ", home: "ホーム", shop: "ショップ", clear: "🏆 ステージクリア！", fail: "💀 攻略失敗！", clearDesc: "サイバー要塞を破壊した！", failDesc: "弾薬が切れました！", next: "次へ ➔", retry: "リトライ 🔄" },
+  zh: { title: "赛博城堡攻城战", home: "主页", shop: "商店", clear: "🏆 关卡完成！", fail: "💀 攻城失败！", clearDesc: "赛博要塞已被摧毁！", failDesc: "弹药耗尽！", next: "下一关 ➔", retry: "重试 🔄" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+
+// Saved Data
+let currentStage = parseInt(localStorage.getItem("cs_stage") || "1");
+let rubies = parseInt(localStorage.getItem("cs_rubies") || "0");
+let lvlPow = parseInt(localStorage.getItem("cs_lvlPow") || "1");
+let lvlAmmo = parseInt(localStorage.getItem("cs_lvlAmmo") || "1");
+let lvlGrav = parseInt(localStorage.getItem("cs_lvlGrav") || "1");
+let lvlBlast = parseInt(localStorage.getItem("cs_lvlBlast") || "1");
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 950, H = 550;
+let groundY = H - 50;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 50;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+  groundY = H - 50;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'launch') {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(120, now);
+    osc.frequency.exponentialRampToValueAtTime(320, now + 0.12);
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+  } else if (type === 'hit') {
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(250, now);
+    osc.frequency.exponentialRampToValueAtTime(60, now + 0.18);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+  } else if (type === 'grav') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.exponentialRampToValueAtTime(150, now + 0.4);
+    gain.gain.setValueAtTime(0.4, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.45);
+}
+
+// Cannon Sling Position
+let cannonX = 120, cannonY = H - 120;
+let isDragging = false;
+let dragX = cannonX, dragY = cannonY;
+let currentAmmoType = 1; // 1: Cannonball, 2: Cluster, 3: Gravity
+
+let ammoCounts = { 1: 3 + (lvlAmmo - 1), 2: 2 + (lvlAmmo - 1), 3: 1 + Math.floor((lvlAmmo - 1) / 2) };
+let activeProjectiles = [];
+let blocks = [];
+let particles = [];
+
+class Block {
+  constructor(x, y, w, h, hp, type) {
+    this.x = x; this.y = y; this.w = w; this.h = h;
+    this.hp = hp; this.maxHp = hp;
+    this.type = type; // 'steel', 'crystal', 'core'
+    this.vx = 0; this.vy = 0;
+  }
+  draw() {
+    ctx.save();
+    let col = this.type === 'core' ? '#ff0055' : (this.type === 'steel' ? '#00f0ff' : '#ffcc00');
+    ctx.fillStyle = col;
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 10;
+    ctx.fillRect(this.x, this.y, this.w, this.h);
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(this.x, this.y, this.w, this.h);
+    ctx.restore();
+  }
+}
+
+function initStage(stage) {
+  blocks = [];
+  activeProjectiles = [];
+  particles = [];
+  ammoCounts = { 1: 3 + (lvlAmmo - 1), 2: 2 + (lvlAmmo - 1), 3: 1 + Math.floor((lvlAmmo - 1) / 2) };
+  updateAmmoUI();
+
+  let startX = W - 320;
+  let baseY = groundY;
+
+  // Generate Cyber Fortress Structure based on Stage
+  let cols = 4 + (stage % 3);
+  let rows = 5 + Math.floor(stage / 2);
+  let bw = 32, bh = 24;
+
+  for (let r = 0; r < Math.min(rows, 9); r++) {
+    for (let c = 0; c < cols; c++) {
+      if (Math.random() < 0.85) {
+        let type = (r === rows - 1 || c === Math.floor(cols / 2)) ? 'core' : ((r + c) % 2 === 0 ? 'steel' : 'crystal');
+        let hp = type === 'core' ? 30 : (type === 'steel' ? 20 : 10);
+        blocks.push(new Block(startX + c * (bw + 4), baseY - (r + 1) * (bh + 4), bw, bh, hp, type));
+      }
+    }
+  }
+  document.getElementById("lvlLbl").textContent = `STAGE ${stage}`;
+}
+
+function updateAmmoUI() {
+  document.getElementById("count1").textContent = ammoCounts[1];
+  document.getElementById("count2").textContent = ammoCounts[2];
+  document.getElementById("count3").textContent = ammoCounts[3];
+}
+
+document.getElementById("ammo1Btn").onclick = () => selectAmmo(1);
+document.getElementById("ammo2Btn").onclick = () => selectAmmo(2);
+document.getElementById("ammo3Btn").onclick = () => selectAmmo(3);
+
+function selectAmmo(type) {
+  currentAmmoType = type;
+  document.querySelectorAll(".ammo-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById(`ammo${type}Btn`).classList.add("active");
+}
+
+// Canvas Input Events
+function getCanvasPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: clientX - rect.left, y: clientY - rect.top };
+}
+
+canvas.addEventListener("mousedown", startDrag);
+canvas.addEventListener("touchstart", startDrag);
+
+function startDrag(e) {
+  let pos = getCanvasPos(e);
+  if (Math.hypot(pos.x - cannonX, pos.y - cannonY) < 60) {
+    isDragging = true;
+  }
+}
+
+window.addEventListener("mousemove", drag);
+window.addEventListener("touchmove", drag);
+
+function drag(e) {
+  if (!isDragging) return;
+  let pos = getCanvasPos(e);
+  let dx = pos.x - cannonX;
+  let dy = pos.y - cannonY;
+  let dist = Math.hypot(dx, dy);
+  let maxDist = 90;
+  if (dist > maxDist) {
+    dx = (dx / dist) * maxDist;
+    dy = (dy / dist) * maxDist;
+  }
+  dragX = cannonX + dx;
+  dragY = cannonY + dy;
+}
+
+window.addEventListener("mouseup", endDrag);
+window.addEventListener("touchend", endDrag);
+
+function endDrag() {
+  if (!isDragging) return;
+  isDragging = false;
+
+  if (ammoCounts[currentAmmoType] > 0) {
+    ammoCounts[currentAmmoType]--;
+    updateAmmoUI();
+
+    let vx = (cannonX - dragX) * 0.22 * (1 + (lvlPow - 1) * 0.1);
+    let vy = (cannonY - dragY) * 0.22 * (1 + (lvlPow - 1) * 0.1);
+
+    activeProjectiles.push({
+      x: cannonX, y: cannonY,
+      vx, vy, r: currentAmmoType === 1 ? 12 : 10,
+      type: currentAmmoType,
+      life: 300
+    });
+    playSound('launch');
+  }
+  dragX = cannonX; dragY = cannonY;
+}
+
+function addRubies(amount) {
+  rubies += amount;
+  localStorage.setItem("cs_rubies", rubies);
+  document.getElementById("rubiesVal").textContent = rubies;
+}
+
+function updateGame() {
+  // Update Projectiles
+  for (let i = activeProjectiles.length - 1; i >= 0; i--) {
+    let p = activeProjectiles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.35; // Gravity
+    p.life--;
+
+    // Ground impact
+    if (p.y + p.r >= groundY) {
+      p.y = groundY - p.r;
+      p.vx *= 0.6; p.vy *= -0.4;
+    }
+
+    // Collision with Blocks
+    for (let b of blocks) {
+      if (p.x + p.r > b.x && p.x - p.r < b.x + b.w &&
+          p.y + p.r > b.y && p.y - p.r < b.y + b.h) {
+
+        let blastRad = 40 * (1 + (lvlBlast - 1) * 0.15);
+        if (p.type === 3) blastRad *= (1 + (lvlGrav - 1) * 0.2);
+
+        playSound(p.type === 3 ? 'grav' : 'hit');
+
+        // Apply Damage & Physics Impulse
+        blocks.forEach(target => {
+          let dist = Math.hypot(p.x - (target.x + target.w / 2), p.y - (target.y + target.h / 2));
+          if (dist < blastRad) {
+            target.hp -= (p.type === 1 ? 25 : (p.type === 2 ? 15 : 35));
+            target.vx += (target.x - p.x) * 0.15;
+            target.vy += (target.y - p.y) * 0.15;
+          }
+        });
+
+        activeProjectiles.splice(i, 1);
+        break;
+      }
+    }
+
+    if (p.life <= 0) activeProjectiles.splice(i, 1);
+  }
+
+  // Update Blocks
+  for (let i = blocks.length - 1; i >= 0; i--) {
+    let b = blocks[i];
+    b.x += b.vx; b.y += b.vy;
+    b.vy += 0.3; // Gravity for crumbling blocks
+    b.vx *= 0.9; b.vy *= 0.9;
+
+    if (b.y + b.h >= groundY) {
+      b.y = groundY - b.h;
+      b.vy = 0;
+    }
+
+    if (b.hp <= 0) {
+      addRubies(b.type === 'core' ? 15 : 5);
+      blocks.splice(i, 1);
+    }
+  }
+
+  // Check Stage Status
+  if (blocks.length === 0) {
+    showResult(true);
+  } else if (activeProjectiles.length === 0 && ammoCounts[1] === 0 && ammoCounts[2] === 0 && ammoCounts[3] === 0) {
+    setTimeout(() => {
+      if (blocks.length > 0 && activeProjectiles.length === 0) showResult(false);
+    }, 1500);
+  }
+}
+
+function showResult(success) {
+  const dict = I18N[lang] || I18N.en;
+  const modal = document.getElementById("resultModal");
+  modal.style.display = "flex";
+
+  if (success) {
+    document.getElementById("resultHead").textContent = dict.clear;
+    document.getElementById("resultDesc").textContent = dict.clearDesc;
+    document.getElementById("starsTxt").textContent = "⭐ ⭐ ⭐";
+    document.getElementById("nextLvlBtn").textContent = dict.next;
+    document.getElementById("nextLvlBtn").onclick = () => {
+      currentStage++;
+      localStorage.setItem("cs_stage", currentStage);
+      modal.style.display = "none";
+      initStage(currentStage);
+    };
+  } else {
+    document.getElementById("resultHead").textContent = dict.fail;
+    document.getElementById("resultDesc").textContent = dict.failDesc;
+    document.getElementById("starsTxt").textContent = "💀";
+    document.getElementById("nextLvlBtn").textContent = dict.retry;
+    document.getElementById("nextLvlBtn").onclick = () => {
+      modal.style.display = "none";
+      initStage(currentStage);
+    };
+  }
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Neon Grid Background
+  ctx.strokeStyle = "rgba(255, 102, 0, 0.08)";
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+  // Ground
+  ctx.fillStyle = "rgba(255, 102, 0, 0.15)";
+  ctx.fillRect(0, groundY, W, H - groundY);
+  ctx.strokeStyle = "var(--primary)";
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(W, groundY); ctx.stroke();
+
+  // Draw Cannon / Slingshot
+  ctx.save();
+  ctx.strokeStyle = "var(--gold)";
+  ctx.lineWidth = 6;
+  ctx.beginPath(); ctx.moveTo(cannonX - 15, cannonY + 20); ctx.lineTo(cannonX, cannonY); ctx.lineTo(cannonX + 15, cannonY + 20); ctx.stroke();
+
+  // Drag Trajectory Line
+  if (isDragging) {
+    ctx.strokeStyle = "rgba(0, 240, 255, 0.6)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(cannonX, cannonY);
+    let simX = cannonX, simY = cannonY;
+    let simVx = (cannonX - dragX) * 0.22;
+    let simVy = (cannonY - dragY) * 0.22;
+    for (let t = 0; t < 25; t++) {
+      simX += simVx; simY += simVy; simVy += 0.35;
+      ctx.lineTo(simX, simY);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Draw Dragged Ammo
+  ctx.beginPath();
+  ctx.arc(dragX, dragY, 12, 0, Math.PI * 2);
+  ctx.fillStyle = currentAmmoType === 1 ? 'var(--primary)' : (currentAmmoType === 2 ? 'var(--red)' : 'var(--cyan)');
+  ctx.shadowColor = ctx.fillStyle;
+  ctx.shadowBlur = 15;
+  ctx.fill();
+  ctx.restore();
+
+  // Draw Blocks & Active Projectiles
+  blocks.forEach(b => b.draw());
+
+  activeProjectiles.forEach(p => {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = p.type === 1 ? 'var(--primary)' : (p.type === 2 ? 'var(--red)' : 'var(--cyan)');
+    ctx.shadowColor = ctx.fillStyle;
+    ctx.shadowBlur = 15;
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+function gameLoop() {
+  updateGame();
+  drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+document.getElementById("resetBtn").onclick = () => initStage(currentStage);
+
+// Shop Modal
+document.getElementById("shopBtn").onclick = () => {
+  document.getElementById("shopModal").style.display = "flex";
+  updateShopUI();
+};
+document.getElementById("closeShopBtn").onclick = () => {
+  document.getElementById("shopModal").style.display = "none";
+};
+
+function updateShopUI() {
+  document.getElementById("powLvlTxt").textContent = `Lvl ${lvlPow} (+${(lvlPow - 1) * 10}%)`;
+  document.getElementById("ammoLvlTxt").textContent = `Lvl ${lvlAmmo} (+${lvlAmmo - 1} Ammo)`;
+  document.getElementById("gravLvlTxt").textContent = `Lvl ${lvlGrav} (+${(lvlGrav - 1) * 20}%)`;
+  document.getElementById("blastLvlTxt").textContent = `Lvl ${lvlBlast} (+${(lvlBlast - 1) * 15}%)`;
+}
+
+document.getElementById("buyPowBtn").onclick = () => {
+  let cost = lvlPow * 100;
+  if (rubies >= cost) {
+    rubies -= cost; lvlPow++;
+    localStorage.setItem("cs_rubies", rubies); localStorage.setItem("cs_lvlPow", lvlPow);
+    document.getElementById("rubiesVal").textContent = rubies; updateShopUI();
+  }
+};
+document.getElementById("buyAmmoBtn").onclick = () => {
+  let cost = lvlAmmo * 120;
+  if (rubies >= cost) {
+    rubies -= cost; lvlAmmo++;
+    localStorage.setItem("cs_rubies", rubies); localStorage.setItem("cs_lvlAmmo", lvlAmmo);
+    document.getElementById("rubiesVal").textContent = rubies; updateShopUI(); initStage(currentStage);
+  }
+};
+document.getElementById("buyGravBtn").onclick = () => {
+  let cost = lvlGrav * 150;
+  if (rubies >= cost) {
+    rubies -= cost; lvlGrav++;
+    localStorage.setItem("cs_rubies", rubies); localStorage.setItem("cs_lvlGrav", lvlGrav);
+    document.getElementById("rubiesVal").textContent = rubies; updateShopUI();
+  }
+};
+document.getElementById("buyBlastBtn").onclick = () => {
+  let cost = lvlBlast * 140;
+  if (rubies >= cost) {
+    rubies -= cost; lvlBlast++;
+    localStorage.setItem("cs_rubies", rubies); localStorage.setItem("cs_lvlBlast", lvlBlast);
+    document.getElementById("rubiesVal").textContent = rubies; updateShopUI();
+  }
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("shopTxt").textContent = dict.shop;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+document.getElementById("rubiesVal").textContent = rubies;
+initLang();
+updateLang();
+initStage(currentStage);
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
