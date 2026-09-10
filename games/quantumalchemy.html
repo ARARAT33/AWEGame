@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>⚛️ Quantum Alchemy Fusion RPG</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚛️</text></svg>">
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(13, 22, 45, 0.88);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --secondary: #ff0055;
+  --accent: #ffcc00;
+  --text: #f0f6fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow-x: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 18px; background: rgba(8, 14, 30, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 14px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #33f3ff; color: #000; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; max-width: 1200px; width: 100%; margin: 0 auto; padding: 16px; display: grid; grid-template-columns: 1fr 340px; gap: 16px; }
+
+/* Chamber */
+.chamber-card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 20px;
+  padding: 20px; backdrop-filter: blur(12px); display: flex; flex-direction: column; align-items: center; gap: 18px;
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.1);
+}
+.energy-bar-wrap {
+  width: 100%; display: flex; justify-content: space-between; align-items: center;
+  background: rgba(0,0,0,0.3); border: 1px solid var(--border); padding: 10px 18px; border-radius: 14px;
+}
+.energy-val { font-size: 1.4rem; font-weight: 900; color: var(--accent); }
+
+.fusion-slots {
+  display: flex; gap: 16px; align-items: center; justify-content: center; margin: 20px 0; flex-wrap: wrap;
+}
+.slot {
+  width: 90px; height: 90px; border: 2px dashed var(--primary); border-radius: 18px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(0, 240, 255, 0.05); cursor: pointer; transition: 0.25s; position: relative;
+}
+.slot:hover { border-color: #fff; background: rgba(0, 240, 255, 0.15); }
+.slot .icon { font-size: 2.2rem; }
+.slot .name { font-size: 0.72rem; color: #aaa; font-weight: 600; margin-top: 4px; text-align: center; }
+
+.fuse-btn {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: #fff; border: none; padding: 14px 36px; border-radius: 30px; font-size: 1.1rem; font-weight: 800;
+  cursor: pointer; box-shadow: 0 0 20px rgba(0, 240, 255, 0.4); transition: 0.25s; text-transform: uppercase; letter-spacing: 1px;
+}
+.fuse-btn:hover { transform: scale(1.04); box-shadow: 0 0 30px rgba(255, 0, 85, 0.6); }
+
+/* Elements Grid */
+.elements-card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 16px;
+  display: flex; flex-direction: column; gap: 12px; width: 100%;
+}
+.section-title { font-size: 1.05rem; font-weight: 800; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+.elem-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 4px;
+}
+.elem-item {
+  background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 14px;
+  padding: 10px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer; transition: 0.2s; text-align: center;
+}
+.elem-item:hover { border-color: var(--primary); background: rgba(0, 240, 255, 0.18); transform: translateY(-2px); }
+.elem-item .icon { font-size: 1.8rem; }
+.elem-item .name { font-size: 0.7rem; font-weight: 600; margin-top: 4px; color: #ddd; }
+
+/* Sidebar Shop & Codex */
+.sidebar { display: flex; flex-direction: column; gap: 16px; }
+.shop-card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+}
+.upg-item {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 12px;
+  display: flex; justify-content: space-between; align-items: center; transition: 0.2s;
+}
+.upg-item:hover { border-color: var(--primary); }
+.upg-info { display: flex; flex-direction: column; gap: 2px; }
+.upg-name { font-size: 0.85rem; font-weight: 700; color: #fff; }
+.upg-desc { font-size: 0.72rem; color: #aaa; }
+.upg-cost { font-size: 0.8rem; color: var(--accent); font-weight: 800; }
+
+@media (max-width: 900px) {
+  main { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">⚛️</span>
+    <h1 id="titleTxt">Quantum Alchemy Fusion RPG</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <div style="display:flex; flex-direction:column; gap:16px;">
+    <!-- Fusion Chamber -->
+    <div class="chamber-card">
+      <div class="energy-bar-wrap">
+        <div>
+          <span style="font-size:0.85rem; color:#aaa;" id="energyLbl">Quantum Energy</span>
+          <div class="energy-val">⚡ <span id="energyVal">100</span></div>
+        </div>
+        <div>
+          <span style="font-size:0.85rem; color:#aaa;" id="codexLbl">Discovered Elements</span>
+          <div style="font-size:1.2rem; font-weight:800; color:var(--primary); text-align:right;"><span id="discoveredCount">4</span> / 42</div>
+        </div>
+      </div>
+
+      <div style="text-align:center; margin-top:8px;">
+        <h2 id="chamberTitle" style="font-size:1.3rem; color:#fff;">Quantum Fusion Chamber</h2>
+        <p id="chamberSub" style="font-size:0.82rem; color:#aaa; margin-top:4px;">Select two elements below to synthesize a new quantum particle!</p>
+      </div>
+
+      <div class="fusion-slots">
+        <div class="slot" id="slotA" onclick="clearSlot('A')">
+          <div class="icon" id="slotAIcon">❓</div>
+          <div class="name" id="slotAName">Select Element 1</div>
+        </div>
+        <div style="font-size:2rem; color:var(--primary); font-weight:900;">+</div>
+        <div class="slot" id="slotB" onclick="clearSlot('B')">
+          <div class="icon" id="slotBIcon">❓</div>
+          <div class="name" id="slotBName">Select Element 2</div>
+        </div>
+      </div>
+
+      <button class="fuse-btn" id="fuseBtn" onclick="synthesize()">⚡ Synthesize Fusion</button>
+      <div id="resultMsg" style="font-size:0.9rem; font-weight:700; height:24px; color:var(--accent);"></div>
+    </div>
+
+    <!-- Inventory Elements -->
+    <div class="elements-card">
+      <div class="section-title">
+        <span id="unlockedTitle">Discovered Particle Inventory</span>
+        <span style="font-size:0.75rem; color:#aaa;" id="clickHelp">Click element to place in slot</span>
+      </div>
+      <div class="elem-grid" id="elemGrid"></div>
+    </div>
+  </div>
+
+  <!-- Sidebar Upgrades -->
+  <div class="sidebar">
+    <div class="shop-card">
+      <div class="section-title" id="shopTitle">🔬 Laboratory Upgrades</div>
+
+      <div class="upg-item">
+        <div class="upg-info">
+          <div class="upg-name" id="upg1Name">Particle Accelerator</div>
+          <div class="upg-desc" id="upg1Desc">+2 Energy / sec</div>
+        </div>
+        <button class="btn btn-primary" id="upg1Btn" onclick="buyUpg('accel')">⚡ <span id="upg1Cost">50</span></button>
+      </div>
+
+      <div class="upg-item">
+        <div class="upg-info">
+          <div class="upg-name" id="upg2Name">Quantum Stabilizer</div>
+          <div class="upg-desc" id="upg2Desc">+10% Fusion Multiplier</div>
+        </div>
+        <button class="btn btn-primary" id="upg2Btn" onclick="buyUpg('stab')">⚡ <span id="upg2Cost">120</span></button>
+      </div>
+
+      <div class="upg-item">
+        <div class="upg-info">
+          <div class="upg-name" id="upg3Name">Antimatter Core</div>
+          <div class="upg-desc" id="upg3Desc">+10 Energy / sec</div>
+        </div>
+        <button class="btn btn-primary" id="upg3Btn" onclick="buyUpg('antimatter')">⚡ <span id="upg3Cost">350</span></button>
+      </div>
+
+      <div class="upg-item">
+        <div class="upg-info">
+          <div class="upg-name" id="upg4Name">Auto-Synthesizer</div>
+          <div class="upg-desc" id="upg4Desc">Passive Quantum Yield</div>
+        </div>
+        <button class="btn btn-primary" id="upg4Btn" onclick="buyUpg('auto')">⚡ <span id="upg4Cost">800</span></button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Quantum Alchemy Fusion RPG", home: "Home", energy: "Quantum Energy", codex: "Discovered Elements", chamberTitle: "Quantum Fusion Chamber", chamberSub: "Select two elements below to synthesize a new quantum particle!", fuseBtn: "⚡ Synthesize Fusion", inventory: "Discovered Particle Inventory", clickHelp: "Click element to place in slot", shop: "🔬 Laboratory Upgrades", upg1: "Particle Accelerator", upg1D: "+2 Energy / sec", upg2: "Quantum Stabilizer", upg2D: "+10% Fusion Bonus", upg3: "Antimatter Core", upg3D: "+10 Energy / sec", upg4: "Auto-Synthesizer", upg4D: "Passive Energy Yield", selectElem: "Select Element", success: "Discovered New Element: ", fail: "No reaction occurred!", needEnergy: "Not enough Quantum Energy!" },
+  hy: { title: "Քվանտային Ալքիմիա Ֆյուժն RPG", home: "Գլխավոր", energy: "Քվանտային Էներգիա", codex: "Բացահայտված Էլեմենտներ", chamberTitle: "Քվանտային Ֆյուժն Խցիկ", chamberSub: "Ընտրեք երկու էլեմենտ՝ նոր քվանտային մասնիկ սինթեզելու համար!", fuseBtn: "⚡ Սինթեզել Ֆյուժն", inventory: "Բացահայտված Մասնիկներ", clickHelp: "Սեղմեք էլեմենտին տեղադրելու համար", shop: "🔬 Լաբորատոր Թարմացումներ", upg1: "Մասնիկների Արագացուցիչ", upg1D: "+2 Էներգիա / վրկ", upg2: "Քվանտային Ստաբիլիզատոր", upg2D: "+10% Ֆյուժն Բոնուս", upg3: "Անտիմատերիայի Միջուկ", upg3D: "+10 Էներգիա / վրկ", upg4: "Ավտո-Սինթեզատոր", upg4D: "Պասիվ Էներգիայի Եկամուտ", selectElem: "Ընտրեք Էլեմենտ", success: "Բացահայտվեց Նոր Էլեմենտ: ", fail: "Ռեակցիա չստացվեց!", needEnergy: "Բավարար Էներգիա չկա!" },
+  ru: { title: "Квантовая Алхимия Фьюжн RPG", home: "Главная", energy: "Квантовая Энергия", codex: "Открытые Элементы", chamberTitle: "Камера Квантового Синтеза", chamberSub: "Выберите два элемента для синтеза новой квантовой частицы!", fuseBtn: "⚡ Синтезировать Фьюжн", inventory: "Инвентарь Частиц", clickHelp: "Нажмите для выбора", shop: "🔬 Улучшения Лаборатории", upg1: "Ускоритель Частиц", upg1D: "+2 Энергии / сек", upg2: "Квантовый Стабилизатор", upg2D: "+10% Бонус Синтеза", upg3: "Ядро Антиматерии", upg3D: "+10 Энергии / сек", upg4: "Авто-Синтезатор", upg4D: "Пассивный Доход Энергии", selectElem: "Выберите Элемент", success: "Открыт Новый Элемент: ", fail: "Реакция не произошла!", needEnergy: "Недостаточно Квантовой Энергии!" },
+  es: { title: "Quantum Alquimia Fusión RPG", home: "Inicio", energy: "Energía Cuántica", codex: "Elementos Descubiertos", chamberTitle: "Cámara de Fusión Cuántica", chamberSub: "¡Selecciona dos elementos para sintetizar una nueva partícula!", fuseBtn: "⚡ Sintetizar Fusión", inventory: "Inventario de Partículas", clickHelp: "Haz clic para seleccionar", shop: "🔬 Mejoras de Laboratorio", upg1: "Acelerador de Partículas", upg1D: "+2 Energía / seg", upg2: "Estabilizador Cuántico", upg2D: "+10% Bono Fusión", upg3: "Núcleo Antimateria", upg3D: "+10 Energía / seg", upg4: "Auto-Sintetizador", upg4D: "Rendimiento Pasivo", selectElem: "Selecciona Elemento", success: "Nuevo Elemento Descubierto: ", fail: "¡No hubo reacción!", needEnergy: "¡Energía insuficiente!" },
+  fr: { title: "Fusion Alchimie Quantique RPG", home: "Accueil", energy: "Énergie Quantique", codex: "Éléments Découverts", chamberTitle: "Chambre de Fusion Quantique", chamberSub: "Sélectionnez deux éléments pour synthétiser une nouvelle particule !", fuseBtn: "⚡ Synthétiser la Fusion", inventory: "Inventaire des Particules", clickHelp: "Cliquez pour placer", shop: "🔬 Améliorations du Labo", upg1: "Accélérateur de Particules", upg1D: "+2 Énergie / sec", upg2: "Stabilisateur Quantique", upg2D: "+10% Bonus Fusion", upg3: "Cœur Antimatière", upg3D: "+10 Énergie / sec", upg4: "Auto-Synthétiseur", upg4D: "Rendement Passif", selectElem: "Choisir Élement", success: "Nouvel Élément Découvert : ", fail: "Aucune réaction !", needEnergy: "Pas assez d'énergie !" },
+  de: { title: "Quanten-Alchemie Fusion RPG", home: "Startseite", energy: "Quantenenergie", codex: "Entdeckte Elemente", chamberTitle: "Quantenfusionskammer", chamberSub: "Wähle zwei Elemente, um ein neues Quantenteilchen zu synthetisieren!", fuseBtn: "⚡ Fusion Synthetisieren", inventory: "Teilcheninventar", clickHelp: "Klicken zum Auswählen", shop: "🔬 Labor-Upgrades", upg1: "Teilchenbeschleuniger", upg1D: "+2 Energie / Sek", upg2: "Quantenstabilisator", upg2D: "+10% Fusionsbonus", upg3: "Antimateriekern", upg3D: "+10 Energie / Sek", upg4: "Auto-Synthesizer", upg4D: "Passiver Ertrag", selectElem: "Element Wählen", success: "Neues Element Entdeckt: ", fail: "Keine Reaktion!", needEnergy: "Nicht genug Energie!" },
+  it: { title: "Alchimia Quantistica Fusion RPG", home: "Home", energy: "Energia Quantistica", codex: "Elementi Scoperti", chamberTitle: "Camera di Fusione Quantistica", chamberSub: "Seleziona due elementi per sintetizzare una nuova particella!", fuseBtn: "⚡ Sintetizza Fusione", inventory: "Inventario Particelle", clickHelp: "Clicca per inserire", shop: "🔬 Potenziamenti Laboratorio", upg1: "Acceleratore di Particelle", upg1D: "+2 Energia / sec", upg2: "Stabilizzatore Quantistico", upg2D: "+10% Bonus Fusione", upg3: "Nucleo Antimateria", upg3D: "+10 Energia / sec", upg4: "Auto-Sintetizzatore", upg4D: "Resa Passiva", selectElem: "Seleziona Elemento", success: "Nuovo Elemento Scoperto: ", fail: "Nessuna reazione!", needEnergy: "Energia insufficiente!" },
+  pt: { title: "Alquimia Quântica Fusão RPG", home: "Início", energy: "Energia Quântica", codex: "Elementos Descobertos", chamberTitle: "Câmara de Fusão Quântica", chamberSub: "Selecione dois elementos para sintetizar uma nova partícula!", fuseBtn: "⚡ Sintetizar Fusão", inventory: "Inventário de Partículas", clickHelp: "Clique para colocar", shop: "🔬 Melhorias de Laboratório", upg1: "Acelerador de Partículas", upg1D: "+2 Energia / seg", upg2: "Estabilizador Quântico", upg2D: "+10% Bônus Fusão", upg3: "Núcleo de Antimatéria", upg3D: "+10 Energia / seg", upg4: "Auto-Sintetizador", upg4D: "Rendimento Passivo", selectElem: "Selecionar Elemento", success: "Novo Elemento Descoberto: ", fail: "Nenhuma reação!", needEnergy: "Energia insuficiente!" },
+  tr: { title: "Kuantum Simya Füzyon RPG", home: "Ana Sayfa", energy: "Kuantum Enerjisi", codex: "Keşfedilen Elementler", chamberTitle: "Kuantum Füzyon Odası", chamberSub: "Yeni bir kuantum parçacığı sentezlemek için iki element seçin!", fuseBtn: "⚡ Füzyon Sentezle", inventory: "Parçacık Envanteri", clickHelp: "Yerleştirmek için tıkla", shop: "🔬 Laboratuvar Geliştirmeleri", upg1: "Parçacık Hızlandırıcı", upg1D: "+2 Enerji / sn", upg2: "Kuantum Sabitleyici", upg2D: "+10% Füzyon Bonusu", upg3: "Antimadde Çekirdeği", upg3D: "+10 Enerji / sn", upg4: "Otomatik Sentezleyici", upg4D: "Pasif Enerji Geliri", selectElem: "Element Seç", success: "Yeni Element Keşfedildi: ", fail: "Tepkime gerçekleşmedi!", needEnergy: "Yetersiz Enerji!" },
+  ja: { title: "量子錬金術フュージョン RPG", home: "ホーム", energy: "量子エネルギー", codex: "発見した元素", chamberTitle: "量子融合チェンバー", chamberSub: "2つの元素を選択して新しい量子粒子を合成しよう！", fuseBtn: "⚡ フュージョン合成", inventory: "粒子インベントリ", clickHelp: "クリックしてスロットに配置", shop: "🔬 研究室アップグレード", upg1: "粒子加速器", upg1D: "+2 エネルギー/秒", upg2: "量子スタビライザー", upg2D: "+10% 融合ボーナス", upg3: "反物質コア", upg3D: "+10 エネルギー/秒", upg4: "自動合成装置", upg4D: "不労エネルギー収入", selectElem: "元素を選択", success: "新しい元素を発見: ", fail: "反応なし！", needEnergy: "エネルギーが不足しています！" },
+  zh: { title: "量子炼金术融合 RPG", home: "主页", energy: "量子能量", codex: "已发现元素", chamberTitle: "量子融合室", chamberSub: "选择两个元素以合成新的量子粒子！", fuseBtn: "⚡ 合成量子融合", inventory: "粒子背包", clickHelp: "点击元素放入插槽", shop: "🔬 实验室升级", upg1: "粒子加速器", upg1D: "+2 能量/秒", upg2: "量子稳定器", upg2D: "+10% 融合加成", upg3: "反物质核心", upg3D: "+10 能量/秒", upg4: "自动合成仪", upg4D: "被动能量收益", selectElem: "选择元素", success: "发现新元素：", fail: "未发生化学反应！", needEnergy: "量子能量不足！" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+
+// Elements Master Dictionary
+const ELEMENTS = {
+  quark: { id: "quark", name: "Quark", icon: "🔴", initial: true },
+  gluon: { id: "gluon", name: "Gluon", icon: "🟡", initial: true },
+  photon: { id: "photon", name: "Photon", icon: "✨", initial: true },
+  electron: { id: "electron", name: "Electron", icon: "⚡", initial: true },
+
+  plasma: { id: "plasma", name: "Plasma Core", icon: "🔥" },
+  laser: { id: "laser", name: "Laser Pulse", icon: "⚡" },
+  atom: { id: "atom", name: "Quantum Atom", icon: "⚛️" },
+  darkmatter: { id: "darkmatter", name: "Dark Matter", icon: "🌌" },
+  antimatter: { id: "antimatter", name: "Antimatter", icon: "💥" },
+  tachyon: { id: "tachyon", name: "Tachyon Field", icon: "🌀" },
+  graviton: { id: "graviton", name: "Graviton", icon: "🪐" },
+  higgs: { id: "higgs", name: "Higgs Boson", icon: "💫" },
+  supernova: { id: "supernova", name: "Supernova Core", icon: "🌟" },
+  blackhole: { id: "blackhole", name: "Black Hole Gate", icon: "🕳️" },
+  quantumcpu: { id: "quantumcpu", name: "Quantum Processor", icon: "💻" },
+  singularity: { id: "singularity", name: "Singularity Engine", icon: "🔮" }
+};
+
+// Fusion Recipes
+const RECIPES = [
+  { a: "quark", b: "gluon", result: "plasma" },
+  { a: "photon", b: "electron", result: "laser" },
+  { a: "quark", b: "electron", result: "atom" },
+  { a: "plasma", b: "laser", result: "tachyon" },
+  { a: "atom", b: "atom", result: "darkmatter" },
+  { a: "plasma", b: "darkmatter", result: "antimatter" },
+  { a: "photon", b: "tachyon", result: "graviton" },
+  { a: "atom", b: "graviton", result: "higgs" },
+  { a: "antimatter", b: "plasma", result: "supernova" },
+  { a: "graviton", b: "darkmatter", result: "blackhole" },
+  { a: "laser", b: "higgs", result: "quantumcpu" },
+  { a: "blackhole", b: "quantumcpu", result: "singularity" }
+];
+
+let state = {
+  energy: 100,
+  discovered: ["quark", "gluon", "photon", "electron"],
+  upg: { accel: 0, stab: 0, antimatter: 0, auto: 0 },
+  slotA: null,
+  slotB: null
+};
+
+// LocalStorage Load
+function loadSave() {
+  const s = localStorage.getItem("qa_save");
+  if (s) {
+    try {
+      const data = JSON.parse(s);
+      state.energy = data.energy || 100;
+      state.discovered = data.discovered || ["quark", "gluon", "photon", "electron"];
+      state.upg = data.upg || { accel: 0, stab: 0, antimatter: 0, auto: 0 };
+    } catch(e) {}
+  }
+}
+
+function saveState() {
+  localStorage.setItem("qa_save", JSON.stringify(state));
+}
+
+// Web Audio sound synthesis
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'select') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(600, now + 0.08);
+    gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+  } else if (type === 'fuse') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.25);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+  } else if (type === 'success') {
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(523, now); osc.frequency.setValueAtTime(659, now + 0.1); osc.frequency.setValueAtTime(783, now + 0.2);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.35);
+}
+
+function selectElem(id) {
+  if (!state.slotA) {
+    state.slotA = id;
+  } else if (!state.slotB) {
+    state.slotB = id;
+  } else {
+    state.slotA = id;
+  }
+  playSound('select');
+  updateChamberUI();
+}
+
+function clearSlot(slot) {
+  if (slot === 'A') state.slotA = null;
+  if (slot === 'B') state.slotB = null;
+  updateChamberUI();
+}
+
+function updateChamberUI() {
+  const dict = I18N[lang] || I18N.en;
+
+  const slotAEl = document.getElementById("slotAIcon");
+  const slotANameEl = document.getElementById("slotAName");
+  if (state.slotA && ELEMENTS[state.slotA]) {
+    slotAEl.textContent = ELEMENTS[state.slotA].icon;
+    slotANameEl.textContent = ELEMENTS[state.slotA].name;
+  } else {
+    slotAEl.textContent = "❓";
+    slotANameEl.textContent = dict.selectElem;
+  }
+
+  const slotBEl = document.getElementById("slotBIcon");
+  const slotBNameEl = document.getElementById("slotBName");
+  if (state.slotB && ELEMENTS[state.slotB]) {
+    slotBEl.textContent = ELEMENTS[state.slotB].icon;
+    slotBNameEl.textContent = ELEMENTS[state.slotB].name;
+  } else {
+    slotBEl.textContent = "❓";
+    slotBNameEl.textContent = dict.selectElem;
+  }
+}
+
+function synthesize() {
+  const dict = I18N[lang] || I18N.en;
+  const msgEl = document.getElementById("resultMsg");
+
+  if (!state.slotA || !state.slotB) {
+    msgEl.textContent = dict.chamberSub;
+    return;
+  }
+
+  if (state.energy < 15) {
+    msgEl.textContent = dict.needEnergy;
+    return;
+  }
+
+  state.energy -= 15;
+  playSound('fuse');
+
+  // Search matching recipe
+  const recipe = RECIPES.find(r =>
+    (r.a === state.slotA && r.b === state.slotB) ||
+    (r.a === state.slotB && r.b === state.slotA)
+  );
+
+  if (recipe) {
+    const newElem = recipe.result;
+    let reward = 50 * (1 + state.upg.stab * 0.1);
+    state.energy += Math.floor(reward);
+
+    if (!state.discovered.includes(newElem)) {
+      state.discovered.push(newElem);
+      msgEl.textContent = dict.success + ELEMENTS[newElem].name + "! (+ " + Math.floor(reward) + " ⚡)";
+      playSound('success');
+    } else {
+      msgEl.textContent = "Synthesized " + ELEMENTS[newElem].name + "! (+ " + Math.floor(reward) + " ⚡)";
+    }
+  } else {
+    msgEl.textContent = dict.fail;
+  }
+
+  saveState();
+  renderInventory();
+  updateUI();
+}
+
+function renderInventory() {
+  const grid = document.getElementById("elemGrid");
+  grid.innerHTML = "";
+  state.discovered.forEach(id => {
+    const elem = ELEMENTS[id];
+    if (!elem) return;
+    const item = document.createElement("div");
+    item.className = "elem-item";
+    item.innerHTML = `<div class="icon">${elem.icon}</div><div class="name">${elem.name}</div>`;
+    item.onclick = () => selectElem(id);
+    grid.appendChild(item);
+  });
+  document.getElementById("discoveredCount").textContent = state.discovered.length;
+}
+
+function buyUpg(type) {
+  let costs = { accel: 50, stab: 120, antimatter: 350, auto: 800 };
+  let cost = costs[type] * Math.pow(1.5, state.upg[type] || 0);
+  if (state.energy >= cost) {
+    state.energy -= Math.floor(cost);
+    state.upg[type] = (state.upg[type] || 0) + 1;
+    playSound('select');
+    saveState();
+    updateUI();
+  }
+}
+
+function updateUI() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("energyVal").textContent = Math.floor(state.energy);
+
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("energyLbl").textContent = dict.energy;
+  document.getElementById("codexLbl").textContent = dict.codex;
+  document.getElementById("chamberTitle").textContent = dict.chamberTitle;
+  document.getElementById("fuseBtn").textContent = dict.fuseBtn;
+  document.getElementById("unlockedTitle").textContent = dict.inventory;
+  document.getElementById("clickHelp").textContent = dict.clickHelp;
+  document.getElementById("shopTitle").textContent = dict.shop;
+
+  document.getElementById("upg1Name").textContent = dict.upg1 + " (Lvl " + state.upg.accel + ")";
+  document.getElementById("upg1Desc").textContent = dict.upg1D;
+  document.getElementById("upg1Cost").textContent = Math.floor(50 * Math.pow(1.5, state.upg.accel));
+
+  document.getElementById("upg2Name").textContent = dict.upg2 + " (Lvl " + state.upg.stab + ")";
+  document.getElementById("upg2Desc").textContent = dict.upg2D;
+  document.getElementById("upg2Cost").textContent = Math.floor(120 * Math.pow(1.5, state.upg.stab));
+
+  document.getElementById("upg3Name").textContent = dict.upg3 + " (Lvl " + state.upg.antimatter + ")";
+  document.getElementById("upg3Desc").textContent = dict.upg3D;
+  document.getElementById("upg3Cost").textContent = Math.floor(350 * Math.pow(1.5, state.upg.antimatter));
+
+  document.getElementById("upg4Name").textContent = dict.upg4 + " (Lvl " + state.upg.auto + ")";
+  document.getElementById("upg4Desc").textContent = dict.upg4D;
+  document.getElementById("upg4Cost").textContent = Math.floor(800 * Math.pow(1.5, state.upg.auto));
+
+  updateChamberUI();
+}
+
+function gameLoop() {
+  // Passive energy generation
+  let rate = (state.upg.accel * 2) + (state.upg.antimatter * 10) + (state.upg.auto * 25);
+  state.energy += rate / 10;
+  document.getElementById("energyVal").textContent = Math.floor(state.energy);
+  saveState();
+}
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateUI(); });
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+loadSave();
+initLang();
+renderInventory();
+updateUI();
+setInterval(gameLoop, 100);
+</script>
+</body>
+</html>
