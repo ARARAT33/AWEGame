@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🚀 Cyber Jetpack Escape RPG</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+<style>
+:root {
+  --bg: #020612;
+  --panel: rgba(10, 16, 35, 0.92);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --secondary: #ff0055;
+  --accent: #ffcc00;
+  --text: #f0f6fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 26, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #33f3ff; color: #000; }
+.btn-accent { background: var(--secondary); color: #fff; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0a1128 0%, #01040d 100%);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.18); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; }
+.stat-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px 16px; backdrop-filter: blur(10px); display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.95rem; }
+
+.touch-controls { position: absolute; bottom: 20px; right: 20px; display: none; pointer-events: auto; }
+.t-btn-large { width: 80px; height: 80px; border-radius: 50%; background: rgba(0, 240, 255, 0.25); border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.8rem; font-weight: 900; box-shadow: 0 0 20px rgba(0,240,255,0.4); }
+.t-btn-large:active { background: rgba(0, 240, 255, 0.6); transform: scale(0.95); }
+
+/* Modal */
+.modal-overlay { position: absolute; inset: 0; background: rgba(3, 5, 15, 0.92); backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #0a0f24; border: 1px solid var(--primary); border-radius: 22px; padding: 26px; width: 90%; max-width: 480px; text-align: center; box-shadow: 0 0 40px rgba(0,240,255,0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.6rem; color: #fff; text-shadow: 0 0 12px var(--primary); }
+
+.upg-grid { display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.upg-row { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; }
+
+@media (max-width: 768px) {
+  .touch-controls { display: block; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🚀</span>
+    <h1 id="titleTxt">Cyber Jetpack Escape RPG</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="stat-card" style="color:var(--primary);">
+        <span>📏</span> <span id="distVal">0 m</span>
+      </div>
+      <div class="stat-card" style="color:var(--accent);">
+        <span>💎</span> <span id="crystalsVal">0</span>
+      </div>
+      <div class="stat-card" style="color:var(--secondary);">
+        <span>🛡️</span> <span id="shieldVal">100%</span>
+      </div>
+    </div>
+
+    <div class="touch-controls">
+      <div class="t-btn-large" id="btnThrust">🚀</div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="startModal">
+    <div class="modal-card">
+      <h2 id="modalHead">🚀 Cyber Jetpack Escape</h2>
+      <p style="color:#aaa; font-size:0.85rem;" id="modalDesc">Thrust through laser traps, harvest energy crystals, upgrade your jetpack suit in the hangar, and escape the deep cyber cavern!</p>
+
+      <div class="upg-grid">
+        <div class="upg-row">
+          <div>
+            <div style="font-weight:700; color:#fff;" id="upg1Title">Thruster Power</div>
+            <div style="font-size:0.72rem; color:#aaa;" id="upg1Desc">Higher lift & speed</div>
+          </div>
+          <button class="btn btn-primary" onclick="buyUpg('thrust')">💎 <span id="upg1Cost">30</span></button>
+        </div>
+
+        <div class="upg-row">
+          <div>
+            <div style="font-weight:700; color:#fff;" id="upg2Title">Shield Hull Armor</div>
+            <div style="font-size:0.72rem; color:#aaa;" id="upg2Desc">Absorb hazard hits</div>
+          </div>
+          <button class="btn btn-primary" onclick="buyUpg('shield')">💎 <span id="upg2Cost">45</span></button>
+        </div>
+
+        <div class="upg-row">
+          <div>
+            <div style="font-weight:700; color:#fff;" id="upg3Title">Crystal Magnet</div>
+            <div style="font-size:0.72rem; color:#aaa;" id="upg3Desc">Attract crystals</div>
+          </div>
+          <button class="btn btn-primary" onclick="buyUpg('magnet')">💎 <span id="upg3Cost">60</span></button>
+        </div>
+      </div>
+
+      <button class="btn btn-accent" style="justify-content:center; padding:12px; font-size:1.05rem;" id="startBtn" onclick="startGame()">🚀 Launch Escape</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Jetpack Escape RPG", home: "Home", launch: "🚀 Launch Escape", best: "Best: ", upg1: "Thruster Engine", upg1D: "+20% Lift Speed", upg2: "Shield Armor", upg2D: "+1 Max Shield Hit", upg3: "Crystal Magnet", upg3D: "+50% Magnet Range", gameOver: "GAME OVER! Distance: " },
+  hy: { title: "Կիբեռ Ջեթփեք Փախուստ RPG", home: "Գլխավոր", launch: "🚀 Սկսել Փախուստը", best: "Լավագույն: ", upg1: "Շարժիչի Հզորություն", upg1D: "+20% Արագություն", upg2: "Վահանի Զրահ", upg2D: "+1 Վահանի Հարված", upg3: "Բյուրեղային Մագնիս", upg3D: "+50% Մագնիսի Շառավիղ", gameOver: "ԽԱՂՆ ԱՎԱՐՏՎԵՑ! Հեռավորություն: " },
+  ru: { title: "Кибер Джетпак Побег RPG", home: "Главная", launch: "🚀 Начать Побег", best: "Рекорд: ", upg1: "Мощность Двигателя", upg1D: "+20% Скорость Подъема", upg2: "Броня Щита", upg2D: "+1 Защита Щита", upg3: "Магнит Кристаллов", upg3D: "+50% Радиус Магнита", gameOver: "ИГРА ОКОНЧЕНА! Дистанция: " },
+  es: { title: "Cyber Jetpack Escape RPG", home: "Inicio", launch: "🚀 Lanzar Escape", best: "Mejor: ", upg1: "Motor Jetpack", upg1D: "+20% Velocidad Elevación", upg2: "Armadura Escudo", upg2D: "+1 Impacto Escudo", upg3: "Imán Cristales", upg3D: "+50% Rango Imán", gameOver: "¡JUEGO TERMINADO! Distancia: " },
+  fr: { title: "Cyber Jetpack Escape RPG", home: "Accueil", launch: "🚀 Lancer l'Échappée", best: "Meilleur : ", upg1: "Puissance Moteur", upg1D: "+20% Vitesse de Levée", upg2: "Armure Bouclier", upg2D: "+1 Coup Bouclier", upg3: "Aimant Cristaux", upg3D: "+50% Rayon Aimant", gameOver: "PARTIE TERMINÉE ! Distance : " },
+  de: { title: "Cyber Jetpack Escape RPG", home: "Startseite", launch: "🚀 Flucht Starten", best: "Bestzeit: ", upg1: "Triebwerksleistung", upg1D: "+20% Steiggeschwindigkeit", upg2: "Schildpanzerung", upg2D: "+1 Schildtreffer", upg3: "Kristallmagnet", upg3D: "+50% Magnetradius", gameOver: "SPIEL VORBEI! Distanz: " },
+  it: { title: "Cyber Jetpack Escape RPG", home: "Home", launch: "🚀 Lancia Fuga", best: "Migliore: ", upg1: "Potenza Motore", upg1D: "+20% Velocità Salita", upg2: "Corazza Scudo", upg2D: "+1 Colpo Scudo", upg3: "Magnete Cristalli", upg3D: "+50% Raggio Magnete", gameOver: "GAME OVER! Distanza: " },
+  pt: { title: "Cyber Jetpack Fuga RPG", home: "Início", launch: "🚀 Iniciar Fuga", best: "Melhor: ", upg1: "Potência Propulsor", upg1D: "+20% Velocidade Subida", upg2: "Blindagem Escudo", upg2D: "+1 Impacto Escudo", upg3: "Ímã de Cristais", upg3D: "+50% Alcance Ímã", gameOver: "FIM DE JOGO! Distância: " },
+  tr: { title: "Cyber Jetpack Escape RPG", home: "Ana Sayfa", launch: "🚀 Kaçışı Başlat", best: "En İyi: ", upg1: "Motor Gücü", upg1D: "+20% Yükselme Hızı", upg2: "Kalkan Zırhı", upg2D: "+1 Kalkan Darbesi", upg3: "Kristal Mıknatısı", upg3D: "+50% Mıknatıs Menzili", gameOver: "OUN BİTTİ! Mesafe: " },
+  ja: { title: "サイバージェットパック Escape RPG", home: "ホーム", launch: "🚀 脱出スタート", best: "ベスト: ", upg1: "スラスター出力", upg1D: "+20% 上昇速度", upg2: "シールドアーマー", upg2D: "+1 シールド耐久", upg3: "クリスタルマグネット", upg3D: "+50% 吸引範囲", gameOver: "ゲームオーバー！距離: " },
+  zh: { title: "赛博火箭喷气背包逃生 RPG", home: "主页", launch: "🚀 开启逃生", best: "最高纪录: ", upg1: "喷气引擎功率", upg1D: "+20% 上升速度", upg2: "护盾护甲", upg2D: "+1 护盾抵挡", upg3: "水晶磁铁", upg3D: "+50% 磁铁范围", gameOver: "游戏结束！行驶距离：" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+let isPlaying = false;
+
+let crystals = parseInt(localStorage.getItem("jp_crystals") || "0");
+let bestDist = parseInt(localStorage.getItem("jp_best") || "0");
+let upg = JSON.parse(localStorage.getItem("jp_upg") || '{"thrust":0, "shield":0, "magnet":0}');
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 900, H = 550;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio sound generator
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'crystal') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(1200, now + 0.12);
+    gain.gain.setValueAtTime(0.25, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+  } else if (type === 'hit') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(250, now); osc.frequency.exponentialRampToValueAtTime(80, now + 0.2);
+    gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.25);
+}
+
+class Hero {
+  constructor() {
+    this.x = 100; this.y = H / 2;
+    this.r = 18;
+    this.vy = 0;
+    this.isThrusting = false;
+    this.shields = 1 + upg.shield;
+  }
+  update() {
+    let thrustPower = 0.55 * (1 + upg.thrust * 0.2);
+    if (this.isThrusting) {
+      this.vy -= thrustPower;
+    } else {
+      this.vy += 0.38; // gravity
+    }
+    this.y += this.vy;
+
+    // Bounds check
+    if (this.y < 30) { this.y = 30; this.vy = 0; }
+    if (this.y > H - 30) { this.y = H - 30; this.vy = 0; }
+  }
+  draw() {
+    ctx.save();
+    // Thrust flames
+    if (this.isThrusting) {
+      ctx.beginPath();
+      ctx.arc(this.x - 16, this.y + 12, 10 + Math.random() * 6, 0, Math.PI * 2);
+      ctx.fillStyle = "#ff0055"; ctx.shadowColor = "#ff0055"; ctx.shadowBlur = 12; ctx.fill();
+    }
+
+    // Body
+    ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = "#00f0ff"; ctx.shadowColor = "#00f0ff"; ctx.shadowBlur = 16;
+    ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.stroke();
+
+    // Visor
+    ctx.fillStyle = "#fff"; ctx.fillRect(this.x + 2, this.y - 5, 10, 5);
+    ctx.restore();
+  }
+}
+
+let hero = new Hero();
+let distance = 0;
+let obstacles = [];
+let items = [];
+let isThrustingKey = false;
+
+window.addEventListener("keydown", e => { if (e.key === ' ' || e.key === 'ArrowUp') isThrustingKey = true; });
+window.addEventListener("keyup", e => { if (e.key === ' ' || e.key === 'ArrowUp') isThrustingKey = false; });
+
+const btnT = document.getElementById("btnThrust");
+btnT.addEventListener("touchstart", (e) => { e.preventDefault(); isThrustingKey = true; });
+btnT.addEventListener("touchend", (e) => { e.preventDefault(); isThrustingKey = false; });
+
+function spawnWorld() {
+  if (Math.random() < 0.035) {
+    // Laser wall
+    let gapY = 80 + Math.random() * (H - 240);
+    obstacles.push({ x: W + 50, y: gapY, w: 24, gapHeight: 140, passed: false });
+  }
+
+  if (Math.random() < 0.06) {
+    // Crystal
+    items.push({ x: W + 30, y: 50 + Math.random() * (H - 100), r: 12, type: 'crystal' });
+  }
+}
+
+function updateGame() {
+  if (!isPlaying) return;
+
+  hero.isThrusting = isThrustingKey;
+  hero.update();
+
+  distance += 1;
+  document.getElementById("distVal").textContent = Math.floor(distance) + " m";
+
+  spawnWorld();
+
+  // Move obstacles
+  for (let i = obstacles.length - 1; i >= 0; i--) {
+    let obs = obstacles[i];
+    obs.x -= 4.5 + Math.min(distance * 0.002, 6);
+
+    // Collision check
+    if (Math.abs(obs.x - hero.x) < obs.w / 2 + hero.r) {
+      if (hero.y < obs.y || hero.y > obs.y + obs.gapHeight) {
+        // Hit barrier!
+        hero.shields--;
+        playSound('hit');
+        obstacles.splice(i, 1);
+        if (hero.shields <= 0) {
+          endGame();
+          return;
+        }
+      }
+    }
+
+    if (obs.x < -50) obstacles.splice(i, 1);
+  }
+
+  // Move & magnetize items
+  let magnetRange = 100 * (1 + upg.magnet * 0.5);
+  for (let i = items.length - 1; i >= 0; i--) {
+    let item = items[i];
+    item.x -= 4.5;
+
+    let dist = Math.hypot(item.x - hero.x, item.y - hero.y);
+    if (dist < magnetRange) {
+      item.x += (hero.x - item.x) * 0.1;
+      item.y += (hero.y - item.y) * 0.1;
+    }
+
+    if (dist < hero.r + item.r) {
+      crystals += 10;
+      localStorage.setItem("jp_crystals", crystals);
+      document.getElementById("crystalsVal").textContent = crystals;
+      playSound('crystal');
+      items.splice(i, 1);
+    } else if (item.x < -30) {
+      items.splice(i, 1);
+    }
+  }
+
+  document.getElementById("shieldVal").textContent = Math.max(0, hero.shields) + " HP";
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw obstacles (Laser beams)
+  obstacles.forEach(obs => {
+    ctx.fillStyle = "rgba(255, 0, 85, 0.85)"; ctx.shadowColor = "#ff0055"; ctx.shadowBlur = 14;
+    ctx.fillRect(obs.x - obs.w / 2, 0, obs.w, obs.y);
+    ctx.fillRect(obs.x - obs.w / 2, obs.y + obs.gapHeight, obs.w, H - (obs.y + obs.gapHeight));
+  });
+
+  // Draw items
+  items.forEach(item => {
+    ctx.beginPath(); ctx.arc(item.x, item.y, item.r, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffcc00"; ctx.shadowColor = "#ffcc00"; ctx.shadowBlur = 16; ctx.fill();
+  });
+
+  hero.draw();
+}
+
+function gameLoop() {
+  updateGame(); drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+function startGame() {
+  hero = new Hero();
+  distance = 0;
+  obstacles = []; items = [];
+  isPlaying = true;
+  document.getElementById("startModal").style.display = "none";
+}
+
+function endGame() {
+  isPlaying = false;
+  if (distance > bestDist) {
+    bestDist = Math.floor(distance);
+    localStorage.setItem("jp_best", bestDist);
+  }
+  alert((I18N[lang] || I18N.en).gameOver + Math.floor(distance) + " m");
+  document.getElementById("startModal").style.display = "flex";
+}
+
+function buyUpg(type) {
+  let costs = { thrust: 30, shield: 45, magnet: 60 };
+  let cost = costs[type] * (upg[type] + 1);
+  if (crystals >= cost) {
+    crystals -= cost;
+    upg[type]++;
+    localStorage.setItem("jp_crystals", crystals);
+    localStorage.setItem("jp_upg", JSON.stringify(upg));
+    playSound('crystal');
+    updateUI();
+  }
+}
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateUI(); });
+}
+
+function updateUI() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("startBtn").textContent = dict.launch;
+  document.getElementById("crystalsVal").textContent = crystals;
+
+  document.getElementById("upg1Title").textContent = dict.upg1 + " (Lvl " + upg.thrust + ")";
+  document.getElementById("upg1Desc").textContent = dict.upg1D;
+  document.getElementById("upg1Cost").textContent = 30 * (upg.thrust + 1);
+
+  document.getElementById("upg2Title").textContent = dict.upg2 + " (Lvl " + upg.shield + ")";
+  document.getElementById("upg2Desc").textContent = dict.upg2D;
+  document.getElementById("upg2Cost").textContent = 45 * (upg.shield + 1);
+
+  document.getElementById("upg3Title").textContent = dict.upg3 + " (Lvl " + upg.magnet + ")";
+  document.getElementById("upg3Desc").textContent = dict.upg3D;
+  document.getElementById("upg3Cost").textContent = 60 * (upg.magnet + 1);
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang(); updateUI();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
