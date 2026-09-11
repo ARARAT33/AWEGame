@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🪐 Cyber Planet Colony Builder</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪐</text></svg>">
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(10, 16, 35, 0.92);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --secondary: #ff0055;
+  --accent: #ffcc00;
+  --text: #f0f6fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 26, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #33f3ff; color: #000; }
+.btn-accent { background: var(--secondary); color: #fff; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; flex-direction: column; width: 100%; height: 100%; overflow: hidden; }
+
+/* Resource Bar */
+.res-bar {
+  display: flex; justify-content: space-around; align-items: center;
+  padding: 8px 12px; background: rgba(10, 16, 35, 0.85); border-bottom: 1px solid var(--border);
+  font-size: 0.85rem; font-weight: 700; flex-wrap: wrap; gap: 8px;
+}
+.res-item { display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); }
+
+/* Game Canvas & Layout */
+.content-wrap { flex: 1; position: relative; display: flex; width: 100%; height: 100%; overflow: hidden; }
+#colonyCanvas { flex: 1; background: radial-gradient(circle at center, #0f172a 0%, #030712 100%); display: block; touch-action: none; }
+
+/* Build Sidebar */
+.build-menu {
+  width: 260px; background: var(--panel); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; padding: 12px; gap: 10px; backdrop-filter: blur(10px);
+  overflow-y: auto; z-index: 5;
+}
+.build-card {
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 14px;
+  padding: 10px; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; gap: 4px;
+}
+.build-card:hover, .build-card.active { background: rgba(0,240,255,0.18); border-color: var(--primary); transform: translateX(-2px); }
+.build-title { font-weight: 800; font-size: 0.9rem; color: var(--primary); display: flex; align-items: center; gap: 6px; }
+.build-cost { font-size: 0.75rem; color: #aaa; display: flex; gap: 8px; }
+
+/* Log Box */
+.log-box {
+  position: absolute; bottom: 12px; left: 12px; width: 280px; height: 120px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+  padding: 8px; overflow-y: auto; font-size: 0.75rem; color: #ccc; backdrop-filter: blur(10px);
+  pointer-events: auto; display: flex; flex-direction: column; gap: 4px;
+}
+
+@media (max-width: 768px) {
+  .content-wrap { flex-direction: column; }
+  .build-menu { width: 100%; height: 140px; flex-direction: row; border-left: none; border-top: 1px solid var(--border); }
+  .build-card { min-width: 140px; }
+  .log-box { width: 220px; height: 90px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🪐</span>
+    <h1 id="titleTxt">Cyber Planet Colony Builder</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="resetBtn" class="btn btn-accent">🔄 <span id="resetTxt">Reset Colony</span></button>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <div class="res-bar">
+    <div class="res-item">⚡ <span id="powVal">100</span></div>
+    <div class="res-item">💨 <span id="oxyVal">100</span></div>
+    <div class="res-item">⛏️ <span id="minVal">200</span></div>
+    <div class="res-item">🌱 <span id="bioVal">50</span></div>
+    <div class="res-item">👨‍🚀 <span id="popVal">10/20</span></div>
+    <div class="res-item" style="color:var(--accent);">🌡️ Terra: <span id="terraVal">0%</span></div>
+  </div>
+
+  <div class="content-wrap">
+    <canvas id="colonyCanvas"></canvas>
+
+    <div class="build-menu" id="buildMenu">
+      <div style="font-size:0.85rem; font-weight:800; color:var(--accent); text-transform:uppercase;" id="structuresHead">Structures</div>
+      <!-- Cards rendered dynamically -->
+    </div>
+
+    <div class="log-box" id="logBox">
+      <div style="color:var(--primary);">🚀 Landing module deployed on Cyber Planet Sector 7!</div>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Planet Colony Builder", home: "Home", reset: "Reset Colony", structures: "Structures", pow: "Power Plant", oxy: "Oxygen Generator", min: "Mineral Drill", bio: "Bio-Dome", hab: "Habitat Pod", terra: "Terraformer", logStart: "🚀 Colony initialized on Cyber Planet!", logBuild: "Constructed ", logNoRes: "⚠️ Insufficient resources!", confirmReset: "Reset your colony progress?" },
+  hy: { title: "Կիբեռ Մոլորակի Գաղութաբնակեցում", home: "Գլխավոր", reset: "Վերասկսել", structures: "Կառույցներ", pow: "Էներգակայան", oxy: "Թթվածնի Կայան", min: "Հանքային Հորատիչ", bio: "Բիո-Գմբեթ", hab: "Բնակելի Մոդուլ", terra: "Տերաֆորմեր", logStart: "🚀 Գաղութը հիմնադրված է Կիբեռ Մոլորակում!", logBuild: "Կառուցվեց ", logNoRes: "⚠️ Անբավարար ռեսուրսներ!", confirmReset: "Վերասկսե՞լ գաղութը:" },
+  ru: { title: "Симулятор Кибер Колонии", home: "Главная", reset: "Сброс", structures: "Постройки", pow: "Электростанция", oxy: "Генератор Кислорода", min: "Минеральный Бур", bio: "Био-Купол", hab: "Жилой Модуль", terra: "Терраформер", logStart: "🚀 Колония основана на Кибер Планете!", logBuild: "Построено: ", logNoRes: "⚠️ Недостаточно ресурсов!", confirmReset: "Сбросить прогресс колонии?" },
+  es: { title: "Constructor de Colonia Cyber", home: "Inicio", reset: "Reiniciar", structures: "Estructuras", pow: "Planta de Energía", oxy: "Gen. de Oxígeno", min: "Taladro Mineral", bio: "Bio-Domo", hab: "Módulo Habitación", terra: "Terraformador", logStart: "🚀 ¡Colonia iniciada en Cyber Planet!", logBuild: "Construido ", logNoRes: "⚠️ ¡Recursos insuficientes!", confirmReset: "¿Reiniciar colonia?" },
+  fr: { title: "Constructeur de Colonie Cyber", home: "Accueil", reset: "Réinitialiser", structures: "Structures", pow: "Centrale Électrique", oxy: "Gén. d'Oxygène", min: "Foreuse Minérale", bio: "Bio-Dôme", hab: "Module Habitation", terra: "Terraformeur", logStart: "🚀 Colonie fondée sur la Cyber Planète !", logBuild: "Construit : ", logNoRes: "⚠️ Ressources insuffisantes !", confirmReset: "Réinitialiser la colonie ?" },
+  de: { title: "Cyber Kolonie Bau-Simulator", home: "Startseite", reset: "Zurücksetzen", structures: "Gebäude", pow: "Kraftwerk", oxy: "Sauerstoff-Gen.", min: "Mineralbohrer", bio: "Bio-Kuppel", hab: "Wohnmodul", terra: "Terraformer", logStart: "🚀 Kolonie auf Cyber Planet gegründet!", logBuild: "Erbaut: ", logNoRes: "⚠️ Nicht genug Ressourcen!", confirmReset: "Kolonie zurücksetzen?" },
+  it: { title: "Costruttore di Colonia Cyber", home: "Home", reset: "Azzera", structures: "Strutture", pow: "Centrale Elettrica", oxy: "Gen. Ossigeno", min: "Trivella Minerale", bio: "Bio-Cupola", hab: "Modulo Abitativo", terra: "Terraformatore", logStart: "🚀 Colonia fondata su Cyber Planet!", logBuild: "Costruito ", logNoRes: "⚠️ Risorse insufficienti!", confirmReset: "Resettare la colonia?" },
+  pt: { title: "Construtor de Colônia Cyber", home: "Início", reset: "Reiniciar", structures: "Estruturas", pow: "Usina de Energia", oxy: "Gerador de Oxigênio", min: "Perfuratriz Mineral", bio: "Bio-Domo", hab: "Módulo Habitacional", terra: "Terraformador", logStart: "🚀 Colônia iniciada no Cyber Planet!", logBuild: "Construído ", logNoRes: "⚠️ Recursos insuficientes!", confirmReset: "Reiniciar a colônia?" },
+  tr: { title: "Cyber Gezegen Koloni Kurma", home: "Ana Sayfa", reset: "Sıfırla", structures: "Yapılar", pow: "Güç Santrali", oxy: "Oksijen Jeneratörü", min: "Maden Matkabı", bio: "Biyo-Kubbe", hab: "Yaşam Modülü", terra: "Terraformır", logStart: "🚀 Koloni Cyber Planet üzerinde kuruldu!", logBuild: "Inşa edildi: ", logNoRes: "⚠️ Yetersiz kaynak!", confirmReset: "Koloni sıfırlansın mı?" },
+  ja: { title: "サイバー惑星コロニーシミュレーター", home: "ホーム", reset: "リセット", structures: "建造物", pow: "発電所", oxy: "酸素発生器", min: "鉱物ドリル", bio: "バイオドーム", hab: "居住区", terra: "テラフォーマー", logStart: "🚀 サイバー惑星にコロニーを設立！", logBuild: "建設完了: ", logNoRes: "⚠️ 資源が不足しています！", confirmReset: "コロニーをリセットしますか？" },
+  zh: { title: "赛博星球殖民地建造者", home: "主页", reset: "重置", structures: "建筑物", pow: "发电厂", oxy: "氧气发生器", min: "矿物钻机", bio: "生物穹顶", hab: "居住舱", terra: "泰拉改造仪", logStart: "🚀 赛博星球殖民地已建立！", logBuild: "建造完成: ", logNoRes: "⚠️ 资源不足！", confirmReset: "确认重置殖民地？" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+const BUILDINGS = [
+  { id: 'pow', icon: '⚡', key: 'pow', costMin: 40, prodPow: 15, prodOxy: 0, prodMin: 0, prodBio: 0 },
+  { id: 'oxy', icon: '💨', key: 'oxy', costMin: 60, costPow: 10, prodPow: 0, prodOxy: 12, prodMin: 0, prodBio: 0 },
+  { id: 'min', icon: '⛏️', key: 'min', costPow: 15, prodPow: 0, prodOxy: 0, prodMin: 18, prodBio: 0 },
+  { id: 'bio', icon: '🌱', key: 'bio', costMin: 80, costOxy: 20, prodPow: 0, prodOxy: 0, prodMin: 0, prodBio: 10 },
+  { id: 'hab', icon: '👨‍🚀', key: 'hab', costMin: 120, costBio: 30, maxPopBonus: 10 },
+  { id: 'terra', icon: '🪐', key: 'terra', costMin: 250, costPow: 50, costBio: 50, terraRate: 0.2 }
+];
+
+let lang = "en";
+let sound = true;
+
+let resources = JSON.parse(localStorage.getItem("cp_res") || '{"pow":100,"oxy":100,"min":200,"bio":50,"pop":10,"maxPop":20,"terra":0}');
+let grid = JSON.parse(localStorage.getItem("cp_grid") || '[]');
+
+if (grid.length === 0) {
+  for (let r = 0; r < 8; r++) {
+    let row = [];
+    for (let c = 0; c < 8; c++) row.push(null);
+    grid.push(row);
+  }
+}
+
+let selectedBuilding = null;
+const canvas = document.getElementById("colonyCanvas");
+const ctx = canvas.getContext("2d");
+let W = 600, H = 600;
+
+function resizeCanvas() {
+  const container = canvas.parentElement;
+  canvas.width = container.clientWidth;
+  canvas.height = container.clientHeight;
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio sound generator
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'build') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(440, now); osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+  } else if (type === 'error') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(180, now); osc.frequency.exponentialRampToValueAtTime(90, now + 0.2);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.3);
+}
+
+function renderBuildMenu() {
+  const menu = document.getElementById("buildMenu");
+  const dict = I18N[lang] || I18N.en;
+  menu.innerHTML = `<div style="font-size:0.85rem; font-weight:800; color:var(--accent); text-transform:uppercase;">${dict.structures}</div>`;
+
+  BUILDINGS.forEach(b => {
+    const card = document.createElement("div");
+    card.className = `build-card ${selectedBuilding === b.id ? 'active' : ''}`;
+    card.onclick = () => { selectedBuilding = b.id; renderBuildMenu(); };
+
+    let costStr = "";
+    if (b.costMin) costStr += `⛏️${b.costMin} `;
+    if (b.costPow) costStr += `⚡${b.costPow} `;
+    if (b.costOxy) costStr += `💨${b.costOxy} `;
+    if (b.costBio) costStr += `🌱${b.costBio} `;
+
+    card.innerHTML = `
+      <div class="build-title">${b.icon} ${dict[b.key]}</div>
+      <div class="build-cost">${costStr}</div>
+    `;
+    menu.appendChild(card);
+  });
+}
+
+function updateResourcesUI() {
+  document.getElementById("powVal").textContent = Math.floor(resources.pow);
+  document.getElementById("oxyVal").textContent = Math.floor(resources.oxy);
+  document.getElementById("minVal").textContent = Math.floor(resources.min);
+  document.getElementById("bioVal").textContent = Math.floor(resources.bio);
+  document.getElementById("popVal").textContent = `${resources.pop}/${resources.maxPop}`;
+  document.getElementById("terraVal").textContent = `${resources.terra.toFixed(1)}%`;
+}
+
+function addLog(msg) {
+  const box = document.getElementById("logBox");
+  const div = document.createElement("div");
+  div.textContent = msg;
+  box.appendChild(div); box.scrollTop = box.scrollHeight;
+}
+
+// Tick production loop
+setInterval(() => {
+  let deltaPow = 2, deltaOxy = 1, deltaMin = 2, deltaBio = 0.5, deltaTerra = 0;
+
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const bId = grid[r][c];
+      if (!bId) continue;
+      const b = BUILDINGS.find(x => x.id === bId);
+      if (b) {
+        if (b.prodPow) deltaPow += b.prodPow * 0.2;
+        if (b.prodOxy) deltaOxy += b.prodOxy * 0.2;
+        if (b.prodMin) deltaMin += b.prodMin * 0.2;
+        if (b.prodBio) deltaBio += b.prodBio * 0.2;
+        if (b.terraRate) deltaTerra += b.terraRate * 0.1;
+      }
+    }
+  }
+
+  resources.pow = Math.min(1000, resources.pow + deltaPow);
+  resources.oxy = Math.min(1000, resources.oxy + deltaOxy);
+  resources.min = Math.min(2000, resources.min + deltaMin);
+  resources.bio = Math.min(1000, resources.bio + deltaBio);
+  resources.terra = Math.min(100, resources.terra + deltaTerra);
+
+  localStorage.setItem("cp_res", JSON.stringify(resources));
+  localStorage.setItem("cp_grid", JSON.stringify(grid));
+  updateResourcesUI();
+}, 1000);
+
+// Canvas Grid Rendering & Clicking
+function drawGrid() {
+  ctx.clearRect(0, 0, W, H);
+
+  let gridSize = 8;
+  let cellSize = Math.min(W, H) * 0.85 / gridSize;
+  let offsetX = (W - cellSize * gridSize) / 2;
+  let offsetY = (H - cellSize * gridSize) / 2;
+
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
+      let x = offsetX + c * cellSize;
+      let y = offsetY + r * cellSize;
+
+      ctx.fillStyle = "rgba(10, 20, 45, 0.7)";
+      ctx.fillRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
+      ctx.strokeStyle = "rgba(0, 240, 255, 0.25)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
+
+      let bId = grid[r][c];
+      if (bId) {
+        let b = BUILDINGS.find(x => x.id === bId);
+        ctx.font = `${cellSize * 0.5}px sans-serif`;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(b.icon, x + cellSize / 2, y + cellSize / 2);
+      }
+    }
+  }
+}
+
+canvas.addEventListener("click", (e) => {
+  const rect = canvas.getBoundingClientRect();
+  let mx = e.clientX - rect.left;
+  let my = e.clientY - rect.top;
+
+  let gridSize = 8;
+  let cellSize = Math.min(W, H) * 0.85 / gridSize;
+  let offsetX = (W - cellSize * gridSize) / 2;
+  let offsetY = (H - cellSize * gridSize) / 2;
+
+  let c = Math.floor((mx - offsetX) / cellSize);
+  let r = Math.floor((my - offsetY) / cellSize);
+
+  if (r >= 0 && r < 8 && c >= 0 && c < 8) {
+    if (!selectedBuilding) return;
+    const b = BUILDINGS.find(x => x.id === selectedBuilding);
+    const dict = I18N[lang] || I18N.en;
+
+    // Check cost
+    if ((b.costMin && resources.min < b.costMin) ||
+        (b.costPow && resources.pow < b.costPow) ||
+        (b.costOxy && resources.oxy < b.costOxy) ||
+        (b.costBio && resources.bio < b.costBio)) {
+      playSound('error');
+      addLog(dict.logNoRes);
+      return;
+    }
+
+    // Deduct cost
+    if (b.costMin) resources.min -= b.costMin;
+    if (b.costPow) resources.pow -= b.costPow;
+    if (b.costOxy) resources.oxy -= b.costOxy;
+    if (b.costBio) resources.bio -= b.costBio;
+
+    if (b.maxPopBonus) resources.maxPop += b.maxPopBonus;
+
+    grid[r][c] = b.id;
+    playSound('build');
+    addLog(`${dict.logBuild} ${b.icon} ${dict[b.key]} [${r+1},${c+1}]`);
+    updateResourcesUI();
+  }
+});
+
+function gameLoop() {
+  drawGrid();
+  requestAnimationFrame(gameLoop);
+}
+
+document.getElementById("resetBtn").onclick = () => {
+  const dict = I18N[lang] || I18N.en;
+  if (confirm(dict.confirmReset)) {
+    resources = { pow: 100, oxy: 100, min: 200, bio: 50, pop: 10, maxPop: 20, terra: 0 };
+    grid = [];
+    for (let r = 0; r < 8; r++) {
+      let row = [];
+      for (let c = 0; c < 8; c++) row.push(null);
+      grid.push(row);
+    }
+    localStorage.removeItem("cp_res");
+    localStorage.removeItem("cp_grid");
+    updateResourcesUI();
+  }
+};
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("resetTxt").textContent = dict.reset;
+  renderBuildMenu();
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang(); updateLang(); updateResourcesUI();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
