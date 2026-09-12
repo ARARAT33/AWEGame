@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🏃 Cyber Parkour Rooftop Runner</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏃</text></svg>">
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(10, 16, 35, 0.92);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --secondary: #ff0055;
+  --accent: #ffcc00;
+  --text: #f0f6fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 26, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0a1128 0%, #02050f 100%);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.18); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; }
+.stats-bar { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px 16px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 14px; font-size: 0.85rem; backdrop-filter: blur(10px); }
+
+/* Touch Overlay */
+.touch-controls { position: absolute; bottom: 16px; right: 16px; display: none; gap: 10px; pointer-events: auto; }
+.t-btn { width: 56px; height: 56px; background: rgba(0, 240, 255, 0.2); border: 1px solid var(--primary); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; font-weight: 800; }
+.t-btn:active { background: var(--primary); color: #000; }
+
+@media (max-width: 768px) {
+  .touch-controls { display: flex; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🏃</span>
+    <h1 id="titleTxt">Cyber Parkour Rooftop Runner</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="stats-bar">
+        <span>🏃 Distance: <span id="distVal">0</span>m</span>
+        <span>⚡ Speed: <span id="spdVal">1.0</span>x</span>
+        <span>🏆 Best: <span id="bestVal">0</span>m</span>
+      </div>
+    </div>
+
+    <div class="touch-controls">
+      <div class="t-btn" id="btnSlide">▼</div>
+      <div class="t-btn" id="btnJump">▲</div>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Parkour Rooftop Runner", home: "Home", overMsg: "GAME OVER! Press Space/Tap to Restart" },
+  hy: { title: "Կիբեռ Պարկուր Տանիքի Վազորդ", home: "Գլխավոր", overMsg: "ԽԱՂՆ ԱՎԱՐՏՎԵՑ! Սեղմեք կրկին սկսելու համար" },
+  ru: { title: "Кибер Паркур Бегун по Крышам", home: "Главная", overMsg: "ИГРА ОКОНЧЕНА! Нажмите для перезапуска" },
+  es: { title: "Cyber Parkour Corredor de Tejados", home: "Inicio", overMsg: "¡JUEGO TERMINADO! Pulsa para reiniciar" },
+  fr: { title: "Cyber Parkour Coureur de Toits", home: "Accueil", overMsg: "PARTIE TERMINÉE ! Appuyez pour recommencer" },
+  de: { title: "Cyber Parkour Dächer-Läufer", home: "Startseite", overMsg: "SPIEL OVER! Drücken zum Neustarten" },
+  it: { title: "Cyber Parkour Corridore sui Tetti", home: "Home", overMsg: "GAME OVER! Premi per ricominciare" },
+  pt: { title: "Cyber Parkour Corredor de Telhados", home: "Início", overMsg: "GAME OVER! Pressione para reiniciar" },
+  tr: { title: "Cyber Parkour Çatı Koşucusu", home: "Ana Sayfa", overMsg: "OYUN BİTTİ! Yeniden başlamak için basın" },
+  ja: { title: "サイバーパルクール 屋上ランナー", home: "ホーム", overMsg: "ゲームオーバー！タップして再起動" },
+  zh: { title: "赛博屋顶酷跑狂人", home: "主页", overMsg: "游戏结束！点击重新开始" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+let bestDist = parseInt(localStorage.getItem("cp_best") || "0");
+let distance = 0;
+let speed = 6;
+let isGameOver = false;
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 900, H = 550;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'jump') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(600, now + 0.12);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+  } else if (type === 'slide') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+    gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+  } else if (type === 'over') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(400, now); osc.frequency.linearRampToValueAtTime(80, now + 0.35);
+    gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.35);
+}
+
+class Runner {
+  constructor() {
+    this.x = 120;
+    this.y = H - 160;
+    this.w = 24; this.h = 48;
+    this.vy = 0;
+    this.isGrounded = false;
+    this.isSliding = false;
+  }
+  jump() {
+    if (this.isGrounded) {
+      this.vy = -13.5;
+      this.isGrounded = false;
+      playSound('jump');
+    }
+  }
+  slide(active) {
+    if (active && this.isGrounded) {
+      this.isSliding = true;
+      this.h = 24;
+      playSound('slide');
+    } else if (!active) {
+      this.isSliding = false;
+      this.h = 48;
+    }
+  }
+  update() {
+    this.vy += 0.65; // gravity
+    this.y += this.vy;
+
+    this.isGrounded = false;
+    rooftops.forEach(r => {
+      if (this.x + this.w > r.x && this.x < r.x + r.w) {
+        if (this.y + this.h >= r.y && this.y + this.h - this.vy <= r.y + 12) {
+          this.y = r.y - this.h;
+          this.vy = 0;
+          this.isGrounded = true;
+        }
+      }
+    });
+
+    if (this.y > H + 50) {
+      triggerGameOver();
+    }
+  }
+  draw() {
+    ctx.save();
+    ctx.fillStyle = "#00f0ff";
+    ctx.shadowColor = "#00f0ff"; ctx.shadowBlur = 14;
+    ctx.fillRect(this.x, this.y, this.w, this.h);
+    ctx.restore();
+  }
+}
+
+class Rooftop {
+  constructor(x, w, y) {
+    this.x = x; this.w = w; this.y = y;
+  }
+  update() {
+    this.x -= speed;
+  }
+  draw() {
+    ctx.save();
+    ctx.fillStyle = "rgba(10, 20, 45, 0.95)";
+    ctx.fillRect(this.x, this.y, this.w, H - this.y);
+    ctx.strokeStyle = "rgba(0, 240, 255, 0.6)"; ctx.lineWidth = 3;
+    ctx.strokeRect(this.x, this.y, this.w, H - this.y);
+    ctx.restore();
+  }
+}
+
+let runner = new Runner();
+let rooftops = [
+  new Rooftop(50, 400, H - 140),
+  new Rooftop(500, 350, H - 140)
+];
+
+window.addEventListener("keydown", e => {
+  if (e.key === " " || e.key === "ArrowUp" || e.key === "w") {
+    if (isGameOver) restartGame();
+    else runner.jump();
+  }
+  if (e.key === "ArrowDown" || e.key === "s") runner.slide(true);
+});
+window.addEventListener("keyup", e => {
+  if (e.key === "ArrowDown" || e.key === "s") runner.slide(false);
+});
+
+document.getElementById("btnJump").onclick = () => {
+  if (isGameOver) restartGame();
+  else runner.jump();
+};
+
+const slideBtn = document.getElementById("btnSlide");
+slideBtn.addEventListener("touchstart", (e) => { e.preventDefault(); runner.slide(true); });
+slideBtn.addEventListener("touchend", (e) => { e.preventDefault(); runner.slide(false); });
+
+function triggerGameOver() {
+  if (isGameOver) return;
+  isGameOver = true;
+  playSound('over');
+  if (distance > bestDist) {
+    bestDist = Math.floor(distance);
+    localStorage.setItem("cp_best", bestDist);
+  }
+}
+
+function restartGame() {
+  distance = 0; speed = 6; isGameOver = false;
+  runner = new Runner();
+  rooftops = [
+    new Rooftop(50, 400, H - 140),
+    new Rooftop(500, 350, H - 140)
+  ];
+}
+
+function updateGame() {
+  if (isGameOver) return;
+
+  distance += speed * 0.05;
+  speed = 6 + Math.floor(distance / 50) * 0.5;
+
+  runner.update();
+
+  rooftops.forEach(r => r.update());
+  if (rooftops[0].x + rooftops[0].w < 0) rooftops.shift();
+
+  let lastRooftop = rooftops[rooftops.length - 1];
+  if (lastRooftop.x + lastRooftop.w < W + 200) {
+    let gap = 90 + Math.random() * 120;
+    let nextW = 250 + Math.random() * 300;
+    let nextY = H - (120 + Math.random() * 80);
+    rooftops.push(new Rooftop(lastRooftop.x + lastRooftop.w + gap, nextW, nextY));
+  }
+
+  document.getElementById("distVal").textContent = Math.floor(distance);
+  document.getElementById("spdVal").textContent = (speed / 6).toFixed(1);
+  document.getElementById("bestVal").textContent = bestDist;
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+  rooftops.forEach(r => r.draw());
+  runner.draw();
+
+  if (isGameOver) {
+    ctx.save();
+    ctx.fillStyle = "rgba(3, 7, 18, 0.85)";
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#ff0055"; ctx.font = "800 2rem 'Segoe UI'"; ctx.textAlign = "center";
+    ctx.fillText((I18N[lang] || I18N.en).overMsg, W / 2, H / 2);
+    ctx.restore();
+  }
+}
+
+function gameLoop() {
+  updateGame(); drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang(); updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>

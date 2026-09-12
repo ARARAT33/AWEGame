@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🔨 Cyber Blacksmith & Weapon Forge RPG</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔨</text></svg>">
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(15, 23, 42, 0.92);
+  --border: rgba(255, 120, 0, 0.35);
+  --primary: #ff6b00;
+  --secondary: #00f0ff;
+  --accent: #ffcc00;
+  --text: #f0f6fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(12, 18, 34, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(255, 107, 0, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+.btn-primary:hover { background: #ff8533; color: #000; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #1a0f00 0%, #030712 100%);
+  box-shadow: 0 0 35px rgba(255, 107, 0, 0.18); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; }
+.stats-bar { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px 16px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 14px; font-size: 0.85rem; backdrop-filter: blur(10px); }
+
+/* Forge UI Panel */
+.forge-controls { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; pointer-events: auto; }
+.f-btn { background: rgba(255,107,0,0.25); border: 1px solid var(--primary); padding: 10px 20px; border-radius: 14px; color: #fff; font-weight: 800; cursor: pointer; transition: 0.2s; box-shadow: 0 0 15px rgba(255,107,0,0.2); }
+.f-btn:hover { background: var(--primary); color: #000; }
+
+@media (max-width: 768px) {
+  .stats-bar { font-size: 0.75rem; gap: 8px; }
+  .f-btn { padding: 8px 14px; font-size: 0.85rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🔨</span>
+    <h1 id="titleTxt">Cyber Blacksmith & Weapon Forge RPG</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="stats-bar">
+        <span>🪙 <span id="goldVal">0</span> Gold</span>
+        <span>🔥 Furnace: <span id="heatVal">500</span>°C</span>
+        <span>💎 Plasma Alloy: <span id="alloyVal">10</span></span>
+        <span>⚔️ Forged: <span id="forgedVal">0</span></span>
+      </div>
+    </div>
+
+    <div class="forge-controls">
+      <button class="f-btn" id="heatBtn">🔥 Pump Bellows</button>
+      <button class="f-btn" id="hammerBtn" style="background:rgba(0,240,255,0.25); border-color:var(--secondary);">🔨 Strike Hammer</button>
+      <button class="f-btn" id="sellBtn" style="background:rgba(255,204,0,0.25); border-color:var(--accent);">💰 Sell Blade</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Blacksmith & Weapon Forge RPG", home: "Home", heatMsg: "Heat Furnace!", hammerMsg: "Forge Target!", sellMsg: "Blade Sold!", perfectHit: "PERFECT STRIKE! +Multi", heatValTxt: "Furnace Heat" },
+  hy: { title: "Կիբեռ Դարբին և Զենքի Դարբնոց RPG", home: "Գլխավոր", heatMsg: "Տաքացնել!", hammerMsg: "Հարվածել!", sellMsg: "Վաճառված է!", perfectHit: "ԿԱՏԱՐՅԱԼ ՀԱՐՎԱԾ!", heatValTxt: "Ջերմություն" },
+  ru: { title: "Кибер Кузница и Ковка Оружия RPG", home: "Главная", heatMsg: "Раздуть мехи!", hammerMsg: "Удар молота!", sellMsg: "Клинок продан!", perfectHit: "ИДЕАЛЬНЫЙ УДАР!", heatValTxt: "Температура" },
+  es: { title: "Cyber Herrería y Forja de Armas RPG", home: "Inicio", heatMsg: "¡Avivar Fuego!", hammerMsg: "¡Golpe de Martillo!", sellMsg: "¡Espada Vendida!", perfectHit: "¡GOLPE PERFECTO!", heatValTxt: "Calor" },
+  fr: { title: "Cyber Forge d'Armes RPG", home: "Accueil", heatMsg: "Chauffer !", hammerMsg: "Coup de Marteau !", sellMsg: "Lame Vendue !", perfectHit: "FRAPPE PARFAITE !", heatValTxt: "Température" },
+  de: { title: "Cyber Waffenschmiede RPG", home: "Startseite", heatMsg: "Anheizen!", hammerMsg: "Hammerschlag!", sellMsg: "Klinge Verkauft!", perfectHit: "PERFEKTER SCHLAG!", heatValTxt: "Hitze" },
+  it: { title: "Cyber Fabbro e Forgia d'Armi RPG", home: "Home", heatMsg: "Aumenta Calore!", hammerMsg: "Colpo di Martello!", sellMsg: "Lama Venduta!", perfectHit: "COLPO PERFETTO!", heatValTxt: "Calore" },
+  pt: { title: "Cyber Ferreiro e Forja de Armas RPG", home: "Início", heatMsg: "Aquecer Forno!", hammerMsg: "Golpe de Martelo!", sellMsg: "Lâmina Vendida!", perfectHit: "GOLPE PERFEITO!", heatValTxt: "Calor" },
+  tr: { title: "Cyber Demirci ve Silah Örfü RPG", home: "Ana Sayfa", heatMsg: "Ateşi Körükle!", hammerMsg: "Çekiç Vuruşu!", sellMsg: "Kılıç Satıldı!", perfectHit: "MÜKEMMEL VURUŞ!", heatValTxt: "Sıcaklık" },
+  ja: { title: "サイバー鍛冶屋＆武器錬成 RPG", home: "ホーム", heatMsg: "炉を加熱！", hammerMsg: "ハンマー打撃！", sellMsg: "刀剣売却！", perfectHit: "パーフェクトヒット！", heatValTxt: "温度" },
+  zh: { title: "赛博铁匠与武器锻造 RPG", home: "主页", heatMsg: "鼓风加热！", hammerMsg: "锻打锤击！", sellMsg: "出售神兵！", perfectHit: "完美锻打！", heatValTxt: "炉温" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+let gold = parseInt(localStorage.getItem("cb_gold") || "100");
+let alloy = parseInt(localStorage.getItem("cb_alloy") || "20");
+let forgedCount = parseInt(localStorage.getItem("cb_forged") || "0");
+
+let heat = 600;
+let progress = 0;
+let bladeQuality = 100;
+let hitTargetPos = 0.5;
+let hitDirection = 1;
+let sparkParticles = [];
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 900, H = 550;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// Web Audio
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'heat') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.linearRampToValueAtTime(350, now + 0.2);
+    gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+  } else if (type === 'hammer') {
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+    gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+  } else if (type === 'sell') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(523, now); osc.frequency.setValueAtTime(659, now + 0.1);
+    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.25);
+}
+
+function updateStats() {
+  document.getElementById("goldVal").textContent = gold;
+  document.getElementById("heatVal").textContent = Math.floor(heat);
+  document.getElementById("alloyVal").textContent = alloy;
+  document.getElementById("forgedVal").textContent = forgedCount;
+}
+
+document.getElementById("heatBtn").onclick = () => {
+  heat = Math.min(1500, heat + 120);
+  playSound('heat');
+  addSparks(W / 2 - 180, H / 2, "#ff6b00");
+  updateStats();
+};
+
+document.getElementById("hammerBtn").onclick = () => {
+  if (heat < 300) { alert("Furnace is too cold! Pump bellows."); return; }
+  let accuracy = 1 - Math.abs(hitTargetPos - 0.5) * 2;
+  let gain = Math.floor(accuracy * 25);
+  progress = Math.min(100, progress + gain);
+  if (accuracy > 0.8) bladeQuality += 10;
+
+  playSound('hammer');
+  addSparks(W / 2, H / 2, "#00f0ff");
+
+  heat -= 40;
+  updateStats();
+};
+
+document.getElementById("sellBtn").onclick = () => {
+  if (progress < 100) { alert("Finish forging the weapon first!"); return; }
+  let reward = Math.floor(150 + bladeQuality * 2.5);
+  gold += reward;
+  forgedCount++;
+  localStorage.setItem("cb_gold", gold);
+  localStorage.setItem("cb_forged", forgedCount);
+
+  playSound('sell');
+  progress = 0; bladeQuality = 100;
+  updateStats();
+};
+
+function addSparks(x, y, color) {
+  for (let i = 0; i < 15; i++) {
+    sparkParticles.push({
+      x: x, y: y,
+      vx: (Math.random() - 0.5) * 8,
+      vy: (Math.random() - 0.5) * 8 - 2,
+      life: 1,
+      color: color
+    });
+  }
+}
+
+function drawAnvil() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Furnace Glowing Core
+  let furnaceX = W * 0.2;
+  let furnaceY = H * 0.5;
+  ctx.beginPath();
+  ctx.arc(furnaceX, furnaceY, 80, 0, Math.PI * 2);
+  let glow = ctx.createRadialGradient(furnaceX, furnaceY, 10, furnaceX, furnaceY, 80);
+  glow.addColorStop(0, `rgba(255, 107, 0, ${heat / 1500})`);
+  glow.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = glow; ctx.fill();
+
+  // Anvil Base
+  ctx.fillStyle = "#334155";
+  ctx.fillRect(W / 2 - 60, H / 2 + 40, 120, 60);
+
+  // Glowing Blade on Anvil
+  let bladeWidth = (progress / 100) * 180;
+  ctx.fillStyle = `hsl(${Math.max(0, 40 - (1500 - heat) / 30)}, 100%, 50%)`;
+  ctx.shadowColor = "#ff6b00"; ctx.shadowBlur = heat / 40;
+  ctx.fillRect(W / 2 - 90, H / 2 + 25, bladeWidth, 14);
+
+  // Precision Hammer Target Bar
+  ctx.fillStyle = "rgba(255,255,255,0.1)";
+  ctx.fillRect(W / 2 - 100, H / 2 - 80, 200, 16);
+
+  // Sweet spot
+  ctx.fillStyle = "rgba(0, 240, 255, 0.6)";
+  ctx.fillRect(W / 2 - 20, H / 2 - 80, 40, 16);
+
+  // Moving Indicator
+  ctx.fillStyle = "#ffcc00";
+  ctx.fillRect(W / 2 - 100 + hitTargetPos * 200 - 4, H / 2 - 84, 8, 24);
+
+  // Sparks
+  sparkParticles.forEach((p, index) => {
+    p.x += p.vx; p.y += p.vy; p.life -= 0.04;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = p.color; ctx.fill();
+    if (p.life <= 0) sparkParticles.splice(index, 1);
+  });
+}
+
+function gameLoop() {
+  hitTargetPos += hitDirection * 0.025;
+  if (hitTargetPos >= 1 || hitTargetPos <= 0) hitDirection *= -1;
+  heat = Math.max(200, heat - 0.15);
+
+  drawAnvil();
+  updateStats();
+  requestAnimationFrame(gameLoop);
+}
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+initLang(); updateLang(); updateStats();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
