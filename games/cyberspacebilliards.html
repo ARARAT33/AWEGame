@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🔮 Cosmic Zero-G Space Billiards</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔮</text></svg>">
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(15, 10, 35, 0.92);
+  --border: rgba(187, 0, 255, 0.35);
+  --primary: #d000ff;
+  --secondary: #00f0ff;
+  --accent: #ffcc00;
+  --text: #f5e8ff;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(18, 8, 30, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(208, 0, 255, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #fff; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #12081e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #100826 0%, #02030d 100%);
+  box-shadow: 0 0 35px rgba(208, 0, 255, 0.18); display: block; touch-action: none;
+}
+
+.hud-overlay { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 6px 20px; backdrop-filter: blur(10px); z-index: 5; }
+.hud-val { font-weight: 800; color: var(--accent); }
+
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(5, 2, 15, 0.9); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 20; }
+.modal-card { background: #120822; border: 1px solid var(--primary); border-radius: 22px; padding: 24px; width: 92%; max-width: 460px; text-align: center; box-shadow: 0 0 40px rgba(208,0,255,0.25); display: flex; flex-direction: column; gap: 12px; }
+
+.shop-item { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 12px; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🔮</span>
+    <h1 id="titleTxt">Cosmic Zero-G Space Billiards</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <button id="shopBtn" class="btn btn-primary">🪄 <span id="shopTxt">Cue Shop</span></button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <div class="hud-overlay">
+    <div>🪙 <span class="hud-val" id="coinsTxt">0</span></div>
+    <div>🏆 <span class="hud-val" id="scoreTxt">0</span></div>
+    <div>🌌 <span id="lblLevel">Sector 1</span></div>
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Cue Shop Modal -->
+  <div class="modal-overlay" id="shopModal" style="display:none;">
+    <div class="modal-card">
+      <h2>🪄 <span id="shopTitleTxt">Cosmic Cue Shop</span></h2>
+      <p style="font-size:0.85rem; color:#aaa;"><span id="balanceTxt">Balance:</span> 🪙 <strong id="shopCoinsVal" style="color:var(--accent);">0</strong></p>
+
+      <div class="shop-item">
+        <div style="text-align:left;">
+          <h4>🔮 Plasma Cue</h4>
+          <span style="font-size:0.75rem; color:#aaa;">+20% Shot Power</span>
+        </div>
+        <button class="btn btn-primary" id="buyPowerBtn">🪙 100</button>
+      </div>
+
+      <div class="shop-item">
+        <div style="text-align:left;">
+          <h4>🎯 Laser Trajectory Guide</h4>
+          <span style="font-size:0.75rem; color:#aaa;">Longer trajectory prediction</span>
+        </div>
+        <button class="btn btn-primary" id="buyGuideBtn">🪙 150</button>
+      </div>
+
+      <button id="closeShopBtn" class="btn" style="padding:10px; justify-content:center; margin-top:10px;">✖ <span id="closeTxt">Close Shop</span></button>
+    </div>
+  </div>
+</main>
+
+<script>
+// --- I18N DATA ---
+const TRANSLATIONS = {
+  en: {
+    title: "Cosmic Zero-G Space Billiards", home: "Home", shop: "Cue Shop",
+    shopTitle: "Cosmic Cue Shop", balance: "Balance:", close: "Close Shop",
+    sector: "Sector"
+  },
+  hy: {
+    title: "Տիեզերական Բիլիարդ Zero-G", home: "Գլխավոր", shop: "Խանութ",
+    shopTitle: "Տիեզերական Կիերի Խանութ", balance: "Հաշիվ:", close: "Փակել Խանութը",
+    sector: "Սեկտոր"
+  },
+  ru: {
+    title: "Космический Бильярд Zero-G", home: "Главная", shop: "Магазин Киев",
+    shopTitle: "Магазин Космических Киев", balance: "Баланс:", close: "Закрыть",
+    sector: "Сектор"
+  },
+  es: { title: "Billar Espacial Zero-G", home: "Inicio", shop: "Tienda Taco", shopTitle: "Tienda de Tacos Cósmicos", balance: "Balance:", close: "Cerrar", sector: "Sector" },
+  fr: { title: "Billard Spatial Zero-G", home: "Accueil", shop: "Boutique", shopTitle: "Boutique de Queues Spatiales", balance: "Solde:", close: "Fermer", sector: "Secteur" },
+  de: { title: "Kosmisches Zero-G Billard", home: "Start", shop: "Kö-Shop", shopTitle: "Kosmischer Kö-Shop", balance: "Guthaben:", close: "Schließen", sector: "Sektor" },
+  it: { title: "Biliardo Spaziale Zero-G", home: "Home", shop: "Negozio Stecche", shopTitle: "Negozio Stecche Cosmiche", balance: "Saldo:", close: "Chiudi", sector: "Settore" },
+  pt: { title: "Bilhar Espacial Zero-G", home: "Início", shop: "Loja Tacos", shopTitle: "Loja de Tacos Cósmicos", balance: "Saldo:", close: "Fechar", sector: "Setor" },
+  zh: { title: "无重力太空台球", home: "主页", shop: "球杆商店", shopTitle: "宇宙球杆商店", balance: "余额：", close: "关闭商店", sector: "星区" },
+  ja: { title: "無重力宇宙ビリヤード", home: "ホーム", shop: "キューショップ", shopTitle: "宇宙キューショップ", balance: "所持金:", close: "閉じろ", sector: "セクター" },
+  ko: { title: "무중력 우주 당구", home: "홈", shop: "큐 Shop", shopTitle: "코스믹 큐 Shop", balance: "보유 동전:", close: "닫기", sector: "섹터" }
+};
+
+let currentLang = 'en';
+
+// --- GAME STATE & LOCALSTORAGE ---
+let state = {
+  coins: 50,
+  score: 0,
+  sector: 1,
+  upgrades: { power: 1, guide: 1 }
+};
+
+function loadData() {
+  const saved = localStorage.getItem('awe_cyberspacebilliards_data');
+  if (saved) {
+    try { state = JSON.parse(saved); } catch(e){}
+  }
+  updateUI();
+}
+
+function saveData() {
+  localStorage.setItem('awe_cyberspacebilliards_data', JSON.stringify(state));
+  updateUI();
+}
+
+// --- AUDIO SYNTHESIS ---
+let audioCtx = null;
+let soundEnabled = true;
+
+function initAudio() {
+  if(!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+function playSound(type) {
+  if(!soundEnabled) return;
+  initAudio();
+  if(!audioCtx) return;
+
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  if(type === 'hit') {
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(220, now);
+    osc.frequency.exponentialRampToValueAtTime(110, now + 0.1);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.1);
+    osc.start(now); osc.stop(now + 0.1);
+  } else if(type === 'hole') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.exponentialRampToValueAtTime(880, now + 0.25);
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.25);
+    osc.start(now); osc.stop(now + 0.25);
+  }
+}
+
+// --- CANVAS & PHYSICS ENGINE ---
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let balls = [];
+let holes = [];
+let cueBall = null;
+let dragStart = null;
+let dragCurrent = null;
+
+function initLevel() {
+  const w = canvas.width, h = canvas.height;
+  balls = [];
+  holes = [
+    { x: 50, y: 50, r: 24 },
+    { x: w - 50, y: 50, r: 24 },
+    { x: 50, y: h - 50, r: 24 },
+    { x: w - 50, y: h - 50, r: 24 }
+  ];
+
+  // White Cue Ball
+  cueBall = { x: w * 0.3, y: h * 0.5, vx: 0, vy: 0, r: 14, color: '#ffffff', isCue: true };
+  balls.push(cueBall);
+
+  // Target Cosmic Balls
+  const colors = ['#d000ff', '#00f0ff', '#ffcc00', '#ff0055', '#00ffaa'];
+  for(let i = 0; i < 6; i++) {
+    balls.push({
+      x: w * 0.6 + (i % 3) * 32,
+      y: h * 0.4 + Math.floor(i / 3) * 32,
+      vx: 0, vy: 0, r: 14,
+      color: colors[i % colors.length],
+      isCue: false
+    });
+  }
+}
+
+function resizeCanvas() {
+  const m = document.querySelector('main');
+  canvas.width = m.clientWidth;
+  canvas.height = m.clientHeight;
+  initLevel();
+}
+
+window.addEventListener('resize', resizeCanvas);
+
+// Interaction Events
+canvas.addEventListener('pointerdown', e => {
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  const dist = Math.hypot(x - cueBall.x, y - cueBall.y);
+  if(dist < 30 && Math.hypot(cueBall.vx, cueBall.vy) < 0.1) {
+    dragStart = { x: cueBall.x, y: cueBall.y };
+    dragCurrent = { x, y };
+  }
+});
+
+canvas.addEventListener('pointermove', e => {
+  if(dragStart) {
+    const rect = canvas.getBoundingClientRect();
+    dragCurrent = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }
+});
+
+canvas.addEventListener('pointerup', () => {
+  if(dragStart && dragCurrent) {
+    const dx = dragStart.x - dragCurrent.x;
+    const dy = dragStart.y - dragCurrent.y;
+    const powerMult = 0.12 * (1 + state.upgrades.power * 0.2);
+
+    cueBall.vx = dx * powerMult;
+    cueBall.vy = dy * powerMult;
+    playSound('hit');
+  }
+  dragStart = null;
+  dragCurrent = null;
+});
+
+function updatePhysics() {
+  // Update ball positions & bounce off walls
+  balls.forEach(b => {
+    b.x += b.vx;
+    b.y += b.vy;
+    b.vx *= 0.985; // Friction in zero-G atmosphere
+    b.vy *= 0.985;
+
+    if(b.x - b.r < 20 || b.x + b.r > canvas.width - 20) { b.vx *= -0.9; }
+    if(b.y - b.r < 20 || b.y + b.r > canvas.height - 20) { b.vy *= -0.9; }
+  });
+
+  // Ball vs Ball collisions
+  for(let i = 0; i < balls.length; i++) {
+    for(let j = i + 1; j < balls.length; j++) {
+      const b1 = balls[i], b2 = balls[j];
+      const dx = b2.x - b1.x, dy = b2.y - b1.y;
+      const dist = Math.hypot(dx, dy);
+
+      if(dist < b1.r + b2.r) {
+        playSound('hit');
+        const angle = Math.atan2(dy, dx);
+        const speed1 = Math.hypot(b1.vx, b1.vy);
+        const speed2 = Math.hypot(b2.vx, b2.vy);
+
+        b1.vx = -Math.cos(angle) * speed2;
+        b1.vy = -Math.sin(angle) * speed2;
+        b2.vx = Math.cos(angle) * speed1;
+        b2.vy = Math.sin(angle) * speed1;
+      }
+    }
+  }
+
+  // Check Hole Pocketing
+  for(let i = balls.length - 1; i >= 0; i--) {
+    const b = balls[i];
+    holes.forEach(h => {
+      if(Math.hypot(b.x - h.x, b.y - h.y) < h.r) {
+        playSound('hole');
+        if(b.isCue) {
+          // Reset Cue Ball
+          b.x = canvas.width * 0.3; b.y = canvas.height * 0.5;
+          b.vx = 0; b.vy = 0;
+        } else {
+          balls.splice(i, 1);
+          state.coins += 20;
+          state.score += 100;
+          saveData();
+
+          if(balls.length === 1) { // Only cue ball left
+            state.sector++;
+            saveData();
+            initLevel();
+          }
+        }
+      }
+    });
+  }
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Table Outer Boundary Glow
+  ctx.strokeStyle = '#d000ff';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+
+  // Draw Black Hole Pockets
+  holes.forEach(h => {
+    ctx.fillStyle = '#000000';
+    ctx.shadowColor = '#d000ff';
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.arc(h.x, h.y, h.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.shadowBlur = 0;
+
+  // Aiming Drag Line & Guide
+  if(dragStart && dragCurrent) {
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.8)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cueBall.x, cueBall.y);
+    const guideLen = 120 * state.upgrades.guide;
+    const angle = Math.atan2(dragStart.y - dragCurrent.y, dragStart.x - dragCurrent.x);
+    ctx.lineTo(cueBall.x + Math.cos(angle) * guideLen, cueBall.y + Math.sin(angle) * guideLen);
+    ctx.stroke();
+  }
+
+  // Draw Balls
+  balls.forEach(b => {
+    ctx.fillStyle = b.color;
+    ctx.shadowColor = b.color;
+    ctx.shadowBlur = b.isCue ? 15 : 8;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.shadowBlur = 0;
+
+  updatePhysics();
+  requestAnimationFrame(render);
+}
+
+function updateUI() {
+  document.getElementById('coinsTxt').textContent = state.coins;
+  document.getElementById('shopCoinsVal').textContent = state.coins;
+  document.getElementById('scoreTxt').textContent = state.score;
+  const t = TRANSLATIONS[currentLang];
+  document.getElementById('lblLevel').textContent = `${t.sector} ${state.sector}`;
+}
+
+function populateLangDropdown() {
+  const sel = document.getElementById('langSel');
+  sel.innerHTML = '';
+  Object.keys(TRANSLATIONS).forEach(lang => {
+    const opt = document.createElement('option');
+    opt.value = lang;
+    opt.textContent = lang.toUpperCase();
+    if(lang === currentLang) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function setLanguage(lang) {
+  if(!TRANSLATIONS[lang]) return;
+  currentLang = lang;
+  const t = TRANSLATIONS[lang];
+
+  document.getElementById('titleTxt').textContent = t.title;
+  document.getElementById('homeTxt').textContent = t.home;
+  document.getElementById('shopTxt').textContent = t.shop;
+  document.getElementById('shopTitleTxt').textContent = t.shopTitle;
+  document.getElementById('balanceTxt').textContent = t.balance;
+  document.getElementById('closeTxt').textContent = t.close;
+  updateUI();
+}
+
+function bindEvents() {
+  document.getElementById('langSel').addEventListener('change', e => setLanguage(e.target.value));
+
+  document.getElementById('sndBtn').addEventListener('click', () => {
+    soundEnabled = !soundEnabled;
+    document.getElementById('sndBtn').textContent = soundEnabled ? '🔊' : '🔇';
+  });
+
+  document.getElementById('shopBtn').addEventListener('click', () => {
+    document.getElementById('shopModal').style.display = 'flex';
+  });
+
+  document.getElementById('closeShopBtn').addEventListener('click', () => {
+    document.getElementById('shopModal').style.display = 'none';
+  });
+
+  document.getElementById('buyPowerBtn').addEventListener('click', () => {
+    if(state.coins >= 100) {
+      state.coins -= 100;
+      state.upgrades.power++;
+      saveData();
+    }
+  });
+
+  document.getElementById('buyGuideBtn').addEventListener('click', () => {
+    if(state.coins >= 150) {
+      state.coins -= 150;
+      state.upgrades.guide += 0.5;
+      saveData();
+    }
+  });
+}
+
+// --- INIT ---
+window.addEventListener('DOMContentLoaded', () => {
+  loadData();
+  populateLangDropdown();
+  setLanguage('en');
+  resizeCanvas();
+  bindEvents();
+  render();
+});
+</script>
+</body>
+</html>

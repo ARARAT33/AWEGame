@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🌱 Cyber Hydroponics & Flora RPG</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
+<style>
+:root {
+  --bg: #030a0f;
+  --panel: rgba(10, 25, 30, 0.92);
+  --border: rgba(0, 255, 170, 0.35);
+  --primary: #00ffaa;
+  --secondary: #00d8ff;
+  --accent: #ffcc00;
+  --text: #e0f8f0;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; background: rgba(8, 18, 22, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 255, 170, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a191e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 16px; width: 100%; height: 100%; overflow-y: auto; }
+
+.stats-panel {
+  display: flex; gap: 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 12px 20px; flex-wrap: wrap; justify-content: center; backdrop-filter: blur(10px); width: 100%; max-width: 900px;
+}
+.stat-box { display: flex; align-items: center; gap: 6px; font-size: 0.95rem; font-weight: 700; }
+
+.farm-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 16px 0; width: 100%; max-width: 900px;
+}
+.farm-pod {
+  background: rgba(10, 25, 35, 0.85); border: 1px solid var(--border); border-radius: 20px; padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; min-height: 180px; position: relative; box-shadow: 0 0 20px rgba(0,255,170,0.1); transition: 0.25s;
+}
+.farm-pod:hover { border-color: var(--primary); transform: translateY(-3px); }
+.pod-plant { font-size: 3rem; margin: 10px 0; transition: 0.3s transform; }
+.pod-progress { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+.pod-bar { height: 100%; background: var(--primary); width: 0%; transition: 0.3s width; }
+
+.action-bar {
+  display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 900px; margin-top: 10px;
+}
+
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(3, 10, 15, 0.9); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 20; }
+.modal-card { background: #0a1920; border: 1px solid var(--primary); border-radius: 22px; padding: 24px; width: 92%; max-width: 480px; text-align: center; box-shadow: 0 0 40px rgba(0,255,170,0.25); display: flex; flex-direction: column; gap: 14px; max-height: 85vh; overflow-y: auto; }
+
+.shop-item { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 14px; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
+
+@media (max-width: 600px) {
+  .farm-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🌱</span>
+    <h1 id="titleTxt">Cyber Hydroponics & Flora RPG</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <button id="shopBtn" class="btn btn-primary">🛒 <span id="shopTxt">Lab Shop</span></button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <div class="stats-panel">
+    <div class="stat-box">🪙 <span id="coinsTxt">100</span> <span id="lblCoins">Bio-Credits</span></div>
+    <div class="stat-box">🧪 <span id="nutrientsTxt">100%</span> <span id="lblNutrients">Nutrient Tank</span></div>
+    <div class="stat-box">💡 <span id="uvTxt">Spectrum UV-A</span></div>
+    <div class="stat-box">⭐ <span id="harvestedTxt">0</span> <span id="lblHarvested">Harvested</span></div>
+  </div>
+
+  <div class="farm-grid" id="farmGrid"></div>
+
+  <div class="action-bar">
+    <button class="btn btn-primary" id="refillBtn" style="padding:10px 18px;">🧪 <span id="refillTxt">Refill Nutrient Fluid (🪙 20)</span></button>
+    <button class="btn" id="uvBtn" style="padding:10px 18px;">💡 <span id="uvToggleTxt">Toggle UV Light Spectrum</span></button>
+  </div>
+
+  <!-- Lab Shop Modal -->
+  <div class="modal-overlay" id="shopModal" style="display:none;">
+    <div class="modal-card">
+      <h2>🧪 <span id="shopTitleTxt">Quantum Flora Lab Shop</span></h2>
+
+      <div class="shop-item">
+        <div style="text-align:left;">
+          <h4 id="seedNeonTxt">🧪 Neon Bloom Seed</h4>
+          <span style="font-size:0.75rem; color:#aaa;" id="seedNeonDesc">Grows fast plasma flowers</span>
+        </div>
+        <button class="btn btn-primary" id="buyNeonBtn">🪙 50</button>
+      </div>
+
+      <div class="shop-item">
+        <div style="text-align:left;">
+          <h4 id="seedQuantumTxt">✨ Quantum Lotus Seed</h4>
+          <span style="font-size:0.75rem; color:#aaa;" id="seedQuantumDesc">Rare high-value quantum flora</span>
+        </div>
+        <button class="btn btn-primary" id="buyQuantumBtn">🪙 150</button>
+      </div>
+
+      <div class="shop-item">
+        <div style="text-align:left;">
+          <h4 id="upgTankTxt">⚡ Tank Capacity Upg</h4>
+          <span style="font-size:0.75rem; color:#aaa;" id="upgTankDesc">Increases max nutrient storage</span>
+        </div>
+        <button class="btn btn-primary" id="buyTankBtn">🪙 200</button>
+      </div>
+
+      <button id="closeShopBtn" class="btn" style="padding:10px; justify-content:center; margin-top:10px;">✖ <span id="closeTxt">Close Lab</span></button>
+    </div>
+  </div>
+</main>
+
+<script>
+// --- I18N DATA ---
+const TRANSLATIONS = {
+  en: {
+    title: "Cyber Hydroponics & Flora RPG", home: "Home", shop: "Lab Shop",
+    lblCoins: "Bio-Credits", lblNutrients: "Nutrient Tank", lblHarvested: "Harvested",
+    refill: "Refill Nutrient Fluid (🪙 20)", uvToggle: "Toggle UV Light Spectrum",
+    shopTitle: "Quantum Flora Lab Shop", close: "Close Lab", emptyPod: "Empty Pod",
+    plantBtn: "🌱 Plant Seed", harvestBtn: "✨ Harvest Flora",
+    seedNeon: "🧪 Neon Bloom Seed", seedNeonDesc: "Grows fast plasma flowers (+🪙 80)",
+    seedQuantum: "✨ Quantum Lotus Seed", seedQuantumDesc: "Rare high-value quantum flora (+🪙 250)",
+    upgTank: "⚡ Tank Capacity Upg", upgTankDesc: "Increases max nutrient storage"
+  },
+  hy: {
+    title: "Կիբեռ Հիդրոպոնիկա և Ֆլորա RPG", home: "Գլխավոր", shop: "Լաբորատորիա",
+    lblCoins: "Բիո-Կրեդիտներ", lblNutrients: "Սննդանյութի Բակ", lblHarvested: "Բերքահավաք",
+    refill: "Լցնել Սննդանյութ (🪙 20)", uvToggle: "Փոխել UV Լույսը",
+    shopTitle: "Քվանտային Ֆլորայի Խանութ", close: "Փակել Խանութը", emptyPod: "Դատարկ Խցիկ",
+    plantBtn: "🌱 Տնկել Սերմ", harvestBtn: "✨ Հավաքել Բերքը",
+    seedNeon: "🧪 Նեոնային Սերմ", seedNeonDesc: "Արագ աճող պլազմային ծաղիկ (+🪙 80)",
+    seedQuantum: "✨ Քվանտային Լոտոս", seedQuantumDesc: "Հազվագյուտ քվանտային ֆլորա (+🪙 250)",
+    upgTank: "⚡ Բակի Թարմացում", upgTankDesc: "Մեծացնում է սննդանյութի տարողությունը"
+  },
+  ru: {
+    title: "Кибер Гидропоника и Флора RPG", home: "Главная", shop: "Лаборатория",
+    lblCoins: "Био-Кредиты", lblNutrients: "Бак Питания", lblHarvested: "Собрано",
+    refill: "Заправить Питание (🪙 20)", uvToggle: "Переключить UV Свет",
+    shopTitle: "Магазин Квантовой Флоры", close: "Закрыть", emptyPod: "Пустой Отсек",
+    plantBtn: "🌱 Посадить Семя", harvestBtn: "✨ Собрать Урожай",
+    seedNeon: "🧪 Неоновое Семя", seedNeonDesc: "Быстрорастущий плазменный цветок (+🪙 80)",
+    seedQuantum: "✨ Квантовый Лотос", seedQuantumDesc: "Редкая квантовая флора (+🪙 250)",
+    upgTank: "⚡ Улучшение Бака", upgTankDesc: "Увеличивает емкость бака"
+  },
+  es: { title: "Ciber Hidroponía RPG", home: "Inicio", shop: "Tienda Lab", lblCoins: "Bio-Créditos", lblNutrients: "Tanque Nutriente", lblHarvested: "Cosechado", refill: "Rellenar Nutrientes (🪙 20)", uvToggle: "Cambiar Luz UV", shopTitle: "Tienda Flora Cuántica", close: "Cerrar", emptyPod: "Módulo Vacío", plantBtn: "🌱 Plantar", harvestBtn: "✨ Cosechar", seedNeon: "🧪 Semilla Neón", seedNeonDesc: "Flor de plasma rápida (+🪙 80)", seedQuantum: "✨ Loto Cuántico", seedQuantumDesc: "Rara flora cuántica (+🪙 250)", upgTank: "⚡ Mejo. Tanque", upgTankDesc: "Aumenta capacidad" },
+  fr: { title: "Cyber Hydroponie RPG", home: "Accueil", shop: "Labo", lblCoins: "Bio-Crédits", lblNutrients: "Réservoir", lblHarvested: "Récolté", refill: "Remplir Nutriments (🪙 20)", uvToggle: "Changer Lumière UV", shopTitle: "Boutique Flore Quantique", close: "Fermer", emptyPod: "Module Vide", plantBtn: "🌱 Planter", harvestBtn: "✨ Récolter", seedNeon: "🧪 Graine Néon", seedNeonDesc: "Fleur de plasma rapide (+🪙 80)", seedQuantum: "✨ Lotus Quantique", seedQuantumDesc: "Flore quantique rare (+🪙 250)", upgTank: "⚡ Amélio. Réservoir", upgTankDesc: "Augmente capacité" },
+  de: { title: "Cyber Hydrokultur RPG", home: "Start", shop: "Labor", lblCoins: "Bio-Credits", lblNutrients: "Nährstoff-Tank", lblHarvested: "Geerntet", refill: "Nährstoff Auffüllen (🪙 20)", uvToggle: "UV-Licht Umschalten", shopTitle: "Quanten-Flora Labor", close: "Schließen", emptyPod: "Leeres Modul", plantBtn: "🌱 Pflanzen", harvestBtn: "✨ Ernten", seedNeon: "🧪 Neon-Samen", seedNeonDesc: "Schnell wachsende Plasma-Blume (+🪙 80)", seedQuantum: "✨ Quanten-Lotus", seedQuantumDesc: "Seltene Quanten-Flora (+🪙 250)", upgTank: "⚡ Tank-Upgrade", upgTankDesc: "Erhöht Tank-Kapazität" },
+  it: { title: "Cyber Idroponica RPG", home: "Home", shop: "Negozio Lab", lblCoins: "Bio-Crediti", lblNutrients: "Serbatoio", lblHarvested: "Raccolto", refill: "Ricarica Nutrienti (🪙 20)", uvToggle: "Cambia Luce UV", shopTitle: "Negozio Flora Quantica", close: "Chiudi", emptyPod: "Modulo Vuoto", plantBtn: "🌱 Pianta", harvestBtn: "✨ Raccogli", seedNeon: "🧪 Seme Neon", seedNeonDesc: "Fiore al plasma veloce (+🪙 80)", seedQuantum: "✨ Loto Quantico", seedQuantumDesc: "Rara flora quantica (+🪙 250)", upgTank: "⚡ Potenz. Serbatoio", upgTankDesc: "Aumenta capacità" },
+  pt: { title: "Cyber Hidroponia RPG", home: "Início", shop: "Loja Lab", lblCoins: "Bio-Créditos", lblNutrients: "Tanque Nutriente", lblHarvested: "Colhido", refill: "Reabastecer Nutrientes (🪙 20)", uvToggle: "Mudar Luz UV", shopTitle: "Loja Flora Quântica", close: "Fechar", emptyPod: "Módulo Vazio", plantBtn: "🌱 Plantar", harvestBtn: "✨ Colher", seedNeon: "🧪 Semente Neon", seedNeonDesc: "Flor de plasma rápida (+🪙 80)", seedQuantum: "✨ Lótus Quântico", seedQuantumDesc: "Rara flora quântica (+🪙 250)", upgTank: "⚡ Melh. Tanque", upgTankDesc: "Aumenta capacidade" },
+  zh: { title: "赛博水培植物 RPG", home: "主页", shop: "实验室", lblCoins: "生物积分", lblNutrients: "营养液罐", lblHarvested: "已收割", refill: "补充营养液 (🪙 20)", uvToggle: "切换紫外灯光谱", shopTitle: "量子植物实验室", close: "关闭实验室", emptyPod: "空培植舱", plantBtn: "🌱 播种", harvestBtn: "✨ 收割植物", seedNeon: "🧪 霓光花种子", seedNeonDesc: "快速生长等离子花朵 (+🪙 80)", seedQuantum: "✨ 量子莲花种子", seedQuantumDesc: "稀有高价值量子植物 (+🪙 250)", upgTank: "⚡ 扩充营养罐", upgTankDesc: "提升最大营养储量" },
+  ja: { title: "サイバー水耕栽培 RPG", home: "ホーム", shop: "ラボショップ", lblCoins: "バイオクレジット", lblNutrients: "養分タンク", lblHarvested: "収穫数", refill: "養分補給 (🪙 20)", uvToggle: "UV光切り替え", shopTitle: "量子フローララボ", close: "閉じろ", emptyPod: "空のカプセル", plantBtn: "🌱 植える", harvestBtn: "✨ 収穫する", seedNeon: "🧪 ネオンの種", seedNeonDesc: "高速プラズマの花 (+🪙 80)", seedQuantum: "✨ 量子ロータス", seedQuantumDesc: "高価値な量子植物 (+🪙 250)", upgTank: "⚡ タンク拡張", upgTankDesc: "最大養分容量増加" },
+  ko: { title: "사이버 수경재배 RPG", home: "홈", shop: "연구소", lblCoins: "바이오 크레딧", lblNutrients: "영양 탱크", lblHarvested: "수확량", refill: "영양액 충전 (🪙 20)", uvToggle: "UV 스펙트럼 전환", shopTitle: "양자 식물 연구소", close: "닫기", emptyPod: "빈 팟", plantBtn: "🌱 심기", harvestBtn: "✨ 수확하기", seedNeon: "🧪 네온 종자", seedNeonDesc: "빠른 플라즈마 꽃 (+🪙 80)", seedQuantum: "✨ 양자 연꽃 종자", seedQuantumDesc: "희귀한 고가치 양자 식물 (+🪙 250)", upgTank: "⚡ 탱크 용량 업그레이드", upgTankDesc: "최대 영양 저장량 증가" }
+};
+
+let currentLang = 'en';
+
+// --- GAME STATE & LOCALSTORAGE ---
+let state = {
+  coins: 100,
+  nutrients: 100,
+  maxNutrients: 100,
+  harvested: 0,
+  uvMode: 'UV-A',
+  inventory: { neonSeeds: 2, quantumSeeds: 0 },
+  pods: [
+    { type: null, progress: 0 }, { type: null, progress: 0 }, { type: null, progress: 0 },
+    { type: null, progress: 0 }, { type: null, progress: 0 }, { type: null, progress: 0 }
+  ]
+};
+
+function loadData() {
+  const saved = localStorage.getItem('awe_cybergardener_data');
+  if (saved) {
+    try { state = JSON.parse(saved); } catch(e){}
+  }
+  updateUI();
+}
+
+function saveData() {
+  localStorage.setItem('awe_cybergardener_data', JSON.stringify(state));
+  updateUI();
+}
+
+// --- AUDIO SYNTHESIS ---
+let audioCtx = null;
+let soundEnabled = true;
+
+function initAudio() {
+  if(!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+function playSound(type) {
+  if(!soundEnabled) return;
+  initAudio();
+  if(!audioCtx) return;
+
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  if(type === 'plant') {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.linearRampToValueAtTime(600, now + 0.15);
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.15);
+    osc.start(now); osc.stop(now + 0.15);
+  } else if(type === 'harvest') {
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(523.25, now);
+    osc.frequency.setValueAtTime(659.25, now + 0.1);
+    osc.frequency.setValueAtTime(783.99, now + 0.2);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.linearRampToValueAtTime(0, now + 0.35);
+    osc.start(now); osc.stop(now + 0.35);
+  }
+}
+
+// --- UI & GAME LOGIC ---
+function renderPods() {
+  const grid = document.getElementById('farmGrid');
+  grid.innerHTML = '';
+  const t = TRANSLATIONS[currentLang];
+
+  state.pods.forEach((pod, index) => {
+    const div = document.createElement('div');
+    div.className = 'farm-pod';
+
+    let plantIcon = '🌫️';
+    if(pod.type === 'neon') plantIcon = pod.progress >= 100 ? '🌺' : '🌱';
+    if(pod.type === 'quantum') plantIcon = pod.progress >= 100 ? '🪷' : '🌿';
+
+    div.innerHTML = `
+      <div style="font-size:0.8rem; font-weight:700; color:var(--primary);">POD #${index + 1}</div>
+      <div class="pod-plant">${plantIcon}</div>
+      <div class="pod-progress"><div class="pod-bar" style="width:${pod.progress}%"></div></div>
+      ${pod.type === null ? `
+        <button class="btn btn-primary" onclick="plantSeed(${index})" style="margin-top:10px; width:100%; justify-content:center;">${t.plantBtn}</button>
+      ` : pod.progress >= 100 ? `
+        <button class="btn" onclick="harvestPod(${index})" style="margin-top:10px; width:100%; justify-content:center; background:var(--accent); color:#000;">${t.harvestBtn}</button>
+      ` : `
+        <span style="font-size:0.75rem; color:#aaa; margin-top:8px;">Growing... ${Math.floor(pod.progress)}%</span>
+      `}
+    `;
+    grid.appendChild(div);
+  });
+}
+
+function plantSeed(podIndex) {
+  if(state.nutrients < 10) return alert("Nutrient fluid too low!");
+  if(state.inventory.neonSeeds > 0) {
+    state.inventory.neonSeeds--;
+    state.pods[podIndex] = { type: 'neon', progress: 0 };
+    state.nutrients -= 10;
+    playSound('plant');
+    saveData();
+  } else if(state.inventory.quantumSeeds > 0) {
+    state.inventory.quantumSeeds--;
+    state.pods[podIndex] = { type: 'quantum', progress: 0 };
+    state.nutrients -= 10;
+    playSound('plant');
+    saveData();
+  } else {
+    alert("No seeds in inventory! Buy seeds in the Lab Shop.");
+  }
+}
+
+function harvestPod(podIndex) {
+  const pod = state.pods[podIndex];
+  if(pod.type === 'neon') {
+    state.coins += 80;
+  } else if(pod.type === 'quantum') {
+    state.coins += 250;
+  }
+  state.harvested++;
+  state.pods[podIndex] = { type: null, progress: 0 };
+  playSound('harvest');
+  saveData();
+}
+
+function gameTick() {
+  let speedMult = state.uvMode === 'UV-B' ? 1.8 : 1.0;
+  state.pods.forEach(pod => {
+    if(pod.type && pod.progress < 100) {
+      pod.progress = Math.min(100, pod.progress + (1.2 * speedMult));
+    }
+  });
+  updateUI();
+}
+
+function updateUI() {
+  document.getElementById('coinsTxt').textContent = state.coins;
+  document.getElementById('nutrientsTxt').textContent = `${Math.floor((state.nutrients / state.maxNutrients) * 100)}%`;
+  document.getElementById('uvTxt').textContent = `Spectrum ${state.uvMode}`;
+  document.getElementById('harvestedTxt').textContent = state.harvested;
+  renderPods();
+}
+
+function populateLangDropdown() {
+  const sel = document.getElementById('langSel');
+  sel.innerHTML = '';
+  Object.keys(TRANSLATIONS).forEach(lang => {
+    const opt = document.createElement('option');
+    opt.value = lang;
+    opt.textContent = lang.toUpperCase();
+    if(lang === currentLang) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function setLanguage(lang) {
+  if(!TRANSLATIONS[lang]) return;
+  currentLang = lang;
+  const t = TRANSLATIONS[lang];
+
+  document.getElementById('titleTxt').textContent = t.title;
+  document.getElementById('homeTxt').textContent = t.home;
+  document.getElementById('shopTxt').textContent = t.shop;
+  document.getElementById('lblCoins').textContent = t.lblCoins;
+  document.getElementById('lblNutrients').textContent = t.lblNutrients;
+  document.getElementById('lblHarvested').textContent = t.lblHarvested;
+  document.getElementById('refillTxt').textContent = t.refill;
+  document.getElementById('uvToggleTxt').textContent = t.uvToggle;
+  document.getElementById('shopTitleTxt').textContent = t.shopTitle;
+  document.getElementById('closeTxt').textContent = t.close;
+
+  document.getElementById('seedNeonTxt').textContent = t.seedNeon;
+  document.getElementById('seedNeonDesc').textContent = t.seedNeonDesc;
+  document.getElementById('seedQuantumTxt').textContent = t.seedQuantum;
+  document.getElementById('seedQuantumDesc').textContent = t.seedQuantumDesc;
+  document.getElementById('upgTankTxt').textContent = t.upgTank;
+  document.getElementById('upgTankDesc').textContent = t.upgTankDesc;
+
+  renderPods();
+}
+
+function bindEvents() {
+  document.getElementById('langSel').addEventListener('change', e => setLanguage(e.target.value));
+
+  document.getElementById('sndBtn').addEventListener('click', () => {
+    soundEnabled = !soundEnabled;
+    document.getElementById('sndBtn').textContent = soundEnabled ? '🔊' : '🔇';
+  });
+
+  document.getElementById('refillBtn').addEventListener('click', () => {
+    if(state.coins >= 20) {
+      state.coins -= 20;
+      state.nutrients = state.maxNutrients;
+      saveData();
+    }
+  });
+
+  document.getElementById('uvBtn').addEventListener('click', () => {
+    state.uvMode = state.uvMode === 'UV-A' ? 'UV-B' : 'UV-A';
+    saveData();
+  });
+
+  document.getElementById('shopBtn').addEventListener('click', () => {
+    document.getElementById('shopModal').style.display = 'flex';
+  });
+
+  document.getElementById('closeShopBtn').addEventListener('click', () => {
+    document.getElementById('shopModal').style.display = 'none';
+  });
+
+  document.getElementById('buyNeonBtn').addEventListener('click', () => {
+    if(state.coins >= 50) {
+      state.coins -= 50;
+      state.inventory.neonSeeds++;
+      saveData();
+    }
+  });
+
+  document.getElementById('buyQuantumBtn').addEventListener('click', () => {
+    if(state.coins >= 150) {
+      state.coins -= 150;
+      state.inventory.quantumSeeds++;
+      saveData();
+    }
+  });
+
+  document.getElementById('buyTankBtn').addEventListener('click', () => {
+    if(state.coins >= 200) {
+      state.coins -= 200;
+      state.maxNutrients += 50;
+      state.nutrients = state.maxNutrients;
+      saveData();
+    }
+  });
+}
+
+// --- INIT ---
+window.addEventListener('DOMContentLoaded', () => {
+  loadData();
+  populateLangDropdown();
+  setLanguage('en');
+  bindEvents();
+  setInterval(gameTick, 1000);
+});
+</script>
+</body>
+</html>

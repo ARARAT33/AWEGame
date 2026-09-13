@@ -1,5 +1,6 @@
-127.0.0.1 - - [12/Sep/2026 11:27:07] "GET /index.html HTTP/1.1" 200 -
-127.0.0.1 - - [12/Sep/2026 11:27:07] "GET /games.js HTTP/1.1" 200 -
-127.0.0.1 - - [12/Sep/2026 11:27:09] "GET /games/cybertabletennis.html HTTP/1.1" 200 -
-127.0.0.1 - - [12/Sep/2026 11:27:10] "GET /games/cyberblacksmith.html HTTP/1.1" 200 -
-127.0.0.1 - - [12/Sep/2026 11:27:11] "GET /games/cyberparkour.html HTTP/1.1" 200 -
+127.0.0.1 - - [13/Sep/2026 11:11:05] "HEAD /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [13/Sep/2026 11:11:48] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [13/Sep/2026 11:11:48] "GET /games.js HTTP/1.1" 200 -
+127.0.0.1 - - [13/Sep/2026 11:11:49] "GET /games/cyberracing1v1.html HTTP/1.1" 200 -
+127.0.0.1 - - [13/Sep/2026 11:11:51] "GET /games/cybergardener.html HTTP/1.1" 200 -
+127.0.0.1 - - [13/Sep/2026 11:11:51] "GET /games/cyberspacebilliards.html HTTP/1.1" 200 -
