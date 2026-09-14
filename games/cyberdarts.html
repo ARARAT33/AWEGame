@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🎯 Cyber Darts Master</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(10, 16, 35, 0.92);
+  --border: rgba(0, 240, 255, 0.35);
+  --primary: #00f0ff;
+  --secondary: #ff0055;
+  --accent: #ffcc00;
+  --text: #f0f6fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 26, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(0, 240, 255, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0b1528 0%, #02050f 100%);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.18); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; }
+.score-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px 16px; display: flex; align-items: center; gap: 10px; backdrop-filter: blur(10px); }
+.score-val { font-size: 1.5rem; font-weight: 900; color: var(--primary); }
+
+.stats-bar { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px 16px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 12px; font-size: 0.85rem; }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🎯</span>
+    <h1 id="titleTxt">Cyber Darts Master</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="score-card">
+        <span style="color:#aaa;" id="scoreLbl">SCORE</span>
+        <span class="score-val" id="scoreVal">501</span>
+      </div>
+
+      <div class="stats-bar">
+        <span>DARTS: <span id="dartsLeft" style="color:#fff;">3</span></span>
+        <span>🪙 <span id="coinsVal">0</span></span>
+        <span>🏆 <span id="highVal">0</span></span>
+      </div>
+
+      <div class="score-card">
+        <span style="color:var(--accent);" id="lastThrowLbl">LAST THROW</span>
+        <span class="score-val" id="lastThrowVal" style="color:var(--accent);">0</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Darts Master", home: "Home", score: "SCORE", lastThrow: "LAST THROW", win: "BULLSEYE! ROUND COMPLETE!", typeMsg: "Type a message..." },
+  hy: { title: "Կիբեռ Դարթս Master", home: "Գլխավոր", score: "ՄԻԱՎՈՐ", lastThrow: "ՎԵՐՋԻՆ ՀԱՐՎԱԾ", win: "ԲՈՒԼՍԱՅԻ! ՌԱՈՒՆԴԸ ԱՎԱՐՏՎԱԾ Է!", typeMsg: "Գրեք..." },
+  ru: { title: "Кибер Дартс Мастер", home: "Главная", score: "СЧЕТ", lastThrow: "ПОСЛЕДНИЙ БРОСОК", win: "В ЯБЛОЧКО! РАУНД ЗАВЕРШЕН!", typeMsg: "Сообщение..." },
+  es: { title: "Cyber Darts Master", home: "Inicio", score: "PUNTOS", lastThrow: "ÚLTIMO TIRO", win: "¡DIANA! ¡RONDA COMPLETA!", typeMsg: "Escribe..." },
+  fr: { title: "Cyber Darts Master", home: "Accueil", score: "SCORE", lastThrow: "DERNIER TIR", win: "BULLSEYE ! MANCHE TERMINÉE !", typeMsg: "Message..." },
+  de: { title: "Cyber Darts Master", home: "Startseite", score: "PUNKTE", lastThrow: "LETZTER WURF", win: "VOLLES ROHR! RUNDE BEENDET!", typeMsg: "Nachricht..." },
+  it: { title: "Cyber Darts Master", home: "Home", score: "PUNTEGGIO", lastThrow: "ULTIMO TIRO", win: "CENTRO! TURNATO COMPLETATO!", typeMsg: "Messaggio..." },
+  pt: { title: "Cyber Darts Master", home: "Início", score: "PONTOS", lastThrow: "ÚLTIMO ARREMESSO", win: "NA VEIA! RODADA CONCLUÍDA!", typeMsg: "Mensagem..." },
+  tr: { title: "Cyber Darts Master", home: "Ana Sayfa", score: "SKOR", lastThrow: "SON ATIŞ", win: "TAM ISABET! TUR TAMAMLANDI!", typeMsg: "Mesaj..." },
+  ja: { title: "サイバーダーツ マスター", home: "ホーム", score: "スコア", lastThrow: "ラストスロー", win: "ブルズアイ！ラウンドクリア！", typeMsg: "メッセージ..." },
+  zh: { title: "赛博飞镖 Master", home: "主页", score: "得分", lastThrow: "上次投掷", win: "靶心！回合结束！", typeMsg: "消息..." }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+let coins = parseInt(localStorage.getItem("cd_coins") || "0");
+let high = parseInt(localStorage.getItem("cd_high") || "0");
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 900, H = 550;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'throw') {
+    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+    gain.gain.setValueAtTime(0.25, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+  } else if (type === 'hit') {
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(120, now + 0.12);
+    gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+  } else if (type === 'bullseye') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(523, now); osc.frequency.setValueAtTime(659, now + 0.1); osc.frequency.setValueAtTime(783, now + 0.2);
+    gain.gain.setValueAtTime(0.5, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.35);
+}
+
+let board = { cx: W / 2, cy: H / 2, r: 180 };
+let currentScore = 501;
+let dartsLeft = 3;
+let thrownDarts = [];
+
+let aiming = false;
+let aimStart = { x: 0, y: 0 };
+let aimCurrent = { x: 0, y: 0 };
+let wind = { x: (Math.random() - 0.5) * 4, y: (Math.random() - 0.5) * 4 };
+
+canvas.addEventListener("pointerdown", (e) => {
+  const rect = canvas.getBoundingClientRect();
+  aimStart.x = e.clientX - rect.left;
+  aimStart.y = e.clientY - rect.top;
+  aimCurrent.x = aimStart.x; aimCurrent.y = aimStart.y;
+  aiming = true;
+});
+
+canvas.addEventListener("pointermove", (e) => {
+  if (!aiming) return;
+  const rect = canvas.getBoundingClientRect();
+  aimCurrent.x = e.clientX - rect.left;
+  aimCurrent.y = e.clientY - rect.top;
+});
+
+canvas.addEventListener("pointerup", (e) => {
+  if (!aiming) return;
+  aiming = false;
+  if (dartsLeft <= 0) return;
+
+  let dx = aimStart.x - aimCurrent.x;
+  let dy = aimStart.y - aimCurrent.y;
+  let force = Math.min(Math.hypot(dx, dy), 150);
+
+  if (force > 10) {
+    playSound('throw');
+    let hitX = board.cx + (dx * 1.8) + wind.x * 8;
+    let hitY = board.cy + (dy * 1.8) + wind.y * 8;
+    calculateHit(hitX, hitY);
+  }
+});
+
+function calculateHit(hx, hy) {
+  let dist = Math.hypot(hx - board.cx, hy - board.cy);
+  let pts = 0;
+
+  if (dist <= 12) {
+    pts = 50; playSound('bullseye');
+  } else if (dist <= 25) {
+    pts = 25; playSound('bullseye');
+  } else if (dist <= board.r) {
+    pts = Math.floor(Math.random() * 20) + 1;
+    if (dist > board.r * 0.85) pts *= 2; // Double ring
+    else if (dist > board.r * 0.5 && dist < board.r * 0.6) pts *= 3; // Triple ring
+    playSound('hit');
+  } else {
+    pts = 0;
+  }
+
+  thrownDarts.push({ x: hx, y: hy, pts: pts });
+  currentScore = Math.max(0, currentScore - pts);
+  dartsLeft--;
+
+  coins += pts;
+  localStorage.setItem("cd_coins", coins);
+  document.getElementById("coinsVal").textContent = coins;
+
+  if (501 - currentScore > high) {
+    high = 501 - currentScore;
+    localStorage.setItem("cd_high", high);
+    document.getElementById("highVal").textContent = high;
+  }
+
+  document.getElementById("scoreVal").textContent = currentScore;
+  document.getElementById("lastThrowVal").textContent = pts;
+  document.getElementById("dartsLeft").textContent = dartsLeft;
+
+  if (dartsLeft === 0) {
+    setTimeout(() => {
+      dartsLeft = 3; thrownDarts = [];
+      wind = { x: (Math.random() - 0.5) * 5, y: (Math.random() - 0.5) * 5 };
+      document.getElementById("dartsLeft").textContent = dartsLeft;
+    }, 1200);
+  }
+}
+
+function drawBoard() {
+  ctx.clearRect(0, 0, W, H);
+  board.cx = W / 2; board.cy = H / 2;
+
+  // Outer ring
+  ctx.beginPath(); ctx.arc(board.cx, board.cy, board.r, 0, Math.PI * 2);
+  ctx.fillStyle = "#111827"; ctx.fill();
+  ctx.lineWidth = 6; ctx.strokeStyle = "#00f0ff"; ctx.stroke();
+
+  // Concentric Rings
+  const rings = [0.85, 0.6, 0.5, 0.25, 0.12];
+  const colors = ["#ff0055", "#00f0ff", "#ffcc00", "#ff0055", "#00f0ff"];
+
+  rings.forEach((ratio, i) => {
+    ctx.beginPath(); ctx.arc(board.cx, board.cy, board.r * ratio, 0, Math.PI * 2);
+    ctx.lineWidth = 3; ctx.strokeStyle = colors[i]; ctx.stroke();
+  });
+
+  // Bullseye
+  ctx.beginPath(); ctx.arc(board.cx, board.cy, 12, 0, Math.PI * 2);
+  ctx.fillStyle = "#ff0055"; ctx.shadowColor = "#ff0055"; ctx.shadowBlur = 15;
+  ctx.fill();
+
+  // Wind Indicator
+  ctx.save();
+  ctx.fillStyle = "rgba(0, 240, 255, 0.8)";
+  ctx.font = "bold 14px sans-serif";
+  ctx.fillText(`WIND: ${wind.x.toFixed(1)} / ${wind.y.toFixed(1)}`, 20, 30);
+  ctx.restore();
+
+  // Aiming Line
+  if (aiming) {
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(aimStart.x, aimStart.y);
+    ctx.lineTo(aimCurrent.x, aimCurrent.y);
+    ctx.strokeStyle = "#ffcc00"; ctx.lineWidth = 3; ctx.stroke();
+
+    let dx = aimStart.x - aimCurrent.x;
+    let dy = aimStart.y - aimCurrent.y;
+    let targetX = board.cx + (dx * 1.8);
+    let targetY = board.cy + (dy * 1.8);
+
+    ctx.beginPath(); ctx.arc(targetX, targetY, 8, 0, Math.PI * 2);
+    ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 2; ctx.stroke();
+    ctx.restore();
+  }
+
+  // Thrown Darts
+  thrownDarts.forEach(d => {
+    ctx.save();
+    ctx.beginPath(); ctx.arc(d.x, d.y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffcc00"; ctx.shadowColor = "#ffcc00"; ctx.shadowBlur = 12; ctx.fill();
+    ctx.restore();
+  });
+}
+
+function gameLoop() {
+  drawBoard();
+  requestAnimationFrame(gameLoop);
+}
+
+function initLang() {
+  const sel = document.getElementById("langSel");
+  sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => {
+    const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o);
+  });
+  sel.value = lang;
+  sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("scoreLbl").textContent = dict.score;
+  document.getElementById("lastThrowLbl").textContent = dict.lastThrow;
+}
+
+document.getElementById("sndBtn").onclick = () => {
+  sound = !sound;
+  document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇";
+};
+
+document.getElementById("coinsVal").textContent = coins;
+document.getElementById("highVal").textContent = high;
+initLang(); updateLang();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
