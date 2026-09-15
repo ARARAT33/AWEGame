@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🔮 Cyber Telekinesis Lab RPG</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔮</text></svg>">
+<style>
+:root {
+  --bg: #030712;
+  --panel: rgba(10, 16, 35, 0.92);
+  --border: rgba(168, 85, 247, 0.35);
+  --primary: #a855f7;
+  --secondary: #00f0ff;
+  --accent: #ffcc00;
+  --text: #f0f6fc;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px; background: rgba(8, 12, 26, 0.95);
+  border-bottom: 1px solid var(--border); z-index: 10; flex-wrap: wrap; gap: 8px;
+}
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand h1 { font-size: 1.15rem; font-weight: 800; color: #fff; text-shadow: 0 0 12px var(--primary); }
+.controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.btn {
+  background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #fff;
+  padding: 6px 12px; border-radius: 18px; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; text-decoration: none; outline: none;
+}
+.btn:hover { background: rgba(168, 85, 247, 0.25); border-color: var(--primary); transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #fff; border: none; font-weight: 700; }
+.btn-primary:hover { background: #c084fc; }
+select.btn { outline: none; appearance: none; padding-right: 22px; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; }
+select option { background: #0a0e1e; color: #fff; }
+
+main { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+#gameCanvas {
+  background: radial-gradient(circle at center, #0f0a1c 0%, #02040c 100%);
+  box-shadow: 0 0 35px rgba(168, 85, 247, 0.18); display: block; touch-action: none;
+}
+
+.overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
+.hud-top { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 960px; margin: 0 auto; pointer-events: auto; }
+.hud-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 6px 16px; display: flex; align-items: center; gap: 12px; backdrop-filter: blur(10px); font-weight: 700; font-size: 0.85rem; }
+
+/* Touch Overlay */
+.touch-controls { position: absolute; bottom: 16px; right: 16px; display: none; gap: 10px; pointer-events: auto; }
+.d-pad { display: flex; gap: 6px; }
+.action-btns { display: flex; gap: 6px; }
+.t-btn { width: 48px; height: 48px; background: rgba(255,255,255,0.12); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1rem; font-weight: 800; }
+.t-btn:active { background: rgba(168, 85, 247, 0.4); }
+
+/* Shop Modal */
+.modal-overlay { position: absolute; inset: 0; background: rgba(3, 5, 15, 0.9); backdrop-filter: blur(14px); display: none; align-items: center; justify-content: center; z-index: 20; pointer-events: auto; }
+.modal-card { background: #0e0a1f; border: 1px solid var(--primary); border-radius: 22px; padding: 24px; width: 90%; max-width: 480px; text-align: center; box-shadow: 0 0 40px rgba(168,85,247,0.25); display: flex; flex-direction: column; gap: 14px; }
+.modal-card h2 { font-size: 1.5rem; color: #fff; text-shadow: 0 0 12px var(--primary); }
+
+.shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; }
+.shop-item { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.shop-item-title { font-weight: 700; font-size: 0.85rem; color: var(--secondary); }
+.shop-item-desc { font-size: 0.75rem; color: #aaa; }
+
+@media (max-width: 768px) {
+  .touch-controls { display: flex; }
+  .shop-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span style="font-size:24px;">🔮</span>
+    <h1 id="titleTxt">Cyber Telekinesis Lab RPG</h1>
+  </div>
+  <div class="controls">
+    <select id="langSel" class="btn" aria-label="Language"></select>
+    <button id="sndBtn" class="btn">🔊</button>
+    <button id="shopBtn" class="btn btn-primary">🧪 <span id="shopTxt">Lab Shop</span></button>
+    <a href="../index.html" class="btn">⌂ <span id="homeTxt">Home</span></a>
+  </div>
+</header>
+
+<main>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="hud-top">
+      <div class="hud-card">
+        <span>SECTOR: <span id="levelVal" style="color:var(--secondary);">1</span>/25</span>
+        <span>CORES: <span id="coresVal" style="color:var(--accent);">0/2</span></span>
+      </div>
+
+      <div class="hud-card">
+        <span>🪙 <span id="coinsVal" style="color:var(--accent);">0</span></span>
+        <span>⚡ ENERGY: <span id="energyVal" style="color:var(--primary);">100</span>%</span>
+      </div>
+    </div>
+
+    <div class="touch-controls">
+      <div class="d-pad">
+        <div class="t-btn" id="btnUp">▲</div>
+        <div class="t-btn" id="btnDown">▼</div>
+        <div class="t-btn" id="btnLeft">◄</div>
+        <div class="t-btn" id="btnRight">►</div>
+      </div>
+      <div class="action-btns">
+        <div class="t-btn" id="btnPull" style="background:rgba(168,85,247,0.3); border-color:var(--primary);">🧲</div>
+        <div class="t-btn" id="btnPush" style="background:rgba(0,240,255,0.3); border-color:var(--secondary);">💥</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="shopModal">
+    <div class="modal-card">
+      <h2 id="shopHead">🧪 Telekinesis Lab Upgrades</h2>
+      <div class="shop-grid">
+        <div class="shop-item">
+          <div class="shop-item-title" id="upg1Title">Force Intensity</div>
+          <div class="shop-item-desc" id="upg1Desc">Increases telekinetic push/pull strength.</div>
+          <button class="btn btn-primary" id="buyUpg1">Upgrade (50 🪙)</button>
+        </div>
+        <div class="shop-item">
+          <div class="shop-item-title" id="upg2Title">Field Radius</div>
+          <div class="shop-item-desc" id="upg2Desc">Expands forcefield reach diameter.</div>
+          <button class="btn btn-primary" id="buyUpg2">Upgrade (75 🪙)</button>
+        </div>
+        <div class="shop-item">
+          <div class="shop-item-title" id="upg3Title">Quantum Energy</div>
+          <div class="shop-item-desc" id="upg3Desc">Faster telekinetic energy regeneration.</div>
+          <button class="btn btn-primary" id="buyUpg3">Upgrade (60 🪙)</button>
+        </div>
+        <div class="shop-item">
+          <div class="shop-item-title" id="upg4Title">Magnetism Grid</div>
+          <div class="shop-item-desc" id="upg4Desc">Auto-attracts distant plasma coins.</div>
+          <button class="btn btn-primary" id="buyUpg4">Upgrade (100 🪙)</button>
+        </div>
+      </div>
+      <button class="btn" style="margin-top:10px; justify-content:center;" id="closeShopBtn">Close Lab</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const I18N = {
+  en: { title: "Cyber Telekinesis Lab RPG", home: "Home", shop: "Lab Shop", close: "Close Lab", upg1: "Force Intensity", upg1D: "Increases telekinetic push/pull strength.", upg2: "Field Radius", upg2D: "Expands forcefield reach diameter.", upg3: "Quantum Energy", upg3D: "Faster energy regeneration.", upg4: "Magnetism Grid", upg4D: "Auto-attracts distant plasma coins.", stageClear: "SECTOR CLEAR! Quantum Core Stabilized!" },
+  hy: { title: "Կիբեռ Տելեկինեզ Լաբ RPG", home: "Գլխավոր", shop: "Լաբ Խանութ", close: "Փակել Լաբը", upg1: "Ուժի Ինտենսիվություն", upg1D: "Մեծացնում է հրելու/քաշելու ուժը:", upg2: "Դաշտի Շառավիղ", upg2D: "Ընդլայնում է ազդեցության շառավիղը:", upg3: "Քվանտային Էներգիա", upg3D: "Էներգիայի ավելի արագ վերականգնում:", upg4: "Մագնիսական Ցանց", upg4D: "Ավտոմատ ձգում է հեռու մետաղադրամները:", stageClear: "ՍԵԿՏՈՐԸ ՄԱՔՐՎԱԾ Է:" },
+  ru: { title: "Кибер Телекинез Лаб RPG", home: "Главная", shop: "Лаб Магазин", close: "Закрыть", upg1: "Сила Телекинеза", upg1D: "Увеличивает силу притяжения/толкания.", upg2: "Радиус Поля", upg2D: "Увеличивает радиус воздействия.", upg3: "Квантовая Энергия", upg3D: "Ускоряет регенерацию энергии.", upg4: "Магнитная Сеть", upg4D: "Притягивает монеты на расстоянии.", stageClear: "СЕКТОР ОЧИЩЕН!" },
+  es: { title: "Cyber Telequinesis Lab RPG", home: "Inicio", shop: "Tienda Lab", close: "Cerrar", upg1: "Intensidad de Fuerza", upg1D: "Aumenta fuerza de empuje/atracción.", upg2: "Radio de Campo", upg2D: "Expande el alcance del campo.", upg3: "Energía Cuántica", upg3D: "Regeneración de energía más rápida.", upg4: "Red Magnética", upg4D: "Atrae monedas lejanas.", stageClear: "¡SECTOR COMPLETADO!" },
+  fr: { title: "Cyber Télékinésie Lab RPG", home: "Accueil", shop: "Boutique Lab", close: "Fermer", upg1: "Intensité de Force", upg1D: "Augmente la force d'attraction/poussée.", upg2: "Rayon du Champ", upg2D: "Élargit la portée du champ.", upg3: "Énergie Quantique", upg3D: "Régénération d'énergie plus rapide.", upg4: "Grille Magnétique", upg4D: "Attire les pièces à distance.", stageClear: "SECTEUR TERMINÉ !" },
+  de: { title: "Cyber Telekinese Lab RPG", home: "Startseite", shop: "Lab Shop", close: "Schließen", upg1: "Kraftintensität", upg1D: "Erhöht Zug- und Schubkraft.", upg2: "Feldradius", upg2D: "Erweitert die Feldreichweite.", upg3: "Quantenenergie", upg3D: "Schnellere Energieregeneration.", upg4: "Magnetnetz", upg4D: "Zieht entfernte Münzen an.", stageClear: "SEKTOR ABGESCHLOSSEN!" },
+  it: { title: "Cyber Telechinesi Lab RPG", home: "Home", shop: "Shop Lab", close: "Chiudi", upg1: "Intensità Forza", upg1D: "Aumenta spinta e trazione.", upg2: "Raggio Campo", upg2D: "Espande la portata del campo.", upg3: "Energia Quantistica", upg3D: "Rigenerazione energia più veloce.", upg4: "Griglia Magnetica", upg4D: "Attira monete distanti.", stageClear: "SETTORE COMPLETATO!" },
+  pt: { title: "Cyber Telecinese Lab RPG", home: "Início", shop: "Loja Lab", close: "Fechar", upg1: "Intensidade de Força", upg1D: "Aumenta força de empuxo/atração.", upg2: "Raio do Campo", upg2D: "Expande alcance do campo.", upg3: "Energia Quântica", upg3D: "Regeneração de energia mais rápida.", upg4: "Rede Magnética", upg4D: "Atrai moedas distantes.", stageClear: "SETOR CONCLUÍDO!" },
+  tr: { title: "Cyber Telekinezi Lab RPG", home: "Ana Sayfa", shop: "Lab Dükkanı", close: "Kapat", upg1: "Güç Şiddeti", upg1D: "Çekme/itme gücünü artırır.", upg2: "Alan Yarıçapı", upg2D: "Alan menzilini genişletir.", upg3: "Kuantum Enerjisi", upg3D: "Daha hızlı enerji yenilenmesi.", upg4: "Manyetik Ağı", upg4D: "Uzak Paraları otomatik çeker.", stageClear: "SEKTÖR TAMAMLANDI!" },
+  ja: { title: "サイバー念力ラボ RPG", home: "ホーム", shop: "ラボショップ", close: "閉じる", upg1: "念力強度", upg1D: "引力・斥力を強化します。", upg2: "フィールド半径", upg2D: "テレキネシス範囲を拡大します。", upg3: "量子エネルギー", upg3D: "エネルギー回復速度を上昇させます。", upg4: "磁気グリッド", upg4D: "遠くのコインを自動引き寄せます。", stageClear: "セクタークリア！" },
+  zh: { title: "赛博意念控物 Lab RPG", home: "主页", shop: "实验室商店", close: "关闭", upg1: "意念强度", upg1D: "增加吸引与推开的力量。", upg2: "气场半径", upg2D: "扩大意念作用范围。", upg3: "量子能量", upg3D: "加快能量恢复速度。", upg4: "磁化网格", upg4D: "自动吸引较远金币。", stageClear: "区域已完成！" }
+};
+
+const LANG_LIST = [["en", "English"], ["hy", "Հայերեն"], ["ru", "Русский"], ["es", "Español"], ["fr", "Français"], ["de", "Deutsch"], ["it", "Italiano"], ["pt", "Português"], ["tr", "Türkçe"], ["ja", "日本語"], ["zh", "中文"]];
+
+let lang = "en";
+let sound = true;
+let level = parseInt(localStorage.getItem("ctk_level") || "1");
+let coins = parseInt(localStorage.getItem("ctk_coins") || "0");
+let upgForce = parseInt(localStorage.getItem("ctk_upgForce") || "1");
+let upgRadius = parseInt(localStorage.getItem("ctk_upgRadius") || "1");
+let upgRegen = parseInt(localStorage.getItem("ctk_upgRegen") || "1");
+let upgMagnet = parseInt(localStorage.getItem("ctk_upgMagnet") || "0");
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+let W = 900, H = 550;
+
+function resizeCanvas() {
+  const maxW = window.innerWidth;
+  const maxH = window.innerHeight - 55;
+  let aspect = 16 / 9;
+  let w = maxW, h = w / aspect;
+  if (h > maxH) { h = maxH; w = h * aspect; }
+  canvas.width = Math.floor(w); canvas.height = Math.floor(h);
+  W = canvas.width; H = canvas.height;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+let audioCtx = null;
+function playSound(type) {
+  if (!sound) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  if (type === 'force') {
+    osc.type = 'sine'; osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(600, now + 0.12);
+    gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+  } else if (type === 'core') {
+    osc.type = 'triangle'; osc.frequency.setValueAtTime(440, now); osc.frequency.setValueAtTime(880, now + 0.15);
+    gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+  }
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(now); osc.stop(now + 0.3);
+}
+
+class TelekineticHero {
+  constructor(x, y) {
+    this.x = x; this.y = y; this.r = 16;
+    this.energy = 100;
+  }
+  update(dx, dy, pull, push) {
+    this.x += dx * 4.2; this.y += dy * 4.2;
+    this.x = Math.max(20, Math.min(W - 20, this.x));
+    this.y = Math.max(20, Math.min(H - 20, this.y));
+
+    // Energy regen
+    this.energy = Math.min(100, this.energy + 0.25 * upgRegen);
+
+    let radius = 120 + upgRadius * 25;
+    let forceStrength = 0.45 * upgForce;
+
+    if ((pull || push) && this.energy > 5) {
+      this.energy -= 0.6;
+      playSound('force');
+
+      orbs.forEach(orb => {
+        let dist = Math.hypot(orb.x - this.x, orb.y - this.y);
+        if (dist < radius && dist > 5) {
+          let angle = Math.atan2(orb.y - this.y, orb.x - this.x);
+          let dir = pull ? -1 : 1;
+          orb.vx += Math.cos(angle) * forceStrength * dir;
+          orb.vy += Math.sin(angle) * forceStrength * dir;
+        }
+      });
+    }
+
+    if (upgMagnet > 0) {
+      plasmaCoins.forEach(c => {
+        let dist = Math.hypot(c.x - this.x, c.y - this.y);
+        if (dist < 180) {
+          let angle = Math.atan2(this.y - c.y, this.x - c.x);
+          c.x += Math.cos(angle) * 4; c.y += Math.sin(angle) * 4;
+        }
+      });
+    }
+  }
+  draw() {
+    ctx.save();
+    // Forcefield aura
+    let radius = 120 + upgRadius * 25;
+    ctx.beginPath(); ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(168, 85, 247, 0.08)"; ctx.fill();
+    ctx.strokeStyle = "rgba(168, 85, 247, 0.3)"; ctx.lineWidth = 1; ctx.stroke();
+
+    ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = "#a855f7"; ctx.shadowColor = "#a855f7"; ctx.shadowBlur = 15; ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.stroke();
+    ctx.restore();
+  }
+}
+
+class QuantumOrb {
+  constructor(x, y) {
+    this.x = x; this.y = y; this.r = 14;
+    this.vx = 0; this.vy = 0;
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    this.vx *= 0.94; this.vy *= 0.94; // friction
+
+    if (this.x < 20 || this.x > W - 20) this.vx *= -1;
+    if (this.y < 20 || this.y > H - 20) this.vy *= -1;
+  }
+  draw() {
+    ctx.save();
+    ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = "#00f0ff"; ctx.shadowColor = "#00f0ff"; ctx.shadowBlur = 14; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = "#fff"; ctx.stroke();
+    ctx.restore();
+  }
+}
+
+class EnergyCore {
+  constructor(x, y) {
+    this.x = x; this.y = y; this.r = 24;
+    this.charged = false;
+  }
+  draw() {
+    ctx.save();
+    ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = this.charged ? "rgba(255, 204, 0, 0.4)" : "rgba(255, 204, 0, 0.1)"; ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = "#ffcc00"; ctx.stroke();
+    ctx.restore();
+  }
+}
+
+let hero = new TelekineticHero(100, H / 2);
+let orbs = [];
+let cores = [];
+let plasmaCoins = [];
+let keys = {};
+
+window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+function bindTouch(id, action) {
+  const el = document.getElementById(id);
+  el.addEventListener("touchstart", (e) => { e.preventDefault(); action(true); });
+  el.addEventListener("touchend", (e) => { e.preventDefault(); action(false); });
+}
+bindTouch("btnUp", val => keys['w'] = val);
+bindTouch("btnDown", val => keys['s'] = val);
+bindTouch("btnLeft", val => keys['a'] = val);
+bindTouch("btnRight", val => keys['d'] = val);
+bindTouch("btnPull", val => keys['j'] = val);
+bindTouch("btnPush", val => keys['k'] = val);
+
+function setupSector() {
+  orbs = []; cores = []; plasmaCoins = [];
+  let count = Math.min(5, Math.floor(level / 2) + 1);
+
+  for (let i = 0; i < count; i++) {
+    orbs.push(new QuantumOrb(200 + i * 80, 150 + (i % 3) * 100));
+    cores.push(new EnergyCore(W - 150 - (i % 2) * 60, 150 + i * 90));
+  }
+
+  for (let i = 0; i < 6; i++) {
+    plasmaCoins.push({ x: 150 + Math.random() * (W - 300), y: 80 + Math.random() * (H - 160) });
+  }
+}
+
+function updateGame() {
+  let dx = 0, dy = 0;
+  if (keys['w'] || keys['arrowup']) dy -= 1;
+  if (keys['s'] || keys['arrowdown']) dy += 1;
+  if (keys['a'] || keys['arrowleft']) dx -= 1;
+  if (keys['d'] || keys['arrowright']) dx += 1;
+
+  hero.update(dx, dy, keys['j'], keys['k'] || keys['space']);
+  orbs.forEach(o => o.update());
+
+  // Check Orbs in Cores
+  let filledCores = 0;
+  cores.forEach(c => {
+    let hasOrb = orbs.some(o => Math.hypot(o.x - c.x, o.y - c.y) < c.r + 5);
+    if (hasOrb && !c.charged) { c.charged = true; playSound('core'); }
+    if (c.charged) filledCores++;
+  });
+
+  // Collect Coins
+  for (let i = plasmaCoins.length - 1; i >= 0; i--) {
+    let coin = plasmaCoins[i];
+    if (Math.hypot(coin.x - hero.x, coin.y - hero.y) < hero.r + 12) {
+      coins += 10; localStorage.setItem("ctk_coins", coins);
+      plasmaCoins.splice(i, 1);
+    }
+  }
+
+  // Level Clear
+  if (filledCores === cores.length && cores.length > 0) {
+    level++; localStorage.setItem("ctk_level", level);
+    alert((I18N[lang] || I18N.en).stageClear);
+    setupSector();
+  }
+
+  document.getElementById("levelVal").textContent = level;
+  document.getElementById("coresVal").textContent = `${filledCores}/${cores.length}`;
+  document.getElementById("coinsVal").textContent = coins;
+  document.getElementById("energyVal").textContent = Math.floor(hero.energy);
+}
+
+function drawGame() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw Coins
+  plasmaCoins.forEach(c => {
+    ctx.beginPath(); ctx.arc(c.x, c.y, 8, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffcc00"; ctx.shadowColor = "#ffcc00"; ctx.shadowBlur = 10; ctx.fill();
+  });
+
+  cores.forEach(c => c.draw());
+  orbs.forEach(o => o.draw());
+  hero.draw();
+}
+
+function gameLoop() {
+  updateGame(); drawGame();
+  requestAnimationFrame(gameLoop);
+}
+
+document.getElementById("shopBtn").onclick = () => { document.getElementById("shopModal").style.display = "flex"; };
+document.getElementById("closeShopBtn").onclick = () => { document.getElementById("shopModal").style.display = "none"; };
+
+document.getElementById("buyUpg1").onclick = () => { if (coins >= 50) { coins -= 50; upgForce++; localStorage.setItem("ctk_coins", coins); localStorage.setItem("ctk_upgForce", upgForce); } };
+document.getElementById("buyUpg2").onclick = () => { if (coins >= 75) { coins -= 75; upgRadius++; localStorage.setItem("ctk_coins", coins); localStorage.setItem("ctk_upgRadius", upgRadius); } };
+document.getElementById("buyUpg3").onclick = () => { if (coins >= 60) { coins -= 60; upgRegen++; localStorage.setItem("ctk_coins", coins); localStorage.setItem("ctk_upgRegen", upgRegen); } };
+document.getElementById("buyUpg4").onclick = () => { if (coins >= 100) { coins -= 100; upgMagnet = 1; localStorage.setItem("ctk_coins", coins); localStorage.setItem("ctk_upgMagnet", upgMagnet); } };
+
+function initLang() {
+  const sel = document.getElementById("langSel"); sel.innerHTML = "";
+  LANG_LIST.forEach(([c, n]) => { const o = document.createElement("option"); o.value = c; o.textContent = n; sel.appendChild(o); });
+  sel.value = lang; sel.addEventListener("change", e => { lang = e.target.value; updateLang(); });
+}
+
+function updateLang() {
+  const dict = I18N[lang] || I18N.en;
+  document.getElementById("titleTxt").textContent = dict.title;
+  document.getElementById("homeTxt").textContent = dict.home;
+  document.getElementById("shopTxt").textContent = dict.shop;
+  document.getElementById("shopHead").textContent = dict.shop;
+  document.getElementById("closeShopBtn").textContent = dict.close;
+  document.getElementById("upg1Title").textContent = dict.upg1; document.getElementById("upg1Desc").textContent = dict.upg1D;
+  document.getElementById("upg2Title").textContent = dict.upg2; document.getElementById("upg2Desc").textContent = dict.upg2D;
+  document.getElementById("upg3Title").textContent = dict.upg3; document.getElementById("upg3Desc").textContent = dict.upg3D;
+  document.getElementById("upg4Title").textContent = dict.upg4; document.getElementById("upg4Desc").textContent = dict.upg4D;
+}
+
+document.getElementById("sndBtn").onclick = () => { sound = !sound; document.getElementById("sndBtn").textContent = sound ? "🔊" : "🔇"; };
+
+initLang(); updateLang(); setupSector(); requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
