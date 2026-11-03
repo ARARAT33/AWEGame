@@ -490,17 +490,71 @@
       const grid = document.getElementById('gameGrid');
       const searchInput = document.getElementById('searchInput');
       const countEl = document.getElementById('gameCount');
+      const ARCHIVE_URL = 'https://raw.githubusercontent.com/ARARAT33/AWEArchiveDB/refs/heads/main/awegames.json';
 
-      // Games are loaded from games.js (global variable `games`)
+      // Keep the existing locally hosted games and add archive entries at runtime.
+      const localGames = typeof games !== 'undefined' && Array.isArray(games) ? games : [];
+      let archiveGames = [];
+
+      function escapeHTML(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[char]);
+      }
+
+      function getArchiveEntries(payload) {
+        if (Array.isArray(payload)) return payload;
+        if (payload && typeof payload === 'object') {
+          for (const key of ['games', 'awegames', 'items', 'data']) {
+            if (Array.isArray(payload[key])) return payload[key];
+          }
+        }
+        return [];
+      }
+
+      function normalizeArchiveGame(item) {
+        if (!item || typeof item !== 'object') return null;
+        const title = String(item.title ?? item.tittle ?? '').trim();
+        const description = String(item.description ?? '').trim();
+        const elink = String(item.elink ?? '').trim();
+        if (!title || !elink) return null;
+
+        try {
+          const url = new URL(elink, window.location.href);
+          if (!['http:', 'https:'].includes(url.protocol)) return null;
+          return {
+            title,
+            description,
+            elink: url.href,
+            icon: '🎮',
+            developer: 'AWEArchiveDB',
+            archive: true
+          };
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function getAllGames() {
+        const seen = new Set();
+        return [...localGames, ...archiveGames].filter(game => {
+          const key = game.elink || game.folder || game.title;
+          if (!key || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      }
+
       function renderGames(filter = '') {
-        const q = filter.toLowerCase().trim();
-        const filtered = q
-          ? games.filter(g =>
-              g.title.toLowerCase().includes(q) ||
-              (g.description && g.description.toLowerCase().includes(q)) ||
-              (g.developer && g.developer.toLowerCase().includes(q))
+        const query = filter.toLowerCase().trim();
+        const allGames = getAllGames();
+        const filtered = query
+          ? allGames.filter(game =>
+              String(game.title || '').toLowerCase().includes(query) ||
+              String(game.description || '').toLowerCase().includes(query) ||
+              String(game.developer || '').toLowerCase().includes(query)
             )
-          : games;
+          : allGames;
 
         if (filtered.length === 0) {
           grid.innerHTML = `
@@ -508,68 +562,94 @@
               <div class="big">🔎</div>
               <h3>No games found</h3>
               <p>Try a different search term.</p>
-            </div>
-          `;
+            </div>`;
           countEl.textContent = '0 games';
           return;
         }
 
-        grid.innerHTML = filtered.map(g => `
-          <div class="game-card" data-folder="${g.folder}">
-            <span class="badge">${g.developer ? 'dev' : 'game'}</span>
-            <div class="icon">${g.icon || '🎮'}</div>
-            <div class="title">${g.title}</div>
-            <div class="desc">${g.description || ''}</div>
-            ${g.developer ? `<div class="developer">✏️ <strong>${g.developer}</strong></div>` : ''}
-            <div class="footer-meta">
-              <span>${g.folder}</span>
-              <span class="arrow">→</span>
-            </div>
-          </div>
-        `).join('');
+        grid.innerHTML = filtered.map(game => {
+          const title = escapeHTML(game.title || 'Untitled game');
+          const description = escapeHTML(game.description || '');
+          const developer = escapeHTML(game.developer || '');
+          const icon = escapeHTML(game.icon || '🎮');
+          const destination = game.elink
+            ? 'data-elink="' + escapeHTML(game.elink) + '"'
+            : 'data-folder="' + escapeHTML(game.folder || '') + '"';
+          const sourceLabel = game.archive ? 'AWEArchiveDB' : (game.folder || 'AWEGame');
+          return `
+            <div class="game-card" ${destination} tabindex="0" role="link" aria-label="Play ${title}">
+              <span class="badge">${game.archive ? 'archive' : (developer ? 'dev' : 'game')}</span>
+              <div class="icon">${icon}</div>
+              <div class="title">${title}</div>
+              <div class="desc">${description}</div>
+              ${developer ? `<div class="developer">✏️ <strong>${developer}</strong></div>` : ''}
+              <div class="footer-meta">
+                <span>${escapeHTML(sourceLabel)}</span>
+                <span class="arrow">→</span>
+              </div>
+            </div>`;
+        }).join('');
 
         countEl.textContent = `${filtered.length} game${filtered.length !== 1 ? 's' : ''}`;
       }
 
-      // ─── SEARCH ───
+      function openGame(card) {
+        if (!card) return;
+        const externalLink = card.dataset.elink;
+        if (externalLink) {
+          try {
+            const url = new URL(externalLink, window.location.href);
+            if (['http:', 'https:'].includes(url.protocol)) window.location.href = url.href;
+          } catch (_) {}
+          return;
+        }
+        const folder = card.dataset.folder;
+        if (folder) window.location.href = 'games/' + folder;
+      }
+
       searchInput.addEventListener('input', function() {
         renderGames(this.value);
       });
 
-      // ─── CLICK ON CARD → NAVIGATE ───
-      grid.addEventListener('click', function(e) {
-        const card = e.target.closest('.game-card');
-        if (!card) return;
-        const folder = card.dataset.folder;
-        if (folder) {
-          // All games are inside the "games/" folder
-          window.location.href = 'games/' + folder;
+      grid.addEventListener('click', function(event) {
+        openGame(event.target.closest('.game-card'));
+      });
+
+      grid.addEventListener('keydown', function(event) {
+        if ((event.key === 'Enter' || event.key === ' ') && event.target.classList.contains('game-card')) {
+          event.preventDefault();
+          openGame(event.target);
         }
       });
 
-      // ─── KEYBOARD SHORTCUTS ───
-      document.addEventListener('keydown', function(e) {
-        if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
-          e.preventDefault();
+      document.addEventListener('keydown', function(event) {
+        if (event.key === '/' && !['INPUT', 'TEXTAREA'].includes(event.target.tagName)) {
+          event.preventDefault();
           searchInput.focus();
         }
-        if (e.key === 'Escape' && document.activeElement === searchInput) {
+        if (event.key === 'Escape' && document.activeElement === searchInput) {
           searchInput.blur();
         }
       });
 
-      // ─── INIT ───
-      if (typeof games !== 'undefined') {
-        renderGames();
-      } else {
-        grid.innerHTML = `
-          <div class="no-results">
-            <div class="big">⚠️</div>
-            <h3>Data not loaded</h3>
-            <p>Make sure games.js is in the same folder.</p>
-          </div>
-        `;
-      }
+      // Render local games immediately; archive games appear as soon as JSON loads.
+      renderGames();
+
+      fetch(ARCHIVE_URL, { cache: 'no-cache' })
+        .then(response => {
+          if (!response.ok) throw new Error('Archive request failed: HTTP ' + response.status);
+          return response.json();
+        })
+        .then(payload => {
+          archiveGames = getArchiveEntries(payload)
+            .map(normalizeArchiveGame)
+            .filter(Boolean);
+          renderGames(searchInput.value);
+        })
+        .catch(error => {
+          console.warn('AWEArchiveDB could not be loaded. Local games remain available.', error);
+          renderGames(searchInput.value);
+        });
     })();
   </script>
 
