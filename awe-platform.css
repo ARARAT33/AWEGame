@@ -47,3 +47,12 @@
 .awe-game-utility button:focus-visible,.awe-game-utility a:focus-visible{outline:2px solid #b8d7bd;outline-offset:2px}
 @media(max-width:560px){.awe-game-utility{right:8px;top:8px}.awe-game-utility a,.awe-game-utility button{min-height:27px;padding:0 8px;font-size:9px}}
 @media(prefers-reduced-motion:reduce){.awe-game-utility *{transition:none!important;animation:none!important}}
+
+.awe-game-utility{position:fixed;right:14px;top:14px;z-index:99999;display:flex;align-items:center;gap:7px;padding:5px;border:1px solid #b8d7bd35;border-radius:999px;background:#111a14c9;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 8px 26px #0003;font:600 10px/1 'DM Sans',system-ui,sans-serif;color:#e9eee7;pointer-events:auto}
+.awe-game-utility a,.awe-game-utility button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:29px;padding:0 10px;border:0;border-radius:999px;background:transparent;color:inherit;text-decoration:none;cursor:pointer}
+.awe-game-utility a:hover,.awe-game-utility button:hover{background:#b8d7bd24;color:#d5ead7}
+.awe-game-utility .awe-mark{display:grid;place-items:center;width:23px;height:23px;border-radius:50%;background:#b8d7bd;color:#18231a;font:800 15px 'Manrope',sans-serif;font-style:italic}
+.awe-game-utility .awe-separator{width:1px;height:16px;background:#d7e3d522}
+.awe-game-utility button:focus-visible,.awe-game-utility a:focus-visible{outline:2px solid #b8d7bd;outline-offset:2px}
+@media(max-width:560px){.awe-game-utility{right:8px;top:8px}.awe-game-utility a,.awe-game-utility button{min-height:27px;padding:0 8px;font-size:9px}}
+@media(prefers-reduced-motion:reduce){.awe-game-utility *{transition:none!important;animation:none!important}}
