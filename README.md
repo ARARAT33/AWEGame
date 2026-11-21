@@ -14,7 +14,7 @@ AWEGame is a static browser-game collection with a personalized AWE Play interfa
 
 ## Personal data and portability
 
-Player name, favorites, recent games, appearance and recorded victories are saved in the current browser's `localStorage`. The player card can be renamed. Export creates a JSON backup file; import validates the AWEGame backup format and merges favorites, recent titles and victory history. Users can move this file to another browser/device manually.
+Player name, favorites, recent games, appearance and recorded victories are saved in the current browser's `localStorage`. The player card can be renamed. Export creates a JSON backup file containing the profile, app preferences, favorites, recent history, victories and the browser origin's localStorage entries (including game saves stored there). Import validates the AWEGame backup format and restores those saved values. Users can move this file to another browser/device manually.
 
 There is no cloud account, remote save, server-side profile, or automatic synchronization. Clearing browser storage or using private browsing can remove local progress; export backups regularly.
 
