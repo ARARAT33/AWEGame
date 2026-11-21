@@ -9,7 +9,7 @@ const getFavorites=()=>new Set(safeRead(FAVORITES_KEY,[]));
 const getRecent=()=>safeRead(RECENT_KEY,[]);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const normalizeArchive=item=>{if(!item||typeof item!=='object')return null;const title=String(item.title??item.tittle??'').trim(),description=String(item.description??'').trim(),elink=String(item.elink??'').trim();if(!title||!elink)return null;try{const u=new URL(elink,location.href);if(!['https:','http:'].includes(u.protocol))return null;return{title,description,elink:u.href,icon:'🎮',developer:'AWEArchiveDB',archive:true}}catch{return null}};
-const local=Array.isArray(window.games)?window.games:[];
+const local=Array.isArray(window.AWE_GAMES)?window.AWE_GAMES:[];
 const all=()=>{const seen=new Set();return [...local,...archiveGames].filter(g=>{const k=g.elink||g.folder||g.title;if(!k||seen.has(k))return false;seen.add(k);return true}).map((g,i)=>({...g,id:g.elink||g.folder||g.title,category:categoryOf(g),order:i}))};
 function categoryOf(g){const s=(g.title+' '+g.description).toLowerCase();if(/defender|shooter|racing|combat|action|reactor|cybercore/.test(s))return /reactor|strategy|management/.test(s)?'strategy':'action';if(/random|discover|link|explor/.test(s))return'discovery';return'calm'}
 function target(g){if(g.elink)return g.elink;return g.folder?(g.folder.includes('/')?g.folder:'games/'+g.folder):'#'}
@@ -25,7 +25,7 @@ grid.addEventListener('click',e=>{const fav=e.target.closest('[data-favorite]');
 $('#recentGrid').addEventListener('click',e=>{const fav=e.target.closest('[data-favorite]');if(fav){e.preventDefault();e.stopPropagation();toggleFavorite(fav.dataset.favorite);return}const c=e.target.closest('.game-card');if(c){const g=all().find(x=>x.id===c.dataset.id);if(g)openTarget(g)}});
 search.addEventListener('input',render);$('#sortSelect').addEventListener('change',e=>{sortMode=e.target.value;render()});
 document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{activeFilter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('selected',x===b));render()}));
-document.querySelectorAll('[data-nav]').forEach(a=>a.addEventListener('click',()=>{document.querySelectorAll('[data-nav]').forEach(x=>x.classList.toggle('active',x===a));$('#sidebar').classList.remove('open')}));
+document.querySelectorAll('[data-nav]').forEach(a=>a.addEventListener('click',()=>{document.querySelectorAll('[data-nav]').forEach(x=>x.classList.toggle('active',x===a));$('#sidebar').classList.remove('open');if(a.dataset.nav==='favorites'){activeFilter='favorites';document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('selected',x.dataset.filter==='favorites'));render();document.querySelector('#library').scrollIntoView({behavior:'smooth'})}else if(a.dataset.nav==='recent'){document.querySelector('#recent').scrollIntoView({behavior:'smooth'})}else if(a.dataset.nav==='library'){activeFilter='all';document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('selected',x.dataset.filter==='all'));render()}}));
 $('#mobileMenu').addEventListener('click',()=>$('#sidebar').classList.toggle('open'));
 const applyTheme=()=>document.body.classList.toggle('light-mode',localStorage.getItem(THEME_KEY)==='light');applyTheme();
 $('#themeToggle').addEventListener('click',()=>{localStorage.setItem(THEME_KEY,document.body.classList.contains('light-mode')?'dark':'light');applyTheme()});
