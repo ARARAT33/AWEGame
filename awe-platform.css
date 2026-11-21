@@ -58,3 +58,6 @@
 @media(prefers-reduced-motion:reduce){.awe-game-utility *{transition:none!important;animation:none!important}}
 
 .awe-home .install-app{display:block;width:100%;margin-top:10px;padding:8px 9px;border:1px solid #526b55;border-radius:6px;background:#b8d7bd12;color:#b8d7bd;font:600 9px 'DM Sans',sans-serif;cursor:pointer}.awe-home .install-app[hidden]{display:none}
+
+.awe-home.light-mode{--bg:#f1f3ed;--sidebar:#f8f9f5;--surface:#fff;--surface-2:#f7f9f4;--surface-3:#edf1e9;--line:#dce3d8;--text:#263329;--muted:#647165;--soft:#879286;--mint:#638e6b;--mint-strong:#64866a;--awe-bg:#f1f3ed;--awe-panel:#fff;--awe-line:#dce3d8;--awe-text:#263329;--awe-muted:#647165;--awe-soft:#879286;--awe-mint:#638e6b;background:#f1f3ed;color:#263329}
+.awe-home.light-mode .sidebar{background:#f8f9f5;border-color:#dce3d8}.awe-home.light-mode .nav-link{color:#647165}.awe-home.light-mode .nav-link.active{background:#638e6b18;color:#456e4b}.awe-home.light-mode .search-box{background:#fff;border-color:#dce3d8}.awe-home.light-mode .storage-card{background:#eef3ec;border-color:#dce3d8}.awe-home.light-mode .profile-row{border-color:#dce3d8}.awe-home.light-mode .game-card{border-color:#dce3d8}.awe-home.light-mode .game-card-footer{border-color:#e8ece5}
