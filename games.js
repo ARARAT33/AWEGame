@@ -9,10 +9,6 @@ const games = [
   {title:" Language Garden",folder:"languagegarden.html",description:"A peaceful, endlessly growing idle game where you collect Essence by clicking the sun and unlock over 200 world languages. Each unlocked language automatically generates Essence per second, and you can upgrade their levels to increase production. Every time you unlock a new language, the price of all remaining languages increases by 1%, making the game progressively more challenging. Your progress is automatically saved on your device, so you can continue anytime. A beautiful, calming garden with soft animations, clouds, and sparkles awaits you — grow your language garden forever!",developer:"AWEGames",icon:"🌸"},
 ];
 
-(function injectAWEHubNav(){
-  if(document.querySelector('#aweHubNav'))return;
-  const nav=document.querySelector('.nav-links');if(!nav)return;
-  const links=[['A2Z','https://awe-a2z.pages.dev/'],['EXP','https://awe-exp.pages.dev/'],['AWEGame','https://awegame.pages.dev/'],['AWELib','https://awelib.pages.dev/']];
-  const style=document.createElement('style');style.textContent=`#aweHubNav,#aweHubNav~a{position:relative;overflow:hidden;border-radius:999px;padding:9px 12px;transition:transform .35s cubic-bezier(.2,.8,.2,1),color .3s,background .3s,box-shadow .3s;animation:aweNavIn .65s cubic-bezier(.2,.8,.2,1) both}#aweHubNav::before,#aweHubNav~a::before{content:"";position:absolute;inset:-60%;background:radial-gradient(circle,#fff8,transparent 52%);opacity:0;transform:scale(.5);transition:.4s;pointer-events:none}#aweHubNav::after,#aweHubNav~a::after{content:"";position:absolute;left:18%;right:18%;bottom:3px;height:2px;border-radius:99px;background:linear-gradient(90deg,#20c8ff,#8b6cff,#d66cff);transform:scaleX(0);transition:.35s}#aweHubNav:hover,#aweHubNav~a:hover{transform:translateY(-3px) scale(1.025);color:#7657e8;background:#ffffff24;box-shadow:0 12px 30px #7657e82b}#aweHubNav:hover::before,#aweHubNav~a:hover::before{opacity:1;transform:scale(1)}#aweHubNav:hover::after,#aweHubNav~a:hover::after{transform:scaleX(1)}@keyframes aweNavIn{from{opacity:0;transform:translateY(-12px) scale(.94);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}`;document.head.appendChild(style);
-  links.forEach(([name,url],i)=>{const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.textContent=name;a.className='nav-link';a.id=i===0?'aweHubNav':`aweHub-${i}`;a.style.animationDelay=`${i*85}ms`;nav.appendChild(a)});
-})();
+
+// Expose the curated local catalog to the AWE Play application.
+window.AWE_GAMES = games;

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101411">
+  <meta name="description" content="AWE Play — a calm, browser-native home for games and interactive experiences.">
+  <title>AWE Play — Your game space</title>
+  <link rel="stylesheet" href="./style.css">\n  <link rel="icon" href="../awe-mark.svg" type="image/svg+xml">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="../index.html" aria-label="Back to AWEGame home"><span class="brand-symbol">a</span><span class="brand-name">awe<span>play</span></span></a>
+      <div class="side-label">YOUR SPACE</div>
+      <nav class="side-nav" aria-label="Main navigation">
+        <a class="nav-link active" href="#home" data-nav="home"><span class="nav-icon">⌂</span>Home</a>
+        <a class="nav-link" href="#discover" data-nav="discover"><span class="nav-icon">⌕</span>Discover</a>
+        <a class="nav-link" href="#library" data-nav="library"><span class="nav-icon">▤</span>My library</a>
+        <a class="nav-link" href="#aweGameCatalog" data-nav="catalog"><span class="nav-icon">▦</span>AWE Originals</a>\n        <a class="nav-link" href="#runtime" data-nav="runtime"><span class="nav-icon">▹</span>Playground</a>
+      </nav>
+      <div class="side-label collections-label">COLLECTIONS</div>
+      <nav class="side-nav compact-nav" aria-label="Collections">
+        <a class="nav-link" href="#library"><span class="collection-dot mint"></span>Recently played</a>
+        <a class="nav-link" href="#discover"><span class="collection-dot lavender"></span>Open worlds</a>
+        <a class="nav-link" href="#discover"><span class="collection-dot peach"></span>Indie picks</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="storage-card"><div class="storage-top"><span class="storage-icon">✦</span><span>Early access</span></div><p>AWE Play is growing. Your space, your games.</p><a href="#about">About the platform <span>↗</span></a></div>
+        <div class="profile-row"><div class="avatar">A</div><div class="profile-copy"><strong>Guest player</strong><span>Local session</span></div><span class="profile-menu">···</span></div>
+      </div>
+    </aside>
+
+    <main class="main-area" id="home">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobileMenu" aria-label="Open menu">☰</button>
+        <div class="breadcrumb">AWE PLAY <span>/</span> <strong>Home</strong></div>
+        <div class="top-actions">
+          <label class="search-box"><span>⌕</span><input id="gameSearch" type="search" placeholder="Search games..." autocomplete="off"><kbd>⌘ K</kbd></label>
+          <button class="icon-button" id="themeToggle" aria-label="Toggle appearance" title="Toggle appearance">◐</button>
+          <div class="top-avatar">A</div>
+        </div>
+      </header>
+
+      <div class="content-wrap">
+        <section class="welcome-row">
+          <div><p class="date-line">YOUR PERSONAL GAME SPACE</p><h1>Good to see you<span class="period">.</span></h1><p class="welcome-sub">Find a world to get lost in. Take your time.</p></div>
+          <div class="welcome-note"><span class="note-mark">✳</span><span>Made for play.<br><b>Built to feel simple.</b></span></div>
+        </section>
+
+        <section class="featured" aria-label="Featured experience">
+          <div class="featured-art">
+            <div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><div class="art-sun"></div>
+            <div class="art-hill hill-back"></div><div class="art-hill hill-front"></div>
+            <div class="art-caption"><span class="featured-tag"><i></i> FEATURED EXPERIENCE</span><span class="art-index">01 <small>/ 03</small></span></div>
+            <div class="featured-copy"><p class="feature-kicker">AWE ORIGINAL · DRIVING</p><h2>Take the long<br>way home.</h2><p>A little city. An open road. No rush.</p><button class="play-button" id="launchFeatured"><span>▶</span> Play AWE Drive <b>↗</b></button></div>
+            <div class="art-road"></div>
+          </div>
+          <div class="feature-side">
+            <div class="side-stat"><span class="stat-icon">◷</span><div><strong>A moment for yourself</strong><small>Quick sessions, easy to return to</small></div></div>
+            <div class="side-stat"><span class="stat-icon">⌘</span><div><strong>Play right here</strong><small>No installation for browser demos</small></div></div>
+            <div class="side-stat"><span class="stat-icon">✧</span><div><strong>Your library, your pace</strong><small>A growing home for experiences</small></div></div>
+            <div class="feature-side-footer"><span class="online-dot"></span> BROWSER RUNTIME <span class="side-footer-line"></span><span>PREVIEW</span></div>
+          </div>
+        </section>
+
+        <section class="section-block" id="library">
+          <div class="section-heading"><div><p class="section-eyebrow">PICK UP WHERE YOU LEFT OFF</p><h2>Jump back in</h2></div><a class="subtle-link" href="#discover">View library <span>→</span></a></div>
+          <div class="continue-grid">
+            <button class="continue-card" data-launch="drive"><span class="mini-art mini-drive"><span class="mini-sun"></span><span class="mini-road"></span></span><span class="continue-info"><span class="continue-type">AWE ORIGINAL · DEMO</span><strong>AWE Drive</strong><small>Explore at your own pace</small></span><span class="round-play">▶</span></button>
+            <button class="continue-card coming-card" data-launch="runtime"><span class="mini-art mini-sandbox"><span class="sandbox-cube"></span><span class="sandbox-cube second"></span></span><span class="continue-info"><span class="continue-type">EXPERIMENTAL</span><strong>Runtime sandbox</strong><small>Explore browser capabilities</small></span><span class="round-play">↗</span></button>
+          </div>
+        </section>
+
+        <section class="section-block discover-block" id="discover">
+          <div class="section-heading"><div><p class="section-eyebrow">A SMALL WORLD OF POSSIBILITIES</p><h2>Explore experiences</h2></div><div class="filter-row" id="filters"><button class="filter-chip selected" data-filter="all">All</button><button class="filter-chip" data-filter="driving">Driving</button><button class="filter-chip" data-filter="sandbox">Sandbox</button><button class="filter-chip" data-filter="experimental">Experimental</button></div></div>
+          <div class="experience-grid" id="experienceGrid">
+            <article class="experience-card" data-category="driving" data-search="awe drive driving city original">
+              <button class="experience-art card-drive" data-launch="drive" aria-label="Play AWE Drive"><span class="art-label">AWE ORIGINAL</span><span class="card-city-sun"></span><span class="card-city"></span><span class="card-car">▰</span><span class="art-open">↗</span></button>
+              <div class="experience-meta"><div><h3>AWE Drive</h3><p>Take a quiet ride through the city.</p></div><span class="type-pill">DRIVING</span></div>
+            </article>
+            <article class="experience-card" data-category="sandbox" data-search="runtime sandbox build experiment browser">
+              <button class="experience-art card-sandbox" data-launch="runtime" aria-label="Open runtime sandbox"><span class="art-label">BROWSER LAB</span><span class="floating-shape shape-a"></span><span class="floating-shape shape-b"></span><span class="floating-shape shape-c"></span><span class="art-open">↗</span></button>
+              <div class="experience-meta"><div><h3>Runtime sandbox</h3><p>Test local WebAssembly modules.</p></div><span class="type-pill">SANDBOX</span></div>
+            </article>
+            <article class="experience-card" data-category="experimental" data-search="graphics capability lab experimental webgpu">
+              <button class="experience-art card-graphics" data-launch="runtime" aria-label="Open graphics lab"><span class="art-label">IN DEVELOPMENT</span><span class="graphic-rings"></span><span class="graphic-core">A</span><span class="art-open">↗</span></button>
+              <div class="experience-meta"><div><h3>Graphics lab</h3><p>See what your browser can do.</p></div><span class="type-pill">EXPERIMENTAL</span></div>
+            </article>
+          </div>
+          <p class="empty-state" id="emptyState" hidden>No experiences match that search. Try another phrase.</p>
+        </section>
+
+        <section class="section-block awe-catalog" id="aweGameCatalog"><div class="section-heading"><div><p class="section-eyebrow">THE AWE ORIGINALS</p><h2>Play the worlds</h2></div><a class="subtle-link" href="../index.html">Open full AWEGame hub ↗</a></div><p class="catalog-intro">Every game opens inside the AWE universe. Your browser stays in control — no installer required for these browser games.</p><div class="awe-game-grid">
+<a class="awe-game-tile" href="../games/neondefender.html"><span class="tile-art tile-neon">✦<small>ARCADE / ACTION</small></span><strong>Neon Defender</strong><small>Defend the galaxy in a neon space shooter.</small><b>PLAY NOW ↗</b></a>
+<a class="awe-game-tile" href="../games/reactor.html"><span class="tile-art tile-reactor">⚡<small>SIMULATION / STRATEGY</small></span><strong>Reactor</strong><small>Balance energy, upgrades and reactor stability.</small><b>PLAY NOW ↗</b></a>
+<a class="awe-game-tile" href="../games/starlightmeadow.html"><span class="tile-art tile-starlight">✧<small>CASUAL / IDLE</small></span><strong>Starlight Meadow</strong><small>Collect starlight and grow your own world.</small><b>PLAY NOW ↗</b></a>
+<a class="awe-game-tile" href="../games/zenhaven.html"><span class="tile-art tile-zen">☾<small>COZY / RELAX</small></span><strong>Zen Haven</strong><small>Build a quiet sanctuary among the clouds.</small><b>PLAY NOW ↗</b></a>
+<a class="awe-game-tile" href="../games/aetheria.html"><span class="tile-art tile-aetheria">❋<small>COZY / IDLE</small></span><strong>Aetheria</strong><small>Explore a peaceful endless sanctuary.</small><b>PLAY NOW ↗</b></a>
+<a class="awe-game-tile" href="../games/lumina.html"><span class="tile-art tile-lumina">☼<small>IDLE / COLLECTION</small></span><strong>Lumina</strong><small>Gather light and grow a glowing garden.</small><b>PLAY NOW ↗</b></a>
+<a class="awe-game-tile" href="../games/languagegarden.html"><span class="tile-art tile-language">✿<small>EDUCATION / IDLE</small></span><strong>Language Garden</strong><small>Unlock languages and grow your garden.</small><b>PLAY NOW ↗</b></a>
+<a class="awe-game-tile" href="../games/randomlink.html"><span class="tile-art tile-random">↗<small>DISCOVERY / WEB</small></span><strong>Random Discovery</strong><small>Jump into an unexpected web discovery.</small><b>EXPLORE ↗</b></a>
+</div></section><section class="runtime-section" id="runtime">
+          <div class="runtime-intro"><div><p class="section-eyebrow">AWE PLAYGROUND</p><h2>Step inside AWE Drive</h2><p>A tiny playable city built into your browser. No download, no pressure.</p></div><span class="runtime-badge"><i></i> LIVE DEMO</span></div>
+          <div class="runtime-layout">
+            <div class="game-panel">
+              <div class="game-topline"><span><i class="online-dot"></i> CITY SESSION <small>· LOCAL PLAY</small></span><button id="restart" class="quiet-button">↻ Restart</button></div>
+              <div class="canvas-wrap"><canvas id="game" width="960" height="540" aria-label="AWE Drive playable city demo"></canvas><div class="game-overlay" id="gameOverlay"><div class="overlay-symbol">▶</div><strong>Ready when you are.</strong><span>Use WASD or the arrow keys to drive.</span><button id="startGame">Start driving</button></div></div>
+              <div class="game-bottomline"><span>MOVE <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> <span class="or-text">OR</span> <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd></span><span class="speed-readout" id="speedReadout">0 KM/H</span></div>
+            </div>
+            <aside class="runtime-info">
+              <div class="runtime-info-head"><span>RUNTIME HEALTH</span><span class="health-dot"></span></div>
+              <div class="health-row"><span>Graphics</span><b id="graphics">Checking…</b></div>
+              <div class="health-row"><span>WebAssembly</span><b id="wasm">Checking…</b></div>
+              <div class="health-row"><span>Shared memory</span><b id="threads">Checking…</b></div>
+              <div class="module-box"><span class="module-icon">⌘</span><strong>Try your own module</strong><p>Compile a local .wasm file and inspect its exports. The file stays on your device.</p><label class="upload-button">Choose WASM file<input id="wasmFile" type="file" accept=".wasm,application/wasm"></label><div id="moduleResult" class="module-result" aria-live="polite">No module selected.</div></div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="about-strip" id="about"><div class="about-mark">a</div><div><strong>AWE Play is a work in progress.</strong><p>A calmer place for browser-native games, experiments and the worlds still to come.</p></div><a href="https://github.com/ARARAT33/AWEGame/tree/feat/browser-game-runtime" target="_blank" rel="noreferrer">Explore the project ↗</a></section>
+        <footer><span>© AWE PLAY · EXPERIMENTAL</span><span>PLAY LIGHTLY. STAY CURIOUS.</span></footer>
+      </div>
+    </main>
+  </div>
+  <script defer src="./runtime.js"></script>
+</body>
+</html>

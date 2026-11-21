@@ -1,657 +1,97 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AWEGame — Game Library</title>
-  <style>
-    /* ─── RESET & BASE ─── */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f8f9fa;
-      color: #212529;
-      padding: 0 24px 40px;
-      min-height: 100vh;
-    }
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #f1f1f1;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #0077b6;
-      border-radius: 10px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #023e8a;
-    }
-
-    /* ─── HEADER ─── */
-    .header {
-      max-width: 1440px;
-      margin: 0 auto;
-      padding: 20px 0 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px 24px;
-      border-bottom: 1px solid #e9ecef;
-    }
-    .logo-group {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .logo-icon {
-      width: 46px;
-      height: 46px;
-      background: linear-gradient(135deg, #0077b6, #00b4d8);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      font-weight: 800;
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(0, 119, 182, 0.25);
-      transition: 0.25s ease;
-    }
-    .logo-icon:hover {
-      transform: scale(1.05) rotate(-2deg);
-      box-shadow: 0 6px 20px rgba(0, 119, 182, 0.35);
-    }
-    .logo-text {
-      font-size: 24px;
-      font-weight: 700;
-      color: #0077b6;
-      letter-spacing: -0.5px;
-    }
-    .logo-text small {
-      font-weight: 300;
-      color: #6c757d;
-      font-size: 16px;
-    }
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 28px;
-    }
-    .nav-link {
-      font-size: 15px;
-      font-weight: 500;
-      color: #495057;
-      transition: 0.2s;
-      position: relative;
-    }
-    .nav-link::after {
-      content: '';
-      position: absolute;
-      bottom: -4px;
-      left: 0;
-      width: 0;
-      height: 2px;
-      background: #0077b6;
-      transition: 0.25s;
-      border-radius: 4px;
-    }
-    .nav-link:hover {
-      color: #0077b6;
-    }
-    .nav-link:hover::after {
-      width: 100%;
-    }
-    .nav-link.blog {
-      color: #0077b6;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .nav-link.blog:hover {
-      color: #023e8a;
-      text-shadow: 0 0 20px rgba(0, 119, 182, 0.15);
-    }
-
-    .search-wrap {
-      position: relative;
-      flex: 1 1 240px;
-      min-width: 160px;
-      max-width: 360px;
-    }
-    .search-wrap input {
-      width: 100%;
-      padding: 11px 20px 11px 46px;
-      border: 1px solid #ced4da;
-      border-radius: 60px;
-      background: #fff;
-      color: #212529;
-      font-size: 14px;
-      transition: 0.25s;
-      outline: none;
-      font-family: inherit;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
-    }
-    .search-wrap input::placeholder {
-      color: #adb5bd;
-      font-weight: 300;
-    }
-    .search-wrap input:focus {
-      border-color: #0077b6;
-      box-shadow: 0 0 0 4px rgba(0, 119, 182, 0.12);
-    }
-    .search-wrap .search-icon {
-      position: absolute;
-      left: 18px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #adb5bd;
-      font-size: 16px;
-      pointer-events: none;
-      transition: 0.2s;
-    }
-    .search-wrap input:focus ~ .search-icon {
-      color: #0077b6;
-    }
-
-    /* ─── HERO ─── */
-    .hero {
-      max-width: 1440px;
-      margin: 28px auto 36px;
-      text-align: center;
-    }
-    .hero h1 {
-      font-size: clamp(30px, 4.5vw, 52px);
-      font-weight: 800;
-      color: #212529;
-      letter-spacing: -1px;
-    }
-    .hero h1 span {
-      background: linear-gradient(135deg, #0077b6, #00b4d8);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .hero p {
-      margin-top: 8px;
-      color: #6c757d;
-      font-size: clamp(14px, 1.2vw, 18px);
-      font-weight: 300;
-    }
-    .hero p span {
-      color: #0077b6;
-      font-weight: 500;
-    }
-
-    /* ─── GAME GRID ─── */
-    .games-section {
-      max-width: 1440px;
-      margin: 0 auto;
-    }
-    .games-header {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-    .games-header h2 {
-      font-size: 22px;
-      font-weight: 600;
-      color: #212529;
-    }
-    .games-header h2 small {
-      font-weight: 300;
-      color: #6c757d;
-      font-size: 14px;
-      margin-left: 8px;
-    }
-    .game-count {
-      font-size: 13px;
-      color: #6c757d;
-      background: #e9ecef;
-      padding: 5px 16px;
-      border-radius: 60px;
-    }
-
-    .game-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 20px;
-    }
-
-    /* ─── GAME CARD ─── */
-    .game-card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 18px 14px 16px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-      border: 1px solid #e9ecef;
-      transition: 0.25s ease;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      min-height: 170px;
-      position: relative;
-    }
-    .game-card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 12px 32px rgba(0, 119, 182, 0.10);
-      border-color: #0077b6;
-    }
-    .game-card .icon {
-      font-size: 32px;
-      margin-bottom: 10px;
-    }
-    .game-card .title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #212529;
-      line-height: 1.3;
-    }
-    .game-card .desc {
-      font-size: 13px;
-      color: #6c757d;
-      font-weight: 300;
-      margin-top: 4px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      line-height: 1.4;
-    }
-    .game-card .developer {
-      font-size: 12px;
-      color: #6c757d;
-      margin-top: 4px;
-      font-weight: 300;
-    }
-    .game-card .developer strong {
-      color: #0077b6;
-      font-weight: 500;
-    }
-    .game-card .badge {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      background: #e9ecef;
-      color: #495057;
-      padding: 3px 10px;
-      border-radius: 60px;
-      letter-spacing: 0.4px;
-    }
-    .game-card .footer-meta {
-      margin-top: auto;
-      padding-top: 10px;
-      border-top: 1px solid #f1f3f5;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 11px;
-      color: #adb5bd;
-    }
-    .game-card .footer-meta .arrow {
-      color: #0077b6;
-      font-weight: 600;
-      transition: 0.2s;
-    }
-    .game-card:hover .footer-meta .arrow {
-      transform: translateX(4px);
-    }
-
-    .no-results {
-      grid-column: 1 / -1;
-      text-align: center;
-      padding: 50px 20px;
-      color: #6c757d;
-    }
-    .no-results .big {
-      font-size: 44px;
-      margin-bottom: 12px;
-      opacity: 0.5;
-    }
-    .no-results h3 {
-      font-size: 18px;
-      font-weight: 500;
-      color: #212529;
-      margin-bottom: 4px;
-    }
-
-    /* ─── FOOTER ─── */
-    .footer {
-      max-width: 1440px;
-      margin: 50px auto 0;
-      padding: 20px 0 10px;
-      border-top: 1px solid #e9ecef;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px 20px;
-    }
-    .footer p {
-      font-size: 13px;
-      color: #6c757d;
-      font-weight: 300;
-    }
-    .footer p strong {
-      color: #212529;
-      font-weight: 600;
-    }
-    .footer .brand {
-      font-weight: 600;
-      color: #0077b6;
-    }
-    .footer .socials {
-      display: flex;
-      gap: 14px;
-    }
-    .footer .socials a {
-      color: #adb5bd;
-      transition: 0.2s;
-      font-size: 18px;
-    }
-    .footer .socials a:hover {
-      color: #0077b6;
-      transform: translateY(-2px);
-    }
-
-    /* ─── RESPONSIVE ─── */
-    @media (max-width: 1200px) {
-      .game-grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
-      }
-    }
-    @media (max-width: 992px) {
-      .game-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 14px;
-      }
-      .header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-      }
-      .search-wrap {
-        max-width: 100%;
-        flex: 1 1 auto;
-      }
-      .nav-links {
-        justify-content: center;
-        gap: 18px;
-      }
-      .logo-group {
-        justify-content: center;
-      }
-    }
-    @media (max-width: 700px) {
-      .game-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-      }
-      .hero h1 {
-        font-size: 26px;
-      }
-      .footer {
-        flex-direction: column;
-        text-align: center;
-      }
-      .game-card {
-        min-height: 140px;
-        padding: 14px 12px;
-      }
-      .game-card .icon {
-        font-size: 26px;
-      }
-      .game-card .title {
-        font-size: 14px;
-      }
-    }
-    @media (max-width: 440px) {
-      .game-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-      }
-      body {
-        padding: 0 12px 30px;
-      }
-      .game-card .badge {
-        display: none;
-      }
-      .game-card .desc {
-        font-size: 12px;
-        -webkit-line-clamp: 1;
-      }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0e12">
+<meta name="description" content="AWEGame — enter a universe of curated browser games and independent worlds.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./awe-mark.svg" type="image/svg+xml">
+<title>AWEGame — Play beyond</title>
+<link rel="stylesheet" href="awe-platform.css">
 </head>
-<body>
-
-  <!-- ═══ HEADER ═══ -->
-  <header class="header">
-    <div class="logo-group">
-      <div class="logo-icon">▲</div>
-      <div class="logo-text">AWEGame <small>·</small></div>
-    </div>
-    <nav class="nav-links">
-      <a href="https://blogma-wa.blogspot.com/" target="_blank" rel="noopener" class="nav-link blog">✦ Blog</a>
-    </nav>
-    <div class="search-wrap">
-      <input type="text" id="searchInput" placeholder="Search games…" autocomplete="off" />
-      <span class="search-icon">🔍</span>
+<body class="awe-home">
+<div class="ambient ambient-one" aria-hidden="true"></div><div class="ambient ambient-two" aria-hidden="true"></div>
+<div class="app-shell">
+<aside class="sidebar" id="sidebar">
+  <a class="brand" href="#home" aria-label="AWEGame home"><span class="brand-symbol">a</span><span class="brand-name">AWE<span>GAME</span></span></a>
+  <div class="side-label">YOUR PLAYSPACE</div>
+  <nav class="side-nav" aria-label="Main navigation">
+    <a class="nav-link active" href="#home" data-nav="home"><span class="nav-icon">⌂</span><span>Home</span></a>
+    <a class="nav-link" href="#library" data-nav="library"><span class="nav-icon">▦</span><span>Game library</span></a>
+    <a class="nav-link" href="#library" data-nav="favorites"><span class="nav-icon">♡</span><span>Favorites</span></a>
+    <a class="nav-link" href="#store" data-nav="store"><span class="nav-icon">◈</span><span>AWE Store</span></a>
+    <a class="nav-link" href="#recent" data-nav="recent"><span class="nav-icon">◷</span><span>Recently played</span></a>
+    <a class="nav-link" href="#player" data-nav="player"><span class="nav-icon">◎</span><span>Player profile</span></a>
+    <a class="nav-link" href="games/"><span class="nav-icon">↗</span><span>All game files</span></a>
+    <a class="nav-link" href="browser-runtime/index.html"><span class="nav-icon">⌘</span><span>Playground</span><span class="external-mark">↗</span></a>
+  </nav>
+  <div class="side-label side-label-spaced">AWE NETWORK</div>
+  <nav class="side-nav side-nav-small" aria-label="AWE projects">
+    <a class="nav-link" href="https://awe-a2z.pages.dev/" target="_blank" rel="noreferrer"><i class="project-dot dot-green"></i><span>AWE A2Z</span><span class="external-mark">↗</span></a>
+    <a class="nav-link" href="https://awe-exp.pages.dev/" target="_blank" rel="noreferrer"><i class="project-dot dot-purple"></i><span>AWE EXP</span><span class="external-mark">↗</span></a>
+    <a class="nav-link" href="https://awelib.pages.dev/" target="_blank" rel="noreferrer"><i class="project-dot dot-orange"></i><span>AWE Library</span><span class="external-mark">↗</span></a>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="local-card"><div class="local-card-title"><span class="local-lock">◈</span> YOUR SAVE IS LOCAL</div><p>Favorites, history and player progress stay on this device. No account. No tracking.</p><button id="installApp" class="install-app" hidden>Install AWEGame ↥</button></div>
+    <div class="profile-row"><div class="avatar" id="sideAvatar">A</div><div class="profile-copy"><strong>Guest player</strong><span>Local player profile</span></div><span class="profile-menu">···</span></div>
+  </div>
+</aside>
+<main class="main-area" id="home">
+  <header class="topbar">
+    <button class="mobile-menu" id="mobileMenu" aria-label="Open navigation">☰</button>
+    <div class="breadcrumb"><span class="breadcrumb-muted">AWEGAME</span><span class="breadcrumb-slash">/</span><strong>PLAYSPACE</strong></div>
+    <div class="top-actions">
+      <label class="search-box"><span class="search-symbol">⌕</span><input id="searchInput" type="search" placeholder="Find your next game…" autocomplete="off"><kbd>/</kbd></label>
+      <button class="icon-button" id="captureQuick" type="button" aria-label="Screen tools" title="Screen tools">◉</button>
+      <button class="icon-button" id="themeToggle" type="button" aria-label="Toggle appearance" title="Toggle appearance">◐</button>
+      <div class="top-avatar" id="topAvatar">A</div>
     </div>
   </header>
-
-  <!-- ═══ HERO ═══ -->
-  <section class="hero">
-    <h1>AWEGame <span>Library</span></h1>
-    <p>Discover and play <span>all your favorite games</span> in one place.</p>
-  </section>
-
-  <!-- ═══ GAME GRID ═══ -->
-  <section class="games-section">
-    <div class="games-header">
-      <h2>All Games <small>— click any card</small></h2>
-      <span class="game-count" id="gameCount">0 games</span>
-    </div>
-    <div class="game-grid" id="gameGrid"></div>
-  </section>
-
-  <!-- ═══ FOOTER ═══ -->
-  <footer class="footer">
-    <p>&copy; 2026 <strong class="brand">AWEGame</strong> — All Rights Reserved. <span style="font-size:11px; opacity:0.6; margin-left:8px;">v2026,09,13,12.awe.version.game.public</span></p>
-    <div class="socials">
-      <a href="#" aria-label="Twitter">🐦</a>
-      <a href="#" aria-label="Discord">💬</a>
-      <a href="#" aria-label="GitHub">🐙</a>
-      <a href="#" aria-label="YouTube">▶</a>
-    </div>
-  </footer>
-
-  <!-- ═══ SCRIPTS ═══ -->
-  <script src="games.js"></script>
-  <script>
-    (function() {
-      const grid = document.getElementById('gameGrid');
-      const searchInput = document.getElementById('searchInput');
-      const countEl = document.getElementById('gameCount');
-      const ARCHIVE_URL = 'https://raw.githubusercontent.com/ARARAT33/AWEArchiveDB/refs/heads/main/awegames.json';
-
-      // Keep the existing locally hosted games and add archive entries at runtime.
-      const localGames = typeof games !== 'undefined' && Array.isArray(games) ? games : [];
-      let archiveGames = [];
-
-      function escapeHTML(value) {
-        return String(value ?? '').replace(/[&<>"']/g, char => ({
-          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-        })[char]);
-      }
-
-      function getArchiveEntries(payload) {
-        if (Array.isArray(payload)) return payload;
-        if (payload && typeof payload === 'object') {
-          for (const key of ['games', 'awegames', 'items', 'data']) {
-            if (Array.isArray(payload[key])) return payload[key];
-          }
-        }
-        return [];
-      }
-
-      function normalizeArchiveGame(item) {
-        if (!item || typeof item !== 'object') return null;
-        const title = String(item.title ?? item.tittle ?? '').trim();
-        const description = String(item.description ?? '').trim();
-        const elink = String(item.elink ?? '').trim();
-        if (!title || !elink) return null;
-
-        try {
-          const url = new URL(elink, window.location.href);
-          if (!['http:', 'https:'].includes(url.protocol)) return null;
-          return {
-            title,
-            description,
-            elink: url.href,
-            icon: '🎮',
-            developer: 'AWEArchiveDB',
-            archive: true
-          };
-        } catch (_) {
-          return null;
-        }
-      }
-
-      function getAllGames() {
-        const seen = new Set();
-        return [...localGames, ...archiveGames].filter(game => {
-          const key = game.elink || game.folder || game.title;
-          if (!key || seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        });
-      }
-
-      function renderGames(filter = '') {
-        const query = filter.toLowerCase().trim();
-        const allGames = getAllGames();
-        const filtered = query
-          ? allGames.filter(game =>
-              String(game.title || '').toLowerCase().includes(query) ||
-              String(game.description || '').toLowerCase().includes(query) ||
-              String(game.developer || '').toLowerCase().includes(query)
-            )
-          : allGames;
-
-        if (filtered.length === 0) {
-          grid.innerHTML = `
-            <div class="no-results">
-              <div class="big">🔎</div>
-              <h3>No games found</h3>
-              <p>Try a different search term.</p>
-            </div>`;
-          countEl.textContent = '0 games';
-          return;
-        }
-
-        grid.innerHTML = filtered.map(game => {
-          const title = escapeHTML(game.title || 'Untitled game');
-          const description = escapeHTML(game.description || '');
-          const developer = escapeHTML(game.developer || '');
-          const icon = escapeHTML(game.icon || '🎮');
-          const destination = game.elink
-            ? 'data-elink="' + escapeHTML(game.elink) + '"'
-            : 'data-folder="' + escapeHTML(game.folder || '') + '"';
-          const sourceLabel = game.archive ? 'AWEArchiveDB' : (game.folder || 'AWEGame');
-          return `
-            <div class="game-card" ${destination} tabindex="0" role="link" aria-label="Play ${title}">
-              <span class="badge">${game.archive ? 'archive' : (developer ? 'dev' : 'game')}</span>
-              <div class="icon">${icon}</div>
-              <div class="title">${title}</div>
-              <div class="desc">${description}</div>
-              ${developer ? `<div class="developer">✏️ <strong>${developer}</strong></div>` : ''}
-              <div class="footer-meta">
-                <span>${escapeHTML(sourceLabel)}</span>
-                <span class="arrow">→</span>
-              </div>
-            </div>`;
-        }).join('');
-
-        countEl.textContent = `${filtered.length} game${filtered.length !== 1 ? 's' : ''}`;
-      }
-
-      function openGame(card) {
-        if (!card) return;
-        const externalLink = card.dataset.elink;
-        if (externalLink) {
-          try {
-            const url = new URL(externalLink, window.location.href);
-            if (['http:', 'https:'].includes(url.protocol)) window.location.href = url.href;
-          } catch (_) {}
-          return;
-        }
-        const folder = card.dataset.folder;
-        if (folder) window.location.href = 'games/' + folder;
-      }
-
-      searchInput.addEventListener('input', function() {
-        renderGames(this.value);
-      });
-
-      grid.addEventListener('click', function(event) {
-        openGame(event.target.closest('.game-card'));
-      });
-
-      grid.addEventListener('keydown', function(event) {
-        if ((event.key === 'Enter' || event.key === ' ') && event.target.classList.contains('game-card')) {
-          event.preventDefault();
-          openGame(event.target);
-        }
-      });
-
-      document.addEventListener('keydown', function(event) {
-        if (event.key === '/' && !['INPUT', 'TEXTAREA'].includes(event.target.tagName)) {
-          event.preventDefault();
-          searchInput.focus();
-        }
-        if (event.key === 'Escape' && document.activeElement === searchInput) {
-          searchInput.blur();
-        }
-      });
-
-      // Render local games immediately; archive games appear as soon as JSON loads.
-      renderGames();
-
-      fetch(ARCHIVE_URL, { cache: 'no-cache' })
-        .then(response => {
-          if (!response.ok) throw new Error('Archive request failed: HTTP ' + response.status);
-          return response.json();
-        })
-        .then(payload => {
-          archiveGames = getArchiveEntries(payload)
-            .map(normalizeArchiveGame)
-            .filter(Boolean);
-          renderGames(searchInput.value);
-        })
-        .catch(error => {
-          console.warn('AWEArchiveDB could not be loaded. Local games remain available.', error);
-          renderGames(searchInput.value);
-        });
-    })();
-  </script>
-
-</body>
-</html>
+  <div class="content-wrap">
+    <section class="welcome-row">
+      <div><p class="eyebrow"><span class="status-pulse"></span> YOUR NEXT WORLD IS READY</p><h1>Play beyond<br><span>the ordinary.</span></h1><p class="welcome-sub">A handpicked universe of games, experiments and little worlds worth getting lost in.</p></div>
+      <div class="welcome-index"><span>EST.</span><strong> AWE</strong><small>PLAYVERSE / 001</small><div class="index-line"></div><small>MADE TO EXPLORE</small></div>
+    </section>
+    <section class="hero-panel">
+      <div class="hero-visual" aria-hidden="true"><div class="hero-halo"></div><div class="hero-orbit orbit-a"></div><div class="hero-orbit orbit-b"></div><div class="hero-planet"></div><div class="hero-moon"></div><div class="hero-star star-a">✦</div><div class="hero-star star-b">✧</div><div class="hero-star star-c">✦</div><div class="hero-coordinate">35° 41' / AWE-01</div><div class="hero-visual-caption">A NEW WORLD<br>IS ONE CLICK AWAY</div></div>
+      <div class="hero-copy"><div class="hero-kicker"><span class="kicker-line"></span> AWEGAME ORIGINAL UNIVERSE</div><h2>Find your<br>next <em>escape.</em></h2><p>From calm little sanctuaries to high-voltage arcade battles — choose a world and make it yours.</p><div class="hero-actions"><a class="primary-cta" href="#library">Explore games <span>↗</span></a><button class="secondary-cta" id="randomGame" type="button"><span>⤨</span> Surprise me</button></div><div class="hero-foot"><span><i class="tiny-live"></i> PLAYVERSE ONLINE</span><span>NO ACCOUNT REQUIRED</span></div></div>
+    </section>
+    <section class="stats-strip" aria-label="Your playverse">
+      <div class="stat-cell"><span class="stat-symbol">▦</span><div><strong id="localCount">Loading worlds…</strong><small>Worlds ready to play</small></div></div>
+      <div class="stat-cell"><span class="stat-symbol">◷</span><div><strong id="heroRecent">Your first adventure</strong><small>Last played world</small></div></div>
+      <div class="stat-cell"><span class="stat-symbol">♡</span><div><strong id="heroFavorites">0 saved worlds</strong><small>Your collection</small></div></div>
+      <div class="stat-cell"><span class="stat-symbol">◎</span><div><strong id="signalGames">—</strong><small>Playable worlds · browser</small></div></div>
+    </section>
+    <section class="portal-section" id="quickPlay">
+      <div class="section-heading"><div><p class="eyebrow">PICK A DIRECTION</p><h2>What are you in the mood for?</h2></div><span class="section-aside">Choose a feeling. Find a world.</span></div>
+      <div class="portal-grid">
+        <button class="portal-tile portal-calm" type="button" data-vibe="calm"><span class="portal-art">☾</span><span class="portal-copy"><strong>Slow down</strong><small>Calm · Cozy · Relax</small></span><b>↗</b></button>
+        <button class="portal-tile portal-action" type="button" data-vibe="action"><span class="portal-art">ϟ</span><span class="portal-copy"><strong>Feel the rush</strong><small>Action · Arcade · Speed</small></span><b>↗</b></button>
+        <button class="portal-tile portal-discovery" type="button" data-vibe="discovery"><span class="portal-art">✧</span><span class="portal-copy"><strong>Get curious</strong><small>Discover · Explore · Weird</small></span><b>↗</b></button>
+        <button class="portal-tile portal-strategy" type="button" data-vibe="strategy"><span class="portal-art">⌘</span><span class="portal-copy"><strong>Think ahead</strong><small>Strategy · Build · Control</small></span><b>↗</b></button>
+      </div>
+    </section>
+    <section class="quest-board" id="questBoard"><div class="quest-intro"><p class="eyebrow">AWE MINI MISSIONS</p><h2>Make today<br><span>count.</span></h2><p>Three small ways to discover something new. Your progress stays on this device.</p></div><div class="quest-list">
+      <button class="quest-item" type="button" data-mission="discover"><span class="quest-icon">◈</span><span><strong>Open a new portal</strong><small>Play a world you haven't tried</small></span><b>GO ↗</b></button>
+      <button class="quest-item" type="button" data-mission="favorite"><span class="quest-icon">♡</span><span><strong>Save a favorite</strong><small>Build your own collection</small></span><b>GO ↗</b></button>
+      <button class="quest-item" type="button" data-mission="random"><span class="quest-icon">⤨</span><span><strong>Break the routine</strong><small>Let AWE pick your next game</small></span><b>GO ↗</b></button>
+    </div></section>
+    <section class="section-block" id="recent"><div class="section-heading"><div><p class="eyebrow">PICK UP WHERE YOU LEFT OFF</p><h2>Recently played</h2></div><span class="section-aside" id="recentNote">Your recent worlds appear here</span></div><div class="game-grid compact-games" id="recentGrid"><div class="empty-library">Your next adventure is one click away.</div></div></section>
+    <section class="section-block" id="library"><div class="section-heading"><div><p class="eyebrow">THE AWE COLLECTION</p><h2>Explore the worlds</h2></div><span class="game-count" id="gameCount">Loading worlds…</span></div>
+      <div class="library-toolbar"><div class="filter-row" id="filters"><button class="filter-chip selected" data-filter="all">All worlds</button><button class="filter-chip" data-filter="calm">Chill</button><button class="filter-chip" data-filter="action">Action</button><button class="filter-chip" data-filter="strategy">Strategy</button><button class="filter-chip" data-filter="discovery">Explore</button><button class="filter-chip" data-filter="favorites">♡ Saved</button></div><select class="sort-select" id="sortSelect" aria-label="Sort games"><option value="featured">AWE selection</option><option value="az">Name A–Z</option><option value="za">Name Z–A</option></select></div>
+      <div class="game-grid" id="gameGrid"><div class="empty-library">Opening portals…</div></div><div class="empty-state" id="emptyState" hidden>No worlds found. Try another filter or search.</div>
+    </section>
+    <section class="store-hero" id="store"><div class="store-hero-copy"><p class="eyebrow">THE OFFICIAL AWE CATALOG</p><h2>Discover your<br><span>next dimension.</span></h2><p>Explore the wider AWEArchiveDB collection. Titles are curated and added by AWE — no public uploads or random listings.</p><div class="store-hero-actions"><button class="awe-primary" id="storeRefresh" type="button">Sync catalog <span>↻</span></button><span class="store-source"><i class="live-dot"></i><span id="storeStatus">Connecting to AWEArchiveDB…</span></span></div></div><div class="store-hero-art" aria-hidden="true"><div class="store-orbit"></div><div class="store-orbit store-orbit-two"></div><div class="store-core">AWE<small>STORE</small></div><span class="store-spark spark-one">✦</span><span class="store-spark spark-two">✧</span></div></section>
+    <section class="store-controls"><div class="store-search"><span>⌕</span><input id="storeSearch" type="search" placeholder="Search titles, creators, genres…" autocomplete="off"></div><div class="store-filter-row"><select id="storeOsFilter" aria-label="Filter by operating system"><option value="all">Every platform</option><option value="compatible">Compatible with my device</option><option value="windows">Windows</option><option value="macos">macOS</option><option value="linux">Linux</option><option value="android">Android</option><option value="ios">iOS</option><option value="web">Browser</option></select><select id="storeTypeFilter" aria-label="Filter game type"><option value="all">All experiences</option><option value="web">Instant play</option><option value="download">Downloads</option></select><select id="storeSort" aria-label="Sort store"><option value="featured">Featured</option><option value="az">Name A–Z</option><option value="new">Recently added</option></select></div></section>
+    <div class="store-results-head"><div><p class="eyebrow">AWEARCHIVEDB</p><h3>More to discover</h3></div><span id="storeCount">Loading catalog…</span></div><div class="store-grid" id="storeGrid"><div class="store-empty">Loading AWE Store…</div></div><div class="store-empty" id="storeEmpty" hidden>No games match this search. Try another platform.</div>
+    <section class="player-zone" id="player"><div class="player-zone-head"><div><p class="eyebrow">YOUR SPACE · YOUR RULES</p><h2>Player command center</h2></div><span class="local-badge"><i></i> PRIVATE · THIS DEVICE</span></div></section>
+    <section class="about-strip" id="favorites"><div class="about-mark">a</div><div><strong>AWEGame — your gateway to the playverse.</strong><p>Games are curated by AWE. Favorites, history and player data are stored locally on your device.</p></div><a href="https://github.com/ARARAT33/AWEGame" target="_blank" rel="noreferrer">View project ↗</a></section>
+    <footer><span>© AWEGAME · PLAY BEYOND THE ORDINARY</span><span>BUILT FOR THE CURIOUS.</span></footer>
+  </div>
+</main>
+</div>
+<dialog class="play-modal" id="playModal"><div class="play-modal-shell"><header><div><i class="play-live-dot"></i><span id="playModalTitle">AWE GAME SESSION</span></div><div class="play-modal-actions"><button type="button" id="gameFullscreen" aria-label="Fullscreen" title="Fullscreen">⛶</button><button type="button" id="closeGame" aria-label="Close game" title="Close">×</button></div></header><div class="play-frame-wrap"><iframe id="playerFrame" title="AWEGame player" allow="fullscreen; autoplay; gamepad; clipboard-read; clipboard-write; pointer-lock" referrerpolicy="strict-origin-when-cross-origin"></iframe></div></div></dialog>
+<div class="awe-toast" id="aweToast" role="status" aria-live="polite"></div>
+<script src="games.js"></script><script src="awe-platform.js"></script><script src="awe-capture.js"></script>
+</body></html>

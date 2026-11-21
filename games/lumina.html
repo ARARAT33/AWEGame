@@ -252,6 +252,7 @@ main{
   header{justify-content:center;text-align:center}
 }
 </style>
+    <link rel="stylesheet" href="../awe-platform.css">
 </head>
 <body>
 <canvas id="sky"></canvas>
@@ -1016,5 +1017,7 @@ setInterval(save,5000);
 document.addEventListener("visibilitychange",()=>{if(document.hidden)save();});
 addEventListener("beforeunload",save);
 </script>
+<script src="../awe-game-ui.js"></script>
+<script src="../awe-capture.js"></script>
 </body>
 </html>

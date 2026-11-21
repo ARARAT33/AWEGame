@@ -35,6 +35,7 @@
             animation: loading-wave 1.4s infinite linear;
         }
     </style>
+    <link rel="stylesheet" href="../awe-platform.css">
 </head>
 <body class="animated-bg text-slate-800 min-h-screen flex flex-col items-center justify-between p-6 transition-all duration-500 font-sans overflow-hidden" id="page-body">
 
@@ -81,7 +82,7 @@
             const body = document.getElementById('page-body');
             body.classList.add('fade-exit');
             setTimeout(() => {
-                window.location.href = '../../index.html';
+                window.location.href = '../index.html';
             }, 500);
         }
 
@@ -135,5 +136,7 @@
             }, 1200);
         }
     </script>
+<script src="../awe-game-ui.js"></script>
+<script src="../awe-capture.js"></script>
 </body>
 </html>

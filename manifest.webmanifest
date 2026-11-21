@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "AWEGame — AWE Play & Store",
+  "short_name": "AWEGame",
+  "description": "A liquid-glass browser game library, open game store and creator space.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101511",
+  "theme_color": "#101511",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./awe-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
