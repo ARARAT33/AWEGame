@@ -56,3 +56,5 @@
 .awe-game-utility button:focus-visible,.awe-game-utility a:focus-visible{outline:2px solid #b8d7bd;outline-offset:2px}
 @media(max-width:560px){.awe-game-utility{right:8px;top:8px}.awe-game-utility a,.awe-game-utility button{min-height:27px;padding:0 8px;font-size:9px}}
 @media(prefers-reduced-motion:reduce){.awe-game-utility *{transition:none!important;animation:none!important}}
+
+.awe-home .install-app{display:block;width:100%;margin-top:10px;padding:8px 9px;border:1px solid #526b55;border-radius:6px;background:#b8d7bd12;color:#b8d7bd;font:600 9px 'DM Sans',sans-serif;cursor:pointer}.awe-home .install-app[hidden]{display:none}
