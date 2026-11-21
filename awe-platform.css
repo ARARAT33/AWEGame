@@ -61,3 +61,36 @@
 
 .awe-home.light-mode{--bg:#f1f3ed;--sidebar:#f8f9f5;--surface:#fff;--surface-2:#f7f9f4;--surface-3:#edf1e9;--line:#dce3d8;--text:#263329;--muted:#647165;--soft:#879286;--mint:#638e6b;--mint-strong:#64866a;--awe-bg:#f1f3ed;--awe-panel:#fff;--awe-line:#dce3d8;--awe-text:#263329;--awe-muted:#647165;--awe-soft:#879286;--awe-mint:#638e6b;background:#f1f3ed;color:#263329}
 .awe-home.light-mode .sidebar{background:#f8f9f5;border-color:#dce3d8}.awe-home.light-mode .nav-link{color:#647165}.awe-home.light-mode .nav-link.active{background:#638e6b18;color:#456e4b}.awe-home.light-mode .search-box{background:#fff;border-color:#dce3d8}.awe-home.light-mode .storage-card{background:#eef3ec;border-color:#dce3d8}.awe-home.light-mode .profile-row{border-color:#dce3d8}.awe-home.light-mode .game-card{border-color:#dce3d8}.awe-home.light-mode .game-card-footer{border-color:#e8ece5}
+
+
+/* AWEGame Personal Space — client-only profile, data portability and sharing */
+.awe-personal-panel{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(260px,.8fr);gap:18px;margin:28px 0;padding:22px;border:1px solid var(--awe-line);border-radius:18px;background:linear-gradient(135deg,#1d2b21,#172019 70%);box-shadow:0 18px 48px #0002}
+.awe-personal-panel h2{margin:0 0 5px;font:800 19px/1.25 'Manrope',sans-serif;color:var(--awe-text)}
+.awe-personal-panel p{margin:0;color:var(--awe-muted);font-size:11px}
+.awe-personal-panel .personal-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--awe-mint);margin-bottom:8px}
+.awe-profile-line{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.awe-profile-avatar{display:grid;place-items:center;width:46px;height:46px;flex:0 0 46px;border-radius:15px;background:linear-gradient(135deg,#b8d7bd,#d4c5f3);color:#18231a;font:800 21px 'Manrope',sans-serif}
+.awe-profile-name{width:min(100%,240px);padding:9px 11px;border:1px solid var(--awe-line);border-radius:9px;background:#101811;color:var(--awe-text);font:600 12px 'DM Sans',sans-serif}
+.awe-profile-stats{display:flex;gap:9px;flex-wrap:wrap;margin:15px 0}
+.awe-profile-stat{padding:10px 12px;border:1px solid #b8d7bd24;border-radius:10px;background:#ffffff08;min-width:90px}
+.awe-profile-stat strong{display:block;color:var(--awe-text);font:800 18px 'Manrope',sans-serif}
+.awe-profile-stat span{font-size:9px;color:var(--awe-muted)}
+.awe-personal-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.awe-personal-actions button,.awe-personal-actions label{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 12px;border:1px solid var(--awe-line);border-radius:9px;background:#ffffff0a;color:var(--awe-text);font:600 10px 'DM Sans',sans-serif;cursor:pointer}
+.awe-personal-actions button:hover,.awe-personal-actions label:hover{border-color:#8eae91;background:#b8d7bd16}
+.awe-personal-actions input{display:none}
+.awe-personal-hint{margin-top:10px!important;font-size:9px!important}
+.awe-share-feed{max-height:160px;overflow:auto;margin-top:12px;display:grid;gap:7px}
+.awe-share-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid var(--awe-line);border-radius:9px;background:#ffffff08;color:var(--awe-muted);font-size:10px}
+.awe-share-item strong{color:var(--awe-text)}
+.awe-home.light-mode .awe-personal-panel{background:linear-gradient(135deg,#fff,#eef3ec);border-color:#dce3d8}
+.awe-home.light-mode .awe-profile-name{background:#fff;color:#263329}
+.awe-home.light-mode .awe-personal-actions button,.awe-home.light-mode .awe-personal-actions label,.awe-home.light-mode .awe-share-item{background:#fff;color:#526252;border-color:#dce3d8}
+@media(max-width:760px){.awe-personal-panel{grid-template-columns:1fr;padding:16px}.awe-profile-name{width:100%}}
+/* In-game result sharing controls */
+.awe-result-pop{position:fixed;inset:auto 16px 16px auto;z-index:100000;width:min(340px,calc(100vw - 32px));padding:16px;border:1px solid #b8d7bd44;border-radius:16px;background:#101a13ed;color:#e9eee7;box-shadow:0 18px 55px #0008;backdrop-filter:blur(18px);font:12px/1.5 'DM Sans',sans-serif}
+.awe-result-pop h3{margin:0 0 5px;font:800 16px 'Manrope',sans-serif}.awe-result-pop p{margin:0 0 12px;color:#aab9aa;font-size:10px}
+.awe-result-pop input{width:100%;padding:10px;border:1px solid #344637;border-radius:8px;background:#17231a;color:#fff;outline:none}
+.awe-result-pop .result-actions{display:flex;gap:7px;margin-top:10px}.awe-result-pop button{flex:1;padding:9px;border:1px solid #536b55;border-radius:8px;background:#b8d7bd;color:#172219;font:700 10px 'DM Sans',sans-serif;cursor:pointer}
+.awe-result-pop button.secondary{background:transparent;color:#dce9dc}
+@media(prefers-reduced-motion:reduce){.awe-personal-panel *,.awe-result-pop *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
