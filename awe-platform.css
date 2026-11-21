@@ -1,0 +1,49 @@
+/* AWEGame shared platform layer — preserves each game's own visual identity */
+:root{--awe-bg:#101511;--awe-panel:#19211a;--awe-line:#2b382d;--awe-text:#e9eee7;--awe-muted:#9aa79a;--awe-mint:#b8d7bd;--awe-soft:#6f7d70}
+.awe-home{background:var(--awe-bg);color:var(--awe-text);font:14px/1.55 'DM Sans',system-ui,sans-serif}
+.awe-home .sidebar{background:#141a16;border-color:#2a352c}.awe-home .main-area{min-width:0}.awe-home .content-wrap{max-width:1420px}
+.awe-home .featured-home .featured-art{min-height:300px}.awe-home .featured-home-tag{position:absolute;right:22px;top:20px;z-index:3}
+.awe-home .featured-home .featured-copy{top:55px}.awe-home .featured-home .play-button{text-decoration:none}
+.awe-home .section-note{font-size:10px;color:var(--awe-soft)}
+.awe-home .library-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 15px}
+.awe-home .sort-select{background:#19211a;border:1px solid var(--awe-line);border-radius:7px;color:var(--awe-muted);padding:8px 10px;font:10px 'DM Sans',sans-serif;outline:none}
+.awe-home .game-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.awe-home .game-card{position:relative;display:flex;flex-direction:column;min-width:0;min-height:220px;padding:0;overflow:hidden;border:1px solid var(--awe-line);border-radius:10px;background:#19211a;color:var(--awe-text);text-align:left;cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s}
+.awe-home .game-card:hover{transform:translateY(-3px);border-color:#6b896f;box-shadow:0 14px 32px #0003}
+.awe-home .game-art{height:116px;position:relative;display:grid;place-items:center;overflow:hidden;background:linear-gradient(135deg,#334b3b,#1c2b22)}
+.awe-home .game-art:before,.awe-home .game-art:after{content:"";position:absolute;border:1px solid #e4e9d522;border-radius:50%;width:170px;height:170px}
+.awe-home .game-art:after{width:115px;height:115px}
+.awe-home .game-art-icon{font-size:38px;position:relative;z-index:1;filter:drop-shadow(0 8px 12px #0005)}
+.awe-home .game-art-number{position:absolute;left:11px;top:10px;color:#edf4e9a8;font-size:8px;letter-spacing:1.3px}
+.awe-home .game-card-body{display:flex;flex-direction:column;gap:5px;flex:1;padding:12px}
+.awe-home .game-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.awe-home .game-title{font:700 12px/1.35 'Manrope',sans-serif;letter-spacing:-.2px}
+.awe-home .game-description{font-size:9px;line-height:1.55;color:var(--awe-muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.awe-home .game-developer{font-size:8px;color:var(--awe-soft);margin-top:auto;padding-top:6px}
+.awe-home .game-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:7px;padding-top:8px;border-top:1px solid var(--awe-line);font-size:8px;color:var(--awe-soft)}
+.awe-home .game-open{color:var(--awe-mint);font-size:12px}
+.awe-home .favorite-button{position:absolute;right:9px;top:9px;z-index:2;width:27px;height:27px;border:1px solid #e5eee533;border-radius:50%;background:#101811aa;color:#e8eee5;cursor:pointer;font-size:14px}
+.awe-home .favorite-button.is-favorite{color:#f0c5b9;background:#18211beF}
+.awe-home .game-badge{font-size:7px;letter-spacing:.8px;text-transform:uppercase;color:#c1d7c0;border:1px solid #b8d7bd38;border-radius:20px;padding:3px 6px;white-space:nowrap}
+.awe-home .compact-games{grid-template-columns:repeat(4,minmax(0,1fr))}
+.awe-home .compact-games .game-card{min-height:170px}
+.awe-home .compact-games .game-art{height:75px}
+.awe-home .empty-library{grid-column:1/-1;padding:22px;border:1px dashed var(--awe-line);border-radius:9px;color:var(--awe-muted);font-size:10px;text-align:center}
+.awe-home .game-card[hidden]{display:none!important}
+.awe-home .empty-state{padding:25px;color:var(--awe-muted);text-align:center;border:1px dashed var(--awe-line);border-radius:9px;font-size:11px}
+.awe-home .about-strip{margin-top:38px}
+.awe-home footer{display:flex;justify-content:space-between;gap:12px;padding:22px 0 25px;color:var(--awe-soft);font-size:8px;letter-spacing:1.2px}
+.awe-home .light-mode{--awe-bg:#f1f3ed;--awe-panel:#fff;--awe-line:#dce3d8;--awe-text:#263329;--awe-muted:#647165;--awe-soft:#879286;--awe-mint:#638e6b}
+.awe-home.light-mode{background:#f1f3ed;color:#263329}.awe-home.light-mode .game-card,.awe-home.light-mode .sort-select{background:#fff;color:#263329}.awe-home.light-mode .topbar{background:#f1f3edef}
+@media(max-width:1100px){.awe-home .game-grid,.awe-home .compact-games{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.awe-home .game-grid,.awe-home .compact-games{grid-template-columns:repeat(2,minmax(0,1fr))}.awe-home .library-toolbar{align-items:flex-start}.awe-home footer{font-size:7px}}
+@media(max-width:440px){.awe-home .game-art{height:95px}.awe-home .game-card{min-height:205px}.awe-home .game-description{-webkit-line-clamp:2}.awe-home .sort-select{width:100%}}
+/* Consistent game-page utility rail; game canvas and gameplay controls remain untouched. */
+.awe-game-utility{position:fixed;right:14px;top:14px;z-index:99999;display:flex;align-items:center;gap:7px;padding:5px;border:1px solid #b8d7bd35;border-radius:999px;background:#111a14c9;backdrop-filter:blur(16px);box-shadow:0 8px 26px #0003;font:600 10px/1 'DM Sans',system-ui,sans-serif;color:#e9eee7}
+.awe-game-utility a,.awe-game-utility button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:29px;padding:0 10px;border:0;border-radius:999px;background:transparent;color:inherit;text-decoration:none;cursor:pointer}
+.awe-game-utility a:hover,.awe-game-utility button:hover{background:#b8d7bd24;color:#d5ead7}
+.awe-game-utility .awe-mark{display:grid;place-items:center;width:23px;height:23px;border-radius:50%;background:#b8d7bd;color:#18231a;font:800 15px 'Manrope',sans-serif;font-style:italic}
+.awe-game-utility .awe-separator{width:1px;height:16px;background:#d7e3d522}
+.awe-game-utility button:focus-visible,.awe-game-utility a:focus-visible{outline:2px solid #b8d7bd;outline-offset:2px}
+@media(max-width:560px){.awe-game-utility{right:8px;top:8px}.awe-game-utility a,.awe-game-utility button{min-height:27px;padding:0 8px;font-size:9px}}
+@media(prefers-reduced-motion:reduce){.awe-game-utility *{transition:none!important;animation:none!important}}
