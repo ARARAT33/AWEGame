@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "AWEGame — Browser Game Library",
+  "short_name": "AWEGame",
+  "description": "A calm home for browser games, creative worlds and experiments.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101511",
+  "theme_color": "#101511",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./awe-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
