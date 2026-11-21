@@ -1,4 +1,4 @@
-const CACHE='awegame-shell-v4';
+const CACHE='awegame-shell-v5';
 const SHELL=['./','./index.html','./games.js','./awe-platform.css','./awe-platform.js','./awe-game-ui.js','./awe-capture.js','./browser-runtime/index.html','./browser-runtime/style.css','./browser-runtime/runtime.js','./manifest.webmanifest','./awe-mark.svg','./games/aetheria.html','./games/languagegarden.html','./games/lumina.html','./games/neondefender.html','./games/reactor.html','./games/starlightmeadow.html','./games/zenhaven.html','./games/randomlink.html'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()))});
