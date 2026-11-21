@@ -31,6 +31,10 @@ const applyTheme=()=>document.body.classList.toggle('light-mode',localStorage.ge
 $('#themeToggle').addEventListener('click',()=>{localStorage.setItem(THEME_KEY,document.body.classList.contains('light-mode')?'dark':'light');applyTheme()});
 document.addEventListener('click',e=>{if(innerWidth<=820&&!e.target.closest('#sidebar')&&!e.target.closest('#mobileMenu'))$('#sidebar').classList.remove('open')});
 document.addEventListener('keydown',e=>{if(e.key==='/'&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){e.preventDefault();search.focus()}if(e.key==='Escape'){search.blur();$('#sidebar').classList.remove('open')}});
+let installPrompt=null;const installButton=$('#installApp');
+window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;if(installButton)installButton.hidden=false});
+installButton?.addEventListener('click',async()=>{if(!installPrompt)return;installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;installButton.hidden=true});
+window.addEventListener('appinstalled',()=>{if(installButton)installButton.hidden=true});
 render();
 fetch(ARCHIVE_URL,{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error('Archive HTTP '+r.status);return r.json()}).then(payload=>{const entries=Array.isArray(payload)?payload:['games','awegames','items','data'].map(k=>payload?.[k]).find(Array.isArray)||[];archiveGames=entries.map(normalizeArchive).filter(Boolean);render()}).catch(err=>console.info('Archive unavailable; local games remain ready.',err));
 if('serviceWorker'in navigator&&location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.info('Offline support unavailable',err)));
