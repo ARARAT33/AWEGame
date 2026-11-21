@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101511">
-<meta name="description" content="AWEGame — a calm home for browser games, creative worlds and experiments.">
+<meta name="description" content="AWEGame — a calm home for browser games, creative worlds and experiments."><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./awe-mark.svg" type="image/svg+xml">
 <title>AWEGame — Play at your pace</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -18,6 +18,7 @@
 <a class="nav-link" href="#library" data-nav="library"><span class="nav-icon">▤</span>All games</a>
 <a class="nav-link" href="#library" data-nav="favorites"><span class="nav-icon">♡</span>Favorites</a>
 <a class="nav-link" href="#recent" data-nav="recent"><span class="nav-icon">◷</span>Recently played</a>
+<a class="nav-link" href="browser-runtime/index.html"><span class="nav-icon">▹</span>Playground</a>
 </nav>
 <div class="side-label collections-label">AWE NETWORK</div>
 <nav class="side-nav compact-nav">
@@ -26,7 +27,7 @@
 <a class="nav-link" href="https://awelib.pages.dev/" target="_blank" rel="noreferrer"><span class="collection-dot peach"></span>AWE Library ↗</a>
 <a class="nav-link" href="https://blogma-wa.blogspot.com/" target="_blank" rel="noreferrer"><span class="collection-dot mint"></span>Blog ↗</a>
 </nav>
-<div class="sidebar-bottom"><div class="storage-card"><div class="storage-top"><span class="storage-icon">✦</span><span>AWEGame library</span></div><p>Your games stay one click away. Local titles and archive discoveries in one place.</p><a href="https://github.com/ARARAT33/AWEGame" target="_blank" rel="noreferrer">Explore on GitHub <span>↗</span></a></div>
+<div class="sidebar-bottom"><div class="storage-card"><div class="storage-top"><span class="storage-icon">✦</span><span>AWEGame library</span></div><p>Your games stay one click away. Local titles and archive discoveries in one place.</p><a href="https://github.com/ARARAT33/AWEGame" target="_blank" rel="noreferrer">Explore on GitHub <span>↗</span></a><button id="installApp" class="install-app" hidden>Install AWEGame ↥</button></div>
 <div class="profile-row"><div class="avatar">A</div><div class="profile-copy"><strong>Guest player</strong><span>Saved on this device</span></div><span class="profile-menu">···</span></div></div>
 </aside>
 <main class="main-area" id="home">
