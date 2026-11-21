@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#080d18">
+  <title>AWE Play — Browser Runtime</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-mark">A</span><span>AWE<span class="muted">PLAY</span></span></a>
+    <nav><a class="active" href="#library">Library</a><a href="#runtime">Runtime</a><a href="https://github.com/ARARAT33/AWEGame" target="_blank" rel="noreferrer">AWEGame ↗</a></nav>
+    <span class="status"><i></i> LOCAL BROWSER</span>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="eyebrow">AWEGAME EXPERIMENTAL BRANCH</div>
+      <h1>Games, running <span>in your browser.</span></h1>
+      <p>A lightweight browser runtime prototype with a playable demo, WebAssembly package loading and graphics capability checks.</p>
+      <div class="hero-actions"><a class="primary" href="#runtime">Launch demo <b>→</b></a><a class="secondary" href="#how">How it works</a></div>
+    </section>
+    <section class="workspace" id="runtime">
+      <div class="game-panel">
+        <div class="panel-head"><div><span class="live-dot"></span> <strong>AWE DRIVE — TECH DEMO</strong><small>2D runtime sample</small></div><span class="pill">PLAYABLE</span></div>
+        <canvas id="game" width="960" height="540" aria-label="AWE Drive playable demo"></canvas>
+        <div class="game-controls"><span>Move: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows</span><button id="restart">Restart demo ↻</button></div>
+      </div>
+      <aside class="side-panel">
+        <h2>Runtime status</h2>
+        <div class="metric"><span>Graphics API</span><b id="graphics">Checking…</b></div>
+        <div class="metric"><span>WebAssembly</span><b id="wasm">Checking…</b></div>
+        <div class="metric"><span>Shared memory</span><b id="threads">Checking…</b></div>
+        <div class="metric"><span>Canvas renderer</span><b class="ok">Ready</b></div>
+        <hr>
+        <h3>Load a game module</h3>
+        <p class="hint">Choose a WebAssembly <code>.wasm</code> file you own or are licensed to use. This prototype checks and compiles the module; it is not yet a complete game-engine ABI.</p>
+        <label class="file-button">Choose .wasm file<input id="wasmFile" type="file" accept=".wasm,application/wasm"></label>
+        <div id="moduleResult" class="module-result" aria-live="polite">No module loaded.</div>
+      </aside>
+    </section>
+    <section class="how" id="how">
+      <div class="eyebrow">THE APPROACH</div><h2>A browser-native game foundation</h2>
+      <div class="feature-grid">
+        <article><span>01</span><h3>WebAssembly</h3><p>Compile supported game logic to WASM and execute it in a browser sandbox.</p></article>
+        <article><span>02</span><h3>GPU acceleration</h3><p>Detect WebGPU and retain a Canvas fallback for broad compatibility.</p></article>
+        <article><span>03</span><h3>Progressive assets</h3><p>Future game packages can stream assets on demand instead of downloading everything upfront.</p></article>
+      </div>
+      <p class="notice">This is an original AWEGame prototype, not a GTA V port, emulator, cloud-streaming service, or a copy of FivePlay. Commercial games require their own authorized browser-compatible builds and assets.</p>
+    </section>
+  </main>
+  <footer>AWE PLAY · EXPERIMENTAL · <a href="https://github.com/ARARAT33/AWEGame/tree/feat/browser-game-runtime">Source branch</a></footer>
+  <script type="module" src="./runtime.js"></script>
+</body>
+</html>
