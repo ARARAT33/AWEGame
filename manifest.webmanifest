@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "AWEGame — Browser Game Library",
+  "name": "AWEGame — AWE Play & Store",
   "short_name": "AWEGame",
-  "description": "A calm home for browser games, creative worlds and experiments.",
+  "description": "A liquid-glass browser game library, open game store and creator space.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
