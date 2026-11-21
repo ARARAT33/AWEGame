@@ -1,37 +1,56 @@
 # AWEGame
 
-AWEGame is a static browser-game collection with a personalized AWE Play interface. It requires no application backend, account service, or server-side functions for player data.
+AWEGame is a static browser-game platform with a liquid-glass AWE Play library, AWE Store and Creator Studio. Player-specific features run in the browser; no application backend or server functions are required.
 
-## Main application
+## Platform modules
 
-- `index.html` — responsive game library and personal player card.
-- `games.js` — curated local game catalog.
-- `awe-platform.js` / `awe-platform.css` — search, categories, favorites, recent games, light/dark appearance, profile, import/export and share controls.
-- `awe-game-ui.js` — shared in-game home, fullscreen and victory-sharing controls.
-- `manifest.webmanifest`, `awe-mark.svg`, `sw.js` — install metadata, app mark and local shell caching.
-- `browser-runtime/` — experimental browser runtime playground.
+- `index.html` — responsive home, player dashboard, AWE Store and Creator Studio.
+- `awe-platform.js` / `awe-platform.css` — catalog search, local games, archive reader, OS filters, creator drafts, profile, import/export, themes and glass UI.
+- `awe-capture.js` — browser-native screen capture, screenshots, WebM recording, download and supported native file sharing.
+- `awe-game-ui.js` — in-game home, fullscreen and player-confirmed victory sharing.
+- `games.js` — curated browser game list.
 - `games/` — individual browser games.
+- `manifest.webmanifest`, `awe-mark.svg`, `sw.js` — PWA metadata, app mark and local shell caching.
+- `browser-runtime/` — experimental browser runtime playground.
 
-## Personal data and portability
+## AWE Store catalog format
 
-Player name, favorites, recent games, appearance and recorded victories are saved in the current browser's `localStorage`. The player card can be renamed. Export creates a JSON backup file containing the profile, app preferences, favorites, recent history, victories and the browser origin's localStorage entries (including game saves stored there). Import validates the AWEGame backup format and restores those saved values. Users can move this file to another browser/device manually.
+The Store fetches the public static JSON file:
 
-There is no cloud account, remote save, server-side profile, or automatic synchronization. Clearing browser storage or using private browsing can remove local progress; export backups regularly.
+`https://raw.githubusercontent.com/ARARAT33/AWEArchiveDB/refs/heads/main/awegames.json`
 
-## Victory sharing
+The file can be a JSON array or an object containing a `games`, `awegames`, `items` or `data` array. Each entry can contain:
 
-Each game page includes a trophy control. After completing a game, the player can record a victory, optionally add a short note, and share it through the browser's native share sheet or copy/paste fallback. The share message includes the game URL. Victory recording is player-confirmed; the platform does not claim to detect every game's internal win state automatically.
+```json
+{
+  "title": "Example Game",
+  "description": "A short description",
+  "elink": "https://example.org/game.zip",
+  "download_url": "https://example.org/game.zip",
+  "play_url": "https://example.org/",
+  "logo": "https://example.org/logo.webp",
+  "developer": "Creator",
+  "version": "1.0.0",
+  "category": "adventure",
+  "platforms": ["windows", "linux", "web"]
+}
+```
 
-## Catalog behavior
+Supported metadata aliases include `name`, `desc`, `download`, `file_url`, `direct_download`, `logo_url`, `image`, `cover`, `icon`, `os`, `operating_systems`, `supported_os` and `platform`. HTTP(S) links only are accepted. File extensions help infer Windows, macOS, Linux and Android compatibility when platform metadata is absent. Unknown platform data is labelled for manual checking rather than claimed compatible.
 
-Local games appear immediately. Optional AWEArchiveDB entries are fetched from its public static JSON archive and validated to allow only HTTP(S) destinations. Search covers title, description and developer. Favorites and recent history remain local.
+The Creator Studio saves submitted listings in the current browser and exports JSON entries or a complete catalog JSON file. Because this site is static and has no backend, a local draft does not automatically appear for every visitor. To publish globally, add the exported entry to the AWEArchiveDB `awegames.json` array and commit it to the repository. The Store then reads the public raw JSON URL.
 
-## Appearance, install and offline
+## Screen capture
 
-The home page supports persistent light and dark themes and responsive layouts. The web app manifest enables installation where supported. The service worker caches the local app shell; games that depend on third-party libraries, fonts, or services may not be fully playable offline.
+The floating screen tools use browser APIs only:
+- Screenshot: choose a screen/window/tab and save a PNG.
+- Recording: choose a screen/window/tab, record to WebM, then download.
+- Share: uses the native share sheet for files when the browser and OS support it; otherwise the downloaded file can be attached manually.
 
-## Safety and limitations
+Screen capture requires a supported browser and a secure context (HTTPS or localhost), and always asks the user to choose what to share. Browser/OS support varies. Tab audio is included only when the browser exposes it.
 
-No player-specific data is sent to AWEGame servers by the profile, backup or victory-sharing features. Sharing is initiated by the player and sends only the text/URL they choose through the browser's share interface. External game libraries and the public archive remain third-party network dependencies.
+## Local data, privacy and limitations
 
-This is a static browser-game platform. It does not provide cross-device synchronization, online leaderboards, multiplayer, cloud saves, or a universal engine for arbitrary desktop games. Individual games retain their own mechanics and visual identity.
+Player name, favorites, recent games, appearance, victories, creator drafts and game saves stored in localStorage stay on the current browser/device. JSON backup can move data manually. No cloud profile, automatic cross-device sync, online leaderboard or multiplayer backend is provided. Clearing browser storage can erase local data.
+
+The PWA shell can cache local app files, but third-party games, downloads, fonts and archive access may require an internet connection. The Store does not execute downloaded desktop binaries inside the browser; users download them and install them using their operating system's normal security process.
