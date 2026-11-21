@@ -9,18 +9,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./style.css">\n  <link rel="icon" href="../awe-mark.svg" type="image/svg+xml">
 </head>
 <body>
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
-      <a class="brand" href="#home" aria-label="AWE Play home"><span class="brand-symbol">a</span><span class="brand-name">awe<span>play</span></span></a>
+      <a class="brand" href="../index.html" aria-label="Back to AWEGame home"><span class="brand-symbol">a</span><span class="brand-name">awe<span>play</span></span></a>
       <div class="side-label">YOUR SPACE</div>
       <nav class="side-nav" aria-label="Main navigation">
         <a class="nav-link active" href="#home" data-nav="home"><span class="nav-icon">⌂</span>Home</a>
         <a class="nav-link" href="#discover" data-nav="discover"><span class="nav-icon">⌕</span>Discover</a>
         <a class="nav-link" href="#library" data-nav="library"><span class="nav-icon">▤</span>My library</a>
-        <a class="nav-link" href="#runtime" data-nav="runtime"><span class="nav-icon">▹</span>Playground</a>
+        <a class="nav-link" href="#aweGameCatalog" data-nav="catalog"><span class="nav-icon">▦</span>AWE Originals</a>\n        <a class="nav-link" href="#runtime" data-nav="runtime"><span class="nav-icon">▹</span>Playground</a>
       </nav>
       <div class="side-label collections-label">COLLECTIONS</div>
       <nav class="side-nav compact-nav" aria-label="Collections">
@@ -94,7 +94,16 @@
           <p class="empty-state" id="emptyState" hidden>No experiences match that search. Try another phrase.</p>
         </section>
 
-        <section class="runtime-section" id="runtime">
+        <section class="section-block awe-catalog" id="aweGameCatalog"><div class="section-heading"><div><p class="section-eyebrow">THE AWE ORIGINALS</p><h2>Play the worlds</h2></div><a class="subtle-link" href="../index.html">Open full AWEGame hub ↗</a></div><p class="catalog-intro">Every game opens inside the AWE universe. Your browser stays in control — no installer required for these browser games.</p><div class="awe-game-grid">
+<a class="awe-game-tile" href="../games/neondefender.html"><span class="tile-art tile-neon">✦<small>ARCADE / ACTION</small></span><strong>Neon Defender</strong><small>Defend the galaxy in a neon space shooter.</small><b>PLAY NOW ↗</b></a>
+<a class="awe-game-tile" href="../games/reactor.html"><span class="tile-art tile-reactor">⚡<small>SIMULATION / STRATEGY</small></span><strong>Reactor</strong><small>Balance energy, upgrades and reactor stability.</small><b>PLAY NOW ↗</b></a>
+<a class="awe-game-tile" href="../games/starlightmeadow.html"><span class="tile-art tile-starlight">✧<small>CASUAL / IDLE</small></span><strong>Starlight Meadow</strong><small>Collect starlight and grow your own world.</small><b>PLAY NOW ↗</b></a>
+<a class="awe-game-tile" href="../games/zenhaven.html"><span class="tile-art tile-zen">☾<small>COZY / RELAX</small></span><strong>Zen Haven</strong><small>Build a quiet sanctuary among the clouds.</small><b>PLAY NOW ↗</b></a>
+<a class="awe-game-tile" href="../games/aetheria.html"><span class="tile-art tile-aetheria">❋<small>COZY / IDLE</small></span><strong>Aetheria</strong><small>Explore a peaceful endless sanctuary.</small><b>PLAY NOW ↗</b></a>
+<a class="awe-game-tile" href="../games/lumina.html"><span class="tile-art tile-lumina">☼<small>IDLE / COLLECTION</small></span><strong>Lumina</strong><small>Gather light and grow a glowing garden.</small><b>PLAY NOW ↗</b></a>
+<a class="awe-game-tile" href="../games/languagegarden.html"><span class="tile-art tile-language">✿<small>EDUCATION / IDLE</small></span><strong>Language Garden</strong><small>Unlock languages and grow your garden.</small><b>PLAY NOW ↗</b></a>
+<a class="awe-game-tile" href="../games/randomlink.html"><span class="tile-art tile-random">↗<small>DISCOVERY / WEB</small></span><strong>Random Discovery</strong><small>Jump into an unexpected web discovery.</small><b>EXPLORE ↗</b></a>
+</div></section><section class="runtime-section" id="runtime">
           <div class="runtime-intro"><div><p class="section-eyebrow">AWE PLAYGROUND</p><h2>Step inside AWE Drive</h2><p>A tiny playable city built into your browser. No download, no pressure.</p></div><span class="runtime-badge"><i></i> LIVE DEMO</span></div>
           <div class="runtime-layout">
             <div class="game-panel">
@@ -117,6 +126,6 @@
       </div>
     </main>
   </div>
-  <script type="module" src="./runtime.js"></script>
+  <script defer src="./runtime.js"></script>
 </body>
 </html>
