@@ -1,5 +1,6 @@
 const canvas=document.querySelector("#game");
-const ctx=canvas?.getContext("2d");\nif(!canvas||!ctx){document.body.classList.add("runtime-unavailable");throw new Error("AWE Drive canvas is unavailable.");}
+const ctx=canvas?.getContext("2d");
+if(!canvas||!ctx){document.body.classList.add("runtime-unavailable");throw new Error("AWE Drive canvas is unavailable.");}
 const keys=new Set();
 const player={x:480,y:270,angle:0,speed:0};
 let frame=0,playing=false,raf=0;
