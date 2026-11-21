@@ -22,7 +22,7 @@ function draw(){
   // Input and simple vehicle physics.
   const forward=keys.has("w")||keys.has("arrowup"),back=keys.has("s")||keys.has("arrowdown");
   const left=keys.has("a")||keys.has("arrowleft"),right=keys.has("d")||keys.has("arrowright");
-  player.speed+=(forward?.12:0)-(back?.10:0);player.speed*=.975;player.speed=Math.max(-2.8,Math.min(4.2,player.speed));
+  player.speed+=(forward ? 0.12 : 0)-(back ? 0.10 : 0);player.speed*=.975;player.speed=Math.max(-2.8,Math.min(4.2,player.speed));
   player.angle+=(right?1:0)-(left?1:0);player.x+=Math.sin(player.angle*Math.PI/180)*player.speed;player.y-=Math.cos(player.angle*Math.PI/180)*player.speed;
   player.x=Math.max(18,Math.min(942,player.x));player.y=Math.max(18,Math.min(522,player.y));
   ctx.save();ctx.translate(player.x,player.y);ctx.rotate(player.angle*Math.PI/180);
