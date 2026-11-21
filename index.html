@@ -1,63 +1,97 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#101b18"><meta name="description" content="AWEGame — a fast, lightweight portal to curated games and new worlds.">
-<link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./awe-mark.svg" type="image/svg+xml">
-<title>AWEGame — Enter the playverse</title>
-<link rel="stylesheet" href="browser-runtime/style.css"><link rel="stylesheet" href="awe-platform.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0e12">
+<meta name="description" content="AWEGame — enter a universe of curated browser games and independent worlds.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./awe-mark.svg" type="image/svg+xml">
+<title>AWEGame — Play beyond</title>
+<link rel="stylesheet" href="awe-platform.css">
 </head>
 <body class="awe-home">
-<div class="cosmic-backdrop" aria-hidden="true"><div class="cosmic-grid"></div><div class="nebula nebula-a"></div><div class="nebula nebula-b"></div><div class="starfield"></div></div>
+<div class="ambient ambient-one" aria-hidden="true"></div><div class="ambient ambient-two" aria-hidden="true"></div>
 <div class="app-shell">
 <aside class="sidebar" id="sidebar">
-<a class="brand" href="#home"><span class="brand-symbol">a</span><span class="brand-name">AWE<span>GAME</span></span></a>
-<div class="side-label">PLAYVERSE</div>
-<nav class="side-nav" aria-label="Main navigation">
-<a class="nav-link active" href="#home" data-nav="home"><span class="nav-icon">⌂</span>Overview</a>
-<a class="nav-link" href="#library" data-nav="library"><span class="nav-icon">▦</span>Discover games</a>
-<a class="nav-link" href="#library" data-nav="favorites"><span class="nav-icon">♡</span>Favorites</a>
-<a class="nav-link" href="#store" data-nav="store"><span class="nav-icon">◈</span>AWE Store</a>
-<a class="nav-link" href="#recent" data-nav="recent"><span class="nav-icon">◷</span>Continue playing</a>
-<a class="nav-link" href="#player" data-nav="player"><span class="nav-icon">◉</span>Player profile</a>
-<a class="nav-link" href="browser-runtime/index.html"><span class="nav-icon">⌘</span>Playground ↗</a>
-</nav>
-<div class="side-label collections-label">AWE UNIVERSE</div>
-<nav class="side-nav compact-nav">
-<a class="nav-link" href="https://awe-a2z.pages.dev/" target="_blank" rel="noreferrer"><span class="collection-dot mint"></span>AWE A2Z ↗</a>
-<a class="nav-link" href="https://awe-exp.pages.dev/" target="_blank" rel="noreferrer"><span class="collection-dot lavender"></span>AWE EXP ↗</a>
-<a class="nav-link" href="https://awelib.pages.dev/" target="_blank" rel="noreferrer"><span class="collection-dot peach"></span>AWE Library ↗</a>
-</nav>
-<div class="sidebar-bottom">
-<div class="storage-card"><div class="storage-top"><span class="storage-icon">✦</span><span>YOUR LOCAL SAVE</span></div><p>Favorites, history and player progress stay on this device. No account or tracking required.</p><button id="installApp" class="install-app" hidden>Install AWEGame ↥</button></div>
-<div class="profile-row"><div class="avatar" id="sideAvatar">A</div><div class="profile-copy"><strong>Guest player</strong><span>Local player profile</span></div><span class="profile-menu">✦</span></div>
-</div>
+  <a class="brand" href="#home" aria-label="AWEGame home"><span class="brand-symbol">a</span><span class="brand-name">AWE<span>GAME</span></span></a>
+  <div class="side-label">YOUR PLAYSPACE</div>
+  <nav class="side-nav" aria-label="Main navigation">
+    <a class="nav-link active" href="#home" data-nav="home"><span class="nav-icon">⌂</span><span>Home</span></a>
+    <a class="nav-link" href="#library" data-nav="library"><span class="nav-icon">▦</span><span>Game library</span></a>
+    <a class="nav-link" href="#library" data-nav="favorites"><span class="nav-icon">♡</span><span>Favorites</span></a>
+    <a class="nav-link" href="#store" data-nav="store"><span class="nav-icon">◈</span><span>AWE Store</span></a>
+    <a class="nav-link" href="#recent" data-nav="recent"><span class="nav-icon">◷</span><span>Recently played</span></a>
+    <a class="nav-link" href="#player" data-nav="player"><span class="nav-icon">◎</span><span>Player profile</span></a>
+    <a class="nav-link" href="games/"><span class="nav-icon">↗</span><span>All game files</span></a>
+    <a class="nav-link" href="browser-runtime/index.html"><span class="nav-icon">⌘</span><span>Playground</span><span class="external-mark">↗</span></a>
+  </nav>
+  <div class="side-label side-label-spaced">AWE NETWORK</div>
+  <nav class="side-nav side-nav-small" aria-label="AWE projects">
+    <a class="nav-link" href="https://awe-a2z.pages.dev/" target="_blank" rel="noreferrer"><i class="project-dot dot-green"></i><span>AWE A2Z</span><span class="external-mark">↗</span></a>
+    <a class="nav-link" href="https://awe-exp.pages.dev/" target="_blank" rel="noreferrer"><i class="project-dot dot-purple"></i><span>AWE EXP</span><span class="external-mark">↗</span></a>
+    <a class="nav-link" href="https://awelib.pages.dev/" target="_blank" rel="noreferrer"><i class="project-dot dot-orange"></i><span>AWE Library</span><span class="external-mark">↗</span></a>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="local-card"><div class="local-card-title"><span class="local-lock">◈</span> YOUR SAVE IS LOCAL</div><p>Favorites, history and player progress stay on this device. No account. No tracking.</p><button id="installApp" class="install-app" hidden>Install AWEGame ↥</button></div>
+    <div class="profile-row"><div class="avatar" id="sideAvatar">A</div><div class="profile-copy"><strong>Guest player</strong><span>Local player profile</span></div><span class="profile-menu">···</span></div>
+  </div>
 </aside>
 <main class="main-area" id="home">
-<header class="topbar"><button class="mobile-menu" id="mobileMenu" aria-label="Open menu">☰</button><div class="breadcrumb">AWEGAME <span>/</span> <strong>THE PLAYVERSE</strong></div>
-<div class="top-actions"><label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Search the universe…" autocomplete="off"><kbd>/</kbd></label><button class="icon-button" id="captureQuick" aria-label="Screen tools" title="Screen tools">◉</button><button class="icon-button" id="themeToggle" aria-label="Toggle appearance" title="Toggle appearance">◐</button><div class="top-avatar" id="topAvatar">A</div></div></header>
-<div class="content-wrap">
-<section class="welcome-row"><div><p class="date-line"><span class="pulse-dot"></span> YOUR NEXT ADVENTURE IS WAITING</p><h1>Enter the <span class="gradient-word">playverse.</span></h1><p class="welcome-sub">A universe of independent games, strange experiments and worlds worth getting lost in.</p></div><div class="welcome-note"><span class="note-mark">✧</span><span>ONE PORTAL.<br><b>ENDLESS WORLDS.</b></span></div></section>
-<section class="featured featured-home">
-<div class="featured-art"><div class="hero-noise"></div><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><div class="art-orbit orbit-three"></div><div class="art-sun"></div><div class="art-hill hill-back"></div><div class="art-hill hill-front"></div><div class="hero-particles"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-<div class="featured-copy"><p class="feature-kicker">AWEGAME · INDEPENDENT WORLDS</p><h2>Reality is<br>just the <span>loading screen.</span></h2><p>Choose your portal. The rest is yours.</p><div class="hero-actions"><a class="play-button" href="#library"><span>✦</span> Explore universe <b>↗</b></a><button class="hero-random" id="randomGame" type="button">Surprise me <span>⤨</span></button></div></div><span class="featured-tag featured-home-tag"><i></i> ALL SYSTEMS NOMINAL</span><div class="art-index">AWE <small> / 001 · PLAYVERSE</small></div><div class="art-road"></div></div>
-<div class="feature-side"><div class="side-stat"><span class="stat-icon">▦</span><div><strong id="localCount">Loading universe…</strong><small>Worlds ready to explore</small></div></div><div class="side-stat"><span class="stat-icon">◷</span><div><strong id="heroRecent">Your journey starts here</strong><small>Pick up where you left off</small></div></div><div class="side-stat"><span class="stat-icon">♡</span><div><strong id="heroFavorites">0 saved worlds</strong><small>Your personal collection</small></div></div><div class="feature-side-footer"><span class="online-dot"></span> AWE CORE <span class="side-footer-line"></span><span>ONLINE</span></div></div>
-</section>
-<section class="signal-row" aria-label="Platform highlights"><div><span class="signal-icon">✧</span><span><b id="signalGames">—</b><small>Playable worlds</small></span></div><div><span class="signal-icon">⌁</span><span><b>LOCAL FIRST</b><small>Your data stays yours</small></span></div><div><span class="signal-icon">◉</span><span><b>IN-BROWSER</b><small>Launch from AWEGame</small></span></div><div><span class="signal-icon">∞</span><span><b>ALWAYS GROWING</b><small>Curated by AWE</small></span></div></section>
-<section class="quick-play-section" id="quickPlay"><div class="section-heading"><div><p class="section-eyebrow">FIND YOUR NEXT MOOD</p><h2>Choose your portal</h2></div><span class="section-note">One tap. A new kind of fun.</span></div><div class="portal-grid"><button class="portal-tile portal-calm" type="button" data-vibe="calm"><span class="portal-symbol">☾</span><strong>Slow down</strong><small>Cozy · Calm · Relax</small><b>EXPLORE ↗</b></button><button class="portal-tile portal-action" type="button" data-vibe="action"><span class="portal-symbol">⚡</span><strong>Feel the rush</strong><small>Action · Arcade · Speed</small><b>EXPLORE ↗</b></button><button class="portal-tile portal-discovery" type="button" data-vibe="discovery"><span class="portal-symbol">✧</span><strong>Get curious</strong><small>Discover · Explore · Weird</small><b>EXPLORE ↗</b></button><button class="portal-tile portal-strategy" type="button" data-vibe="strategy"><span class="portal-symbol">⌘</span><strong>Think ahead</strong><small>Strategy · Build · Control</small><b>EXPLORE ↗</b></button></div></section>
-<section class="quest-board" id="questBoard"><div class="quest-intro"><p class="section-eyebrow">AWE DAILY MISSIONS</p><h2>Make today legendary.</h2><p>Small missions. New worlds. Your progress stays on this device.</p></div><div class="quest-list"><button class="quest-item" type="button" data-mission="discover"><span class="quest-icon">◈</span><span><strong>Open a new portal</strong><small>Discover a world you haven't played</small></span><b>GO ↗</b></button><button class="quest-item" type="button" data-mission="favorite"><span class="quest-icon">♡</span><span><strong>Save your next favorite</strong><small>Build your own collection</small></span><b>GO ↗</b></button><button class="quest-item" type="button" data-mission="random"><span class="quest-icon">⤨</span><span><strong>Break the routine</strong><small>Let AWE choose your next game</small></span><b>GO ↗</b></button></div></section>
-<section class="section-block" id="recent"><div class="section-heading"><div><p class="section-eyebrow">YOUR JOURNEY</p><h2>Continue your adventure</h2></div><span class="section-note" id="recentNote">Your recently played worlds appear here</span></div><div class="game-grid compact-games" id="recentGrid"><div class="empty-library">Your next adventure is one click away.</div></div></section>
-<section class="section-block" id="library"><div class="section-heading"><div><p class="section-eyebrow">CHOOSE YOUR REALITY</p><h2>Explore the worlds</h2></div><span class="game-count" id="gameCount">Loading…</span></div>
-<div class="library-toolbar"><div class="filter-row" id="filters"><button class="filter-chip selected" data-filter="all">All worlds</button><button class="filter-chip" data-filter="calm">Chill</button><button class="filter-chip" data-filter="action">Action</button><button class="filter-chip" data-filter="strategy">Strategy</button><button class="filter-chip" data-filter="discovery">Explore</button><button class="filter-chip" data-filter="favorites">♥ Saved</button></div><select class="sort-select" id="sortSelect" aria-label="Sort games"><option value="featured">AWE selection</option><option value="az">Name A–Z</option><option value="za">Name Z–A</option></select></div>
-<div class="game-grid" id="gameGrid"><div class="empty-library">Opening portals…</div></div><div class="empty-state" id="emptyState" hidden>No worlds found in this sector. Try another filter.</div></section>
-<section class="store-hero" id="store"><div class="store-hero-copy"><p class="section-eyebrow">AWE STORE · CURATED BY AWE</p><h2>New worlds.<br><span>New dimensions.</span></h2><p>Discover the official AWE catalog. Every game is added and curated by AWE — no public uploads, no random listings.</p><div class="store-hero-actions"><button class="awe-primary" id="storeRefresh">Sync the universe <span>↻</span></button><span class="store-source"><span class="live-dot"></span><span id="storeStatus">Connecting to AWEArchiveDB…</span></span></div></div><div class="store-hero-orb"><div class="orb-ring"></div><div class="orb-ring ring-two"></div><div class="orb-core">AWE<span>STORE</span></div><span class="orb-float orb-one">✦</span><span class="orb-float orb-two">🎮</span><span class="orb-float orb-three">⬡</span></div></section>
-<section class="store-controls"><div class="store-search"><span>⌕</span><input id="storeSearch" type="search" placeholder="Search titles, creators, genres…" autocomplete="off"></div><div class="store-filter-row"><select id="storeOsFilter" aria-label="Filter by operating system"><option value="all">Every platform</option><option value="compatible">Compatible with my device</option><option value="windows">Windows</option><option value="macos">macOS</option><option value="linux">Linux</option><option value="android">Android</option><option value="ios">iOS</option><option value="web">Browser</option></select><select id="storeTypeFilter" aria-label="Filter game type"><option value="all">All experiences</option><option value="web">Instant play</option><option value="download">Downloads</option></select><select id="storeSort" aria-label="Sort store"><option value="featured">Featured</option><option value="az">Name A–Z</option><option value="new">Recently added</option></select></div></section>
-<div class="store-results-head"><div><p class="section-eyebrow">THE OFFICIAL CATALOG</p><h3>Discover something new</h3></div><span id="storeCount">Loading…</span></div><div class="store-grid" id="storeGrid"><div class="store-empty">Loading AWE Store…</div></div><div class="store-empty" id="storeEmpty" hidden>No games match this search. Try another platform.</div>
-<section class="player-zone" id="player"><div class="player-zone-head"><div><p class="section-eyebrow">YOUR IDENTITY IN THE PLAYVERSE</p><h2>Player command center</h2></div><span class="local-badge"><i></i> PRIVATE · THIS DEVICE</span></div></section>
-<section class="about-strip" id="favorites"><div class="about-mark">a</div><div><strong>AWEGame is your gateway to the AWE playverse.</strong><p>Games are curated by AWE. Your favorites, history and player data are stored locally on your device.</p></div><a href="https://github.com/ARARAT33/AWEGame" target="_blank" rel="noreferrer">Project signal ↗</a></section>
-<footer><span>© AWEGAME · ENTER THE PLAYVERSE</span><span>PLAY BEYOND THE ORDINARY.</span></footer>
-</div></main></div>
-<dialog class="play-modal" id="playModal"><div class="play-modal-shell"><header><div><span class="play-live-dot"></span><span id="playModalTitle">AWE GAME SESSION</span></div><div class="play-modal-actions"><button type="button" id="gameFullscreen" aria-label="Fullscreen">⛶</button><button type="button" id="closeGame" aria-label="Close game">×</button></div></header><div class="play-frame-wrap"><iframe id="playerFrame" title="AWEGame player" allow="fullscreen; autoplay; gamepad; clipboard-read; clipboard-write; pointer-lock" referrerpolicy="strict-origin-when-cross-origin"></iframe></div></div></dialog>
+  <header class="topbar">
+    <button class="mobile-menu" id="mobileMenu" aria-label="Open navigation">☰</button>
+    <div class="breadcrumb"><span class="breadcrumb-muted">AWEGAME</span><span class="breadcrumb-slash">/</span><strong>PLAYSPACE</strong></div>
+    <div class="top-actions">
+      <label class="search-box"><span class="search-symbol">⌕</span><input id="searchInput" type="search" placeholder="Find your next game…" autocomplete="off"><kbd>/</kbd></label>
+      <button class="icon-button" id="captureQuick" type="button" aria-label="Screen tools" title="Screen tools">◉</button>
+      <button class="icon-button" id="themeToggle" type="button" aria-label="Toggle appearance" title="Toggle appearance">◐</button>
+      <div class="top-avatar" id="topAvatar">A</div>
+    </div>
+  </header>
+  <div class="content-wrap">
+    <section class="welcome-row">
+      <div><p class="eyebrow"><span class="status-pulse"></span> YOUR NEXT WORLD IS READY</p><h1>Play beyond<br><span>the ordinary.</span></h1><p class="welcome-sub">A handpicked universe of games, experiments and little worlds worth getting lost in.</p></div>
+      <div class="welcome-index"><span>EST.</span><strong> AWE</strong><small>PLAYVERSE / 001</small><div class="index-line"></div><small>MADE TO EXPLORE</small></div>
+    </section>
+    <section class="hero-panel">
+      <div class="hero-visual" aria-hidden="true"><div class="hero-halo"></div><div class="hero-orbit orbit-a"></div><div class="hero-orbit orbit-b"></div><div class="hero-planet"></div><div class="hero-moon"></div><div class="hero-star star-a">✦</div><div class="hero-star star-b">✧</div><div class="hero-star star-c">✦</div><div class="hero-coordinate">35° 41' / AWE-01</div><div class="hero-visual-caption">A NEW WORLD<br>IS ONE CLICK AWAY</div></div>
+      <div class="hero-copy"><div class="hero-kicker"><span class="kicker-line"></span> AWEGAME ORIGINAL UNIVERSE</div><h2>Find your<br>next <em>escape.</em></h2><p>From calm little sanctuaries to high-voltage arcade battles — choose a world and make it yours.</p><div class="hero-actions"><a class="primary-cta" href="#library">Explore games <span>↗</span></a><button class="secondary-cta" id="randomGame" type="button"><span>⤨</span> Surprise me</button></div><div class="hero-foot"><span><i class="tiny-live"></i> PLAYVERSE ONLINE</span><span>NO ACCOUNT REQUIRED</span></div></div>
+    </section>
+    <section class="stats-strip" aria-label="Platform features">
+      <div class="stat-cell"><span class="stat-symbol">▦</span><div><strong id="signalGames">—</strong><small>Playable worlds</small></div></div>
+      <div class="stat-cell"><span class="stat-symbol">⌁</span><div><strong>LOCAL FIRST</strong><small>Your data stays yours</small></div></div>
+      <div class="stat-cell"><span class="stat-symbol">◎</span><div><strong>IN-BROWSER</strong><small>Launch without installs</small></div></div>
+      <div class="stat-cell"><span class="stat-symbol">✳</span><div><strong>HANDPICKED</strong><small>Curated by AWE</small></div></div>
+    </section>
+    <section class="portal-section" id="quickPlay">
+      <div class="section-heading"><div><p class="eyebrow">PICK A DIRECTION</p><h2>What are you in the mood for?</h2></div><span class="section-aside">Choose a feeling. Find a world.</span></div>
+      <div class="portal-grid">
+        <button class="portal-tile portal-calm" type="button" data-vibe="calm"><span class="portal-art">☾</span><span class="portal-copy"><strong>Slow down</strong><small>Calm · Cozy · Relax</small></span><b>↗</b></button>
+        <button class="portal-tile portal-action" type="button" data-vibe="action"><span class="portal-art">ϟ</span><span class="portal-copy"><strong>Feel the rush</strong><small>Action · Arcade · Speed</small></span><b>↗</b></button>
+        <button class="portal-tile portal-discovery" type="button" data-vibe="discovery"><span class="portal-art">✧</span><span class="portal-copy"><strong>Get curious</strong><small>Discover · Explore · Weird</small></span><b>↗</b></button>
+        <button class="portal-tile portal-strategy" type="button" data-vibe="strategy"><span class="portal-art">⌘</span><span class="portal-copy"><strong>Think ahead</strong><small>Strategy · Build · Control</small></span><b>↗</b></button>
+      </div>
+    </section>
+    <section class="quest-board" id="questBoard"><div class="quest-intro"><p class="eyebrow">AWE MINI MISSIONS</p><h2>Make today<br><span>count.</span></h2><p>Three small ways to discover something new. Your progress stays on this device.</p></div><div class="quest-list">
+      <button class="quest-item" type="button" data-mission="discover"><span class="quest-icon">◈</span><span><strong>Open a new portal</strong><small>Play a world you haven't tried</small></span><b>GO ↗</b></button>
+      <button class="quest-item" type="button" data-mission="favorite"><span class="quest-icon">♡</span><span><strong>Save a favorite</strong><small>Build your own collection</small></span><b>GO ↗</b></button>
+      <button class="quest-item" type="button" data-mission="random"><span class="quest-icon">⤨</span><span><strong>Break the routine</strong><small>Let AWE pick your next game</small></span><b>GO ↗</b></button>
+    </div></section>
+    <section class="section-block" id="recent"><div class="section-heading"><div><p class="eyebrow">PICK UP WHERE YOU LEFT OFF</p><h2>Recently played</h2></div><span class="section-aside" id="recentNote">Your recent worlds appear here</span></div><div class="game-grid compact-games" id="recentGrid"><div class="empty-library">Your next adventure is one click away.</div></div></section>
+    <section class="section-block" id="library"><div class="section-heading"><div><p class="eyebrow">THE AWE COLLECTION</p><h2>Explore the worlds</h2></div><span class="game-count" id="gameCount">Loading worlds…</span></div>
+      <div class="library-toolbar"><div class="filter-row" id="filters"><button class="filter-chip selected" data-filter="all">All worlds</button><button class="filter-chip" data-filter="calm">Chill</button><button class="filter-chip" data-filter="action">Action</button><button class="filter-chip" data-filter="strategy">Strategy</button><button class="filter-chip" data-filter="discovery">Explore</button><button class="filter-chip" data-filter="favorites">♡ Saved</button></div><select class="sort-select" id="sortSelect" aria-label="Sort games"><option value="featured">AWE selection</option><option value="az">Name A–Z</option><option value="za">Name Z–A</option></select></div>
+      <div class="game-grid" id="gameGrid"><div class="empty-library">Opening portals…</div></div><div class="empty-state" id="emptyState" hidden>No worlds found. Try another filter or search.</div>
+    </section>
+    <section class="store-hero" id="store"><div class="store-hero-copy"><p class="eyebrow">THE OFFICIAL AWE CATALOG</p><h2>Discover your<br><span>next dimension.</span></h2><p>Explore the wider AWEArchiveDB collection. Titles are curated and added by AWE — no public uploads or random listings.</p><div class="store-hero-actions"><button class="awe-primary" id="storeRefresh" type="button">Sync catalog <span>↻</span></button><span class="store-source"><i class="live-dot"></i><span id="storeStatus">Connecting to AWEArchiveDB…</span></span></div></div><div class="store-hero-art" aria-hidden="true"><div class="store-orbit"></div><div class="store-orbit store-orbit-two"></div><div class="store-core">AWE<small>STORE</small></div><span class="store-spark spark-one">✦</span><span class="store-spark spark-two">✧</span></div></section>
+    <section class="store-controls"><div class="store-search"><span>⌕</span><input id="storeSearch" type="search" placeholder="Search titles, creators, genres…" autocomplete="off"></div><div class="store-filter-row"><select id="storeOsFilter" aria-label="Filter by operating system"><option value="all">Every platform</option><option value="compatible">Compatible with my device</option><option value="windows">Windows</option><option value="macos">macOS</option><option value="linux">Linux</option><option value="android">Android</option><option value="ios">iOS</option><option value="web">Browser</option></select><select id="storeTypeFilter" aria-label="Filter game type"><option value="all">All experiences</option><option value="web">Instant play</option><option value="download">Downloads</option></select><select id="storeSort" aria-label="Sort store"><option value="featured">Featured</option><option value="az">Name A–Z</option><option value="new">Recently added</option></select></div></section>
+    <div class="store-results-head"><div><p class="eyebrow">AWEARCHIVEDB</p><h3>More to discover</h3></div><span id="storeCount">Loading catalog…</span></div><div class="store-grid" id="storeGrid"><div class="store-empty">Loading AWE Store…</div></div><div class="store-empty" id="storeEmpty" hidden>No games match this search. Try another platform.</div>
+    <section class="player-zone" id="player"><div class="player-zone-head"><div><p class="eyebrow">YOUR SPACE · YOUR RULES</p><h2>Player command center</h2></div><span class="local-badge"><i></i> PRIVATE · THIS DEVICE</span></div></section>
+    <section class="about-strip" id="favorites"><div class="about-mark">a</div><div><strong>AWEGame — your gateway to the playverse.</strong><p>Games are curated by AWE. Favorites, history and player data are stored locally on your device.</p></div><a href="https://github.com/ARARAT33/AWEGame" target="_blank" rel="noreferrer">View project ↗</a></section>
+    <footer><span>© AWEGAME · PLAY BEYOND THE ORDINARY</span><span>BUILT FOR THE CURIOUS.</span></footer>
+  </div>
+</main>
+</div>
+<dialog class="play-modal" id="playModal"><div class="play-modal-shell"><header><div><i class="play-live-dot"></i><span id="playModalTitle">AWE GAME SESSION</span></div><div class="play-modal-actions"><button type="button" id="gameFullscreen" aria-label="Fullscreen" title="Fullscreen">⛶</button><button type="button" id="closeGame" aria-label="Close game" title="Close">×</button></div></header><div class="play-frame-wrap"><iframe id="playerFrame" title="AWEGame player" allow="fullscreen; autoplay; gamepad; clipboard-read; clipboard-write; pointer-lock" referrerpolicy="strict-origin-when-cross-origin"></iframe></div></div></dialog>
 <div class="awe-toast" id="aweToast" role="status" aria-live="polite"></div>
 <script src="games.js"></script><script src="awe-platform.js"></script><script src="awe-capture.js"></script>
 </body></html>
